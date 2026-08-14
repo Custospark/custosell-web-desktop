@@ -116,7 +116,7 @@ export function useCreateRole() {
           if (list.some((r) => r.id === role.id || r.slug === role.slug)) return list;
           return [role, ...list];
         });
-        showToast('success', 'Role saved — will sync when online');
+        showToast('success', 'Role saved - will sync when online');
       } else {
         void refreshRoleCatalogSnapshot();
         qc.invalidateQueries({ queryKey: roleKeys.list() });
@@ -169,7 +169,7 @@ export function useUpdateRole() {
         );
         showToast(
           'success',
-          role._mutationType ? 'Corrected changes saved — will retry sync' : 'Changes saved — will sync when online',
+          role._mutationType ? 'Corrected changes saved - will retry sync' : 'Changes saved - will sync when online',
         );
       } else {
         void refreshRoleCatalogSnapshot();

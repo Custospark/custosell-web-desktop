@@ -25,14 +25,14 @@ Platform operators manage users from Platform › All Users. They needed the abi
 
 ### Frontend (this change)
 
-- New `PlatformUserPrivilegesModal` — single-user and bulk modes; plan (active plans only), billing cycle, subscription status, onboarding-fee paid, next billing date, account type, email, password; all fields optional; submit only enabled when a change is present. Remounts per target via a `key` that includes the first target id (no effect-based state reset).
-- New `PlatformUserRowActions` dropdown — Notify / Change status / Platform role / Access & privileges / Delete — mirroring `PlatformBusinessRowActions`.
-- New `PlatformUserFilters` component — search, login-activity, account-status (+duration), user-type, and account-type selects plus select-all and Assign-by-email. Extracted from the page to keep it ≤500 lines.
+- New `PlatformUserPrivilegesModal` - single-user and bulk modes; plan (active plans only), billing cycle, subscription status, onboarding-fee paid, next billing date, account type, email, password; all fields optional; submit only enabled when a change is present. Remounts per target via a `key` that includes the first target id (no effect-based state reset).
+- New `PlatformUserRowActions` dropdown - Notify / Change status / Platform role / Access & privileges / Delete - mirroring `PlatformBusinessRowActions`.
+- New `PlatformUserFilters` component - search, login-activity, account-status (+duration), user-type, and account-type selects plus select-all and Assign-by-email. Extracted from the page to keep it ≤500 lines.
 - **Modal standard:** all five All Users modals (Status, Notify, Delete, Role, Privileges) converted from bespoke `AnimatePresence` overlays to the shared `Modal` + `PipelineModalHero` + `PipelineFormSection`/`PipelineIconField` pattern used by the Product, Expense, Task/Lead, and business modals. Sticky footer, section cards, icon fields, and consistent tones. State resets via `key` remounts in a new `PlatformUserModals` composite (also keeps the page ≤500 lines).
 - Users and Businesses pages now use server-side pagination (`page`/`per_page` params, meta from `current_page`/`last_page`/`total`), and filter-change handlers reset to page 1. Backend `/platform/users` and `/roles/{id}/members` return the same top-level raw-paginator shape as `/platform/businesses` (was `meta`-wrapped).
 - New hooks `useUpdatePlatformUserPrivileges` and `useBulkUpdatePlatformUserPrivileges`; new endpoints `USER_PRIVILEGES` and `USERS_BULK_PRIVILEGES`.
 
-## Update — Status-Aware Dates & Change Summary (2026-08-05)
+## Update - Status-Aware Dates & Change Summary (2026-08-05)
 
 - The privileges modal now shows the **date field that matches the chosen subscription status** instead of always "Next billing date": trial → trial ends, active → next billing, past due → grace period ends, suspended → suspended at, cancelled/expired → ends at. When no status is selected it falls back to the user's current status (see `resolveSubscriptionDateField`).
 - New **"Changes to apply"** panel renders a before → after row for every field being changed (account type, email, plan, billing cycle, status, onboarding fee, status date). Password is shown as `•••••••• → Will be replaced` because the stored hash cannot be read back.
@@ -44,9 +44,9 @@ Platform operators manage users from Platform › All Users. They needed the abi
 - Platform admins can self-service subscription/privilege changes; no dev/DB access required for common corrections.
 - Server pagination keeps Users/Businesses tables responsive as the user base grows and is required to filter on server-computed fields.
 - Privilege edits are fully audited on the backend.
-- Client-side filters that could not map to a server param (login activity, status duration) remain client-side over the current page — documented behavior.
+- Client-side filters that could not map to a server param (login activity, status duration) remain client-side over the current page - documented behavior.
 
 ## Related
 
-- Backend ADR `2026-08-05-owner-business-seeder.md` — `PromoteOwnerBusinessSeeder` (admin for Oscar, update-or-create).
-- `2026-08-01-product-listing-bulk-and-row-actions.md` — row-action dropdown pattern.
+- Backend ADR `2026-08-05-owner-business-seeder.md` - `PromoteOwnerBusinessSeeder` (admin for Oscar, update-or-create).
+- `2026-08-01-product-listing-bulk-and-row-actions.md` - row-action dropdown pattern.

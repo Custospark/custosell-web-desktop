@@ -16,4 +16,4 @@ Merchants need a printable QR for posters, stickers, and table tents. QR was dis
 
 ## Update (same day)
 
-Superseded by self-hosted `qrcode` package in `StorefrontQrCode` — see [storefront-polish-gaps](./2026-07-12-storefront-polish-gaps.md). Download PNG still ships from settings + shop page.
+Superseded by self-hosted `qrcode` package in `StorefrontQrCode` - see [storefront-polish-gaps](./2026-07-12-storefront-polish-gaps.md). Download PNG still ships from settings + shop page.

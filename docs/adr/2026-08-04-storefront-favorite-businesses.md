@@ -13,7 +13,7 @@ on the Shop page header.
 
 ## Context
 
-Customers wanted a way to bookmark shops to revisit — analogous to the existing
+Customers wanted a way to bookmark shops to revisit - analogous to the existing
 product Wishlist (`DISCOVER_WISHLIST`). The shop catalog already had a heart-free tile
 grid (`ShopTile`), a Shop page header, and a primary-tab system in `StorefrontActionStrip`
 (Favorites | Products | Cart | Orders | More, 5 columns). Backend had no concept of a
@@ -25,7 +25,7 @@ business-level favorite.
 - `BusinessFavorite` model; `FavoriteService` with `list/add/remove/isFavorited/count`.
 - `StorefrontController` endpoints under `/storefront/favorites` (GET/POST) and
   `DELETE /storefront/favorites/{business}`, auth sanctum + throttle.
-- `publicShopPayload()` now includes `id` (additive — needed for the frontend heart to
+- `publicShopPayload()` now includes `id` (additive - needed for the frontend heart to
   call add/remove by business id; does not break existing consumers).
 
 ## Frontend

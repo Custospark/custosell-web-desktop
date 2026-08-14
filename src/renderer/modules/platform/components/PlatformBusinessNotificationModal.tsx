@@ -77,14 +77,14 @@ export function PlatformBusinessNotificationModal({
           icon={Bell}
           tone="blue"
           title={businesses.length === 1 ? businesses[0].name : `${businesses.length} selected businesses`}
-          description="One message is delivered per business — never duplicated on the same channel."
+          description="One message is delivered per business - never duplicated on the same channel."
         />
 
         {businesses.length > 1 && (
           <div className="max-h-24 overflow-y-auto rounded-lg border border-gray-100 bg-gray-50/60 divide-y divide-gray-100">
             {businesses.map((b) => (
               <div key={b.id} className="truncate px-3 py-2 text-sm text-gray-700">
-                {b.name} · {b.owner_email ?? b.email ?? '—'}
+                {b.name} · {b.owner_email ?? b.email ?? '-'}
               </div>
             ))}
           </div>

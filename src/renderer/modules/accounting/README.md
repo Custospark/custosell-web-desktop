@@ -1,6 +1,6 @@
 # Accounting Module
 
-Full double-entry accounting system for Custosell — Chart of Accounts, Journal Entries, General Ledger, Trial Balance, Financial Statements, Ratios, Fixed Assets (straight-line depreciation), and Period Closing.
+Full double-entry accounting system for Custosell - Chart of Accounts, Journal Entries, General Ledger, Trial Balance, Financial Statements, Ratios, Fixed Assets (straight-line depreciation), and Period Closing.
 
 ## Architecture
 
@@ -13,13 +13,13 @@ Sales / Expenses ──→ Auto-Journal Entry ──→ General Ledger ──→
 ```
 
 ### Backend Services (Laravel)
-- `ChartOfAccountService` — COA CRUD, tree, template seeding
-- `AccountingPeriodService` — period lifecycle, closing/reopening
-- `JournalEntryService` — immutable entry creation, posting, reversing
-- `GeneralLedgerService` — trial balance, income statement, balance sheet
-- `RatioService` — financial ratio calculations
-- `FixedAssetService` — asset CRUD, straight-line depreciation engine
-- `AutoAccountingService` — auto-generates journal entries from Sales and Expense events
+- `ChartOfAccountService` - COA CRUD, tree, template seeding
+- `AccountingPeriodService` - period lifecycle, closing/reopening
+- `JournalEntryService` - immutable entry creation, posting, reversing
+- `GeneralLedgerService` - trial balance, income statement, balance sheet
+- `RatioService` - financial ratio calculations
+- `FixedAssetService` - asset CRUD, straight-line depreciation engine
+- `AutoAccountingService` - auto-generates journal entries from Sales and Expense events
 
 ### Frontend Pages (React)
 Every page is a self-contained module under `pages/`, backed by React Query hooks in `api/`.
@@ -56,18 +56,18 @@ Posted journal entries are **append-only**. Corrections require a reversing entr
 ### Frontend (`src/renderer/modules/accounting/`)
 ```
 api/
-  AccountingTypes.ts        — TypeScript interfaces for all entities
-  AccountingQueries.ts      — React Query hooks (queries + mutations)
+  AccountingTypes.ts        - TypeScript interfaces for all entities
+  AccountingQueries.ts      - React Query hooks (queries + mutations)
 pages/
-  ChartOfAccountsPage.tsx   — COA list/tree view, add account form
-  JournalEntriesPage.tsx    — Journal entry list, new entry form with line editor
-  TrialBalancePage.tsx      — Trial balance report by period
-  IncomeStatementPage.tsx   — Profit & loss report with section drill-down
-  BalanceSheetPage.tsx      — Balance sheet report with sections
-  RatiosPage.tsx            — Financial ratio dashboard
-  AccountingPeriodsPage.tsx — Period list, close/reopen actions
-  FixedAssetsPage.tsx       — Fixed asset list, add asset, run depreciation
-  AccountingSettingsPage.tsx— Module settings (COA template, defaults)
+  ChartOfAccountsPage.tsx   - COA list/tree view, add account form
+  JournalEntriesPage.tsx    - Journal entry list, new entry form with line editor
+  TrialBalancePage.tsx      - Trial balance report by period
+  IncomeStatementPage.tsx   - Profit & loss report with section drill-down
+  BalanceSheetPage.tsx      - Balance sheet report with sections
+  RatiosPage.tsx            - Financial ratio dashboard
+  AccountingPeriodsPage.tsx - Period list, close/reopen actions
+  FixedAssetsPage.tsx       - Fixed asset list, add asset, run depreciation
+  AccountingSettingsPage.tsx- Module settings (COA template, defaults)
 ```
 
 ### Backend (Laravel)
@@ -108,21 +108,21 @@ database/migrations/
   xxxx_xx_xx_create_depreciation_entries_table.php
 
 database/seeders/
-  AccountingSeeder.php          — Default URA-compliant COA template
-  AccountingPeriodSeeder.php    — Initial period creation
+  AccountingSeeder.php          - Default URA-compliant COA template
+  AccountingPeriodSeeder.php    - Initial period creation
 ```
 
 ### Modified Files
 ```
 Frontend/
-  src/renderer/app/routes/index.tsx              — Added accounting route group
-  src/renderer/app/routes/constants/shared.paths.ts — Added ROUTES.ACCOUNTING
-  src/renderer/shared/components/layout/Sidebar.tsx — Added accounting nav items
-  src/renderer/shared/utils/moduleAccess.ts       — Added 'accounting' module
+  src/renderer/app/routes/index.tsx              - Added accounting route group
+  src/renderer/app/routes/constants/shared.paths.ts - Added ROUTES.ACCOUNTING
+  src/renderer/shared/components/layout/Sidebar.tsx - Added accounting nav items
+  src/renderer/shared/utils/moduleAccess.ts       - Added 'accounting' module
 
 Backend/
-  routes/api.php                — Registered accounting API routes
-  app/Providers/AppServiceProvider.php — Service registrations
+  routes/api.php                - Registered accounting API routes
+  app/Providers/AppServiceProvider.php - Service registrations
 ```
 
 ## API Endpoints
@@ -195,13 +195,13 @@ DepreciationEntry
 ## User Guide
 
 ### Chart of Accounts
-Navigate to **Accounting → Chart of Accounts**. Switch between Flat View (sortable table, filterable by type) and Tree View (hierarchical parent-child display). Click **Add Account** to create a new account — enter code, name, type, and normal balance.
+Navigate to **Accounting → Chart of Accounts**. Switch between Flat View (sortable table, filterable by type) and Tree View (hierarchical parent-child display). Click **Add Account** to create a new account - enter code, name, type, and normal balance.
 
 ### Journal Entries
 **Accounting → Journal Entries**. Click **New Entry** to open the line editor. Add at least 2 lines with matching debit/credit totals. The form shows a real-time balanced/unbalanced indicator. Once created, click **Post** to lock the entry (irreversible). To correct a posted entry, use the reversing workflow.
 
 ### Trial Balance
-**Accounting → Trial Balance**. Select a period to view the trial balance — all accounts with their debit/credit balances. Shows whether debits equal credits.
+**Accounting → Trial Balance**. Select a period to view the trial balance - all accounts with their debit/credit balances. Shows whether debits equal credits.
 
 ### Income Statement
 **Accounting → Income Statement**. Period-filtered profit & loss report grouped by revenue, COGS, and expense sections. Shows gross profit, operating income, net income.

@@ -61,7 +61,7 @@ export default function RoleList() {
       <div className="flex flex-col gap-3 mb-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Roles</h1>
-          <p className="text-sm text-gray-500 mt-1">Organize staff by job title — module access is set per staff member</p>
+          <p className="text-sm text-gray-500 mt-1">Organize staff by job title - module access is set per staff member</p>
         </div>
         <Button onClick={openCreate}><Plus className="w-4 h-4 mr-1.5" />Add Role</Button>
       </div>
@@ -102,12 +102,12 @@ export default function RoleList() {
             { key: 'slug', header: 'Slug' },
             { key: 'description', header: 'Description', render: (item) => {
                 const desc = item.description || '';
-                return desc.length > 50 ? desc.slice(0, 50) + '...' : desc || <span className="text-gray-400">—</span>;
+                return desc.length > 50 ? desc.slice(0, 50) + '...' : desc || <span className="text-gray-400">-</span>;
               },
             },
             { key: 'is_default', header: 'Default', render: (item) => item.is_default
               ? <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800"><Star className="w-3 h-3" />Default</span>
-              : <span className="text-gray-400">—</span>
+              : <span className="text-gray-400">-</span>
             },
             { key: 'actions', header: 'Actions', align: 'center', render: (item) => (
                 <div className="flex items-center justify-center gap-1">

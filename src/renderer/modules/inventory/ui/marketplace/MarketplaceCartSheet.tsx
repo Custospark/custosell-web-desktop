@@ -10,7 +10,7 @@ import {
   type MarketplaceCartLine,
 } from '../../api/marketplace/marketplaceTypes';
 
-/** Soft cap for DOM rows — cart is not meant for millions of lines. */
+/** Soft cap for DOM rows - cart is not meant for millions of lines. */
 const CART_RENDER_CHUNK = 80;
 
 interface MarketplaceCartSheetProps {
@@ -89,7 +89,7 @@ export function MarketplaceCartSheet({
           <h2 className="text-base font-semibold text-slate-900">Purchase order cart</h2>
           <p className="mt-0.5 text-xs text-slate-600">
             {lineCount === 0
-              ? 'Add products from the catalog — cart stays open while you shop.'
+              ? 'Add products from the catalog - cart stays open while you shop.'
               : `${lineCount} line${lineCount === 1 ? '' : 's'} · ${unitCount} unit${unitCount === 1 ? '' : 's'}`}
           </p>
         </div>

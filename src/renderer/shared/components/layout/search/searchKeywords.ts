@@ -111,7 +111,7 @@ export const NAV_ITEM_KEYWORDS: Record<string, string[]> = {
   [ROUTES.PLATFORM.GUIDE.FEEDBACK]: ['platform feedback', 'admin feedback', 'platform ideas'],
 };
 
-/** Module (group) landing route for module-root shortcuts — mirrors Custocare's shortcut entries. */
+/** Module (group) landing route for module-root shortcuts - mirrors Custocare's shortcut entries. */
 export const MODULE_LANDING_ROUTES: Record<string, string> = {
   Dashboard: ROUTES.DASHBOARD,
   Sales: ROUTES.SALES.ORDERS,

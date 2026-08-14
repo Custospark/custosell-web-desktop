@@ -22,7 +22,7 @@ type DocTarget =
   | { kind: 'invoice'; orderId: number; invoiceId: number; focus: 'details' | 'receipts' };
 
 /**
- * B2C My Orders — Eye, cancel/delete, Receipt/Invoice reuse.
+ * B2C My Orders - Eye, cancel/delete, Receipt/Invoice reuse.
  */
 export function MyOrdersDocumentHost({
   order,

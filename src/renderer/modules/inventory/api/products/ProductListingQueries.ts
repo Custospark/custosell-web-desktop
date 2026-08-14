@@ -31,7 +31,7 @@ export function useBulkUpdateListing() {
       showToast('success', `${action} ${payload.ids.length} product(s) ${where}`);
     },
     onError: () => {
-      showToast('error', 'Could not update listing — check your connection');
+      showToast('error', 'Could not update listing - check your connection');
     },
   });
 }

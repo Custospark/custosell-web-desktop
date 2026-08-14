@@ -21,7 +21,7 @@ export function isSyntheticCustomerPhone(phone?: string | null): boolean {
   return phone.startsWith('em-') || phone.startsWith('walkin-');
 }
 
-/** Phone for display — hides internal backend placeholders. */
+/** Phone for display - hides internal backend placeholders. */
 export function displayCustomerPhone(phone?: string | null): string | null {
   if (!phone?.trim() || isSyntheticCustomerPhone(phone)) return null;
   return phone.trim();

@@ -175,7 +175,7 @@ export function BranchPerformanceTable({
 
   return (
     <div className="flex flex-col">
-      <p className="text-[11px] text-gray-500 mb-3">{dateFrom === dateTo ? dateFrom : `${dateFrom} — ${dateTo}`}</p>
+      <p className="text-[11px] text-gray-500 mb-3">{dateFrom === dateTo ? dateFrom : `${dateFrom} - ${dateTo}`}</p>
       <div className="overflow-x-auto -mx-4 px-4">
         <table className="w-full text-sm">
           <thead>
@@ -210,11 +210,11 @@ export function BranchPerformanceTable({
             ))}
             <tr className="bg-gray-50">
               <td className="py-2.5 pr-3 text-gray-900 font-bold">Total</td>
-              <td className="py-2.5 pr-3 text-right text-gray-500">—</td>
-              <td className="py-2.5 pr-3 text-right text-gray-500">—</td>
+              <td className="py-2.5 pr-3 text-right text-gray-500">-</td>
+              <td className="py-2.5 pr-3 text-right text-gray-500">-</td>
               <td className="py-2.5 pr-3 text-right tabular-nums text-gray-900 font-bold">{formatCurrency(totalNet)}</td>
-              <td className="py-2.5 pr-3 text-right text-gray-500">—</td>
-              <td className="py-2.5 text-right text-gray-500">—</td>
+              <td className="py-2.5 pr-3 text-right text-gray-500">-</td>
+              <td className="py-2.5 text-right text-gray-500">-</td>
             </tr>
           </tbody>
         </table>

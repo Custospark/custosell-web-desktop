@@ -22,7 +22,7 @@ const SHELL_STEPS: ProductTourStep[] = [
     id: 'hamburger',
     target: 'sidebar-hamburger',
     title: 'Sidebar menu',
-    body: 'Toggle the sidebar open or closed — keeps your workspace uncluttered when you need more room.',
+    body: 'Toggle the sidebar open or closed - keeps your workspace uncluttered when you need more room.',
     icon: Menu,
     tone: 'bg-slate-50 text-slate-600 ring-slate-200',
   },
@@ -47,7 +47,7 @@ const SHELL_STEPS: ProductTourStep[] = [
     id: 'referral',
     target: 'navbar-referral',
     title: 'Refer & Earn',
-    body: 'Share your referral code, invite businesses, and earn rewards — all from this dropdown.',
+    body: 'Share your referral code, invite businesses, and earn rewards - all from this dropdown.',
     icon: Gift,
     tone: 'bg-rose-50 text-rose-600 ring-rose-100',
   },
@@ -72,7 +72,7 @@ const SHELL_STEPS: ProductTourStep[] = [
     id: 'sidebar',
     target: 'sidebar-nav',
     title: 'Your modules',
-    body: 'Only the modules you can access appear here — including Account and Custosell Guide.',
+    body: 'Only the modules you can access appear here - including Account and Custosell Guide.',
     icon: PanelLeft,
     tone: 'bg-slate-100 text-slate-600 ring-slate-200',
   },
@@ -83,7 +83,7 @@ const CLOSING_STEPS: ProductTourStep[] = [
     id: 'support',
     target: 'sidebar-support',
     title: 'Quick Support',
-    body: 'Need help? Email or call from here anytime — we’re with you.',
+    body: 'Need help? Email or call from here anytime - we’re with you.',
     icon: Headset,
     tone: 'bg-cyan-50 text-cyan-600 ring-cyan-100',
   },
@@ -117,7 +117,7 @@ export function filterStepsWithTargets(steps: ProductTourStep[]): ProductTourSte
  * Shell + one step per accessible module (Account & Guide included;
  * each module expands so sub-nav sits inside the spotlight) + closing.
  * When planAccessibleModules is provided, nav and closing steps are filtered
- * by both permission AND plan — same logic as the sidebar.
+ * by both permission AND plan - same logic as the sidebar.
  */
 export function resolveTourSteps(
   user: AuthUser | null | undefined,

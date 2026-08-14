@@ -10,7 +10,7 @@ Editing staff in `StaffFormDrawer` did not reliably update the logged-in user’
 
 ## Decision
 
-1. **Owner modules from Staff update are persisted.** Backend `UserService::validateModulesUpdate` no longer strips `modules` for the business owner. Owner payloads use `normalizeOwnerModules()` (Settings always included). Owner module updates change **that owner’s** catalog only — they do **not** cascade-clamp staff (see ADR 2026-07-14-owner-module-toggles-no-staff-revoke).
+1. **Owner modules from Staff update are persisted.** Backend `UserService::validateModulesUpdate` no longer strips `modules` for the business owner. Owner payloads use `normalizeOwnerModules()` (Settings always included). Owner module updates change **that owner’s** catalog only - they do **not** cascade-clamp staff (see ADR 2026-07-14-owner-module-toggles-no-staff-revoke).
 2. **Owner email is read-only in Staff drawer.** Frontend disables the email field for the owner account; backend rejects email changes for the owner from the staff update path.
 3. **Settings is required only for the business owner account.** In Staff drawer, Settings is locked with a **Required** badge when editing the owner (same as Module Access). For regular staff create/edit, Settings is a normal optional checkbox. Backend `normalizeOwnerModules()` still injects Settings for owners; `normalizeStaffModules()` does not force it for staff.
 4. **Sidebar refresh on self-edit.** When the updated user is the current session user, Staff update success refreshes auth via `/auth/me` (and falls back to the update response modules) and persists the auth user locally so the sidebar recomputes immediately.

@@ -7,7 +7,7 @@
 
 Large storefront catalogs were a single-shot render: a shop's products endpoint
 returned the entire catalog (e.g. 3,000 products) in one response, and the
-`ShopPage` rendered them all at once — jamming the UI. The Discover products/businesses
+`ShopPage` rendered them all at once - jamming the UI. The Discover products/businesses
 lists already paginated server-side but revealed items via a manual "Show more"
 button. Separately, the auth-shell mobile bottom tab pinned the first two accessible
 leaves from catalog order; because the overflow sheet kept whole nav groups, a pinned
@@ -25,7 +25,7 @@ leaves from catalog order; because the overflow sheet kept whole nav groups, a p
 - New `useRevealMore` hook (storefront) renders the first chunk (36) and reveals more
   via an IntersectionObserver sentinel as the user scrolls, fetching the next page only
   once everything loaded is already showing, and only while the sentinel is on screen.
-  It never writes `useRef` values during render (eslint `react-hooks/refs` clean) —
+  It never writes `useRef` values during render (eslint `react-hooks/refs` clean) -
   latest callbacks are read through effect deps instead.
 - Applied to `ShopPage`, `DiscoverProductsBrowse`, and `DiscoverShopsBrowse`. The manual
   "Show more" button is retained as an explicit fallback; scroll auto-reveal is primary.

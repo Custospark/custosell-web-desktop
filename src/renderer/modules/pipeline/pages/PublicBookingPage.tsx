@@ -36,7 +36,7 @@ function formatIsoDate(iso: string | undefined): string {
 }
 
 function formatSlotRange(slot: TimeSlot): string {
-  return `${formatIsoTime(slot.time_iso) || formatTime(slot.time)} — ${formatIsoTime(slot.end_time_iso) || formatTime(slot.end_time)}`;
+  return `${formatIsoTime(slot.time_iso) || formatTime(slot.time)} - ${formatIsoTime(slot.end_time_iso) || formatTime(slot.end_time)}`;
 }
 
 function utcPartsFromSlot(slot: TimeSlot): { date: string; time: string } {
@@ -193,7 +193,7 @@ export default function PublicBookingPage() {
           <CalendarDays className="h-3.5 w-3.5" />
           <span>{selectedLocalDate}</span>
           <Clock className="ml-1 h-3.5 w-3.5" />
-          <span>{selectedLocalTime}{selectedLocalEnd ? ` — ${selectedLocalEnd}` : ''}</span>
+          <span>{selectedLocalTime}{selectedLocalEnd ? ` - ${selectedLocalEnd}` : ''}</span>
         </div>
 
         <div className="mx-auto mt-3 inline-flex items-center gap-2 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-700">
@@ -392,7 +392,7 @@ export default function PublicBookingPage() {
               <CalendarDays className="h-3.5 w-3.5" />
               <span>{selectedLocalDate}</span>
               <Clock className="h-3.5 w-3.5" />
-              <span>{selectedLocalTime}{selectedLocalEnd ? ` — ${selectedLocalEnd}` : ''}</span>
+              <span>{selectedLocalTime}{selectedLocalEnd ? ` - ${selectedLocalEnd}` : ''}</span>
             </div>
 
             <div className="space-y-3">
@@ -481,7 +481,7 @@ export default function PublicBookingPage() {
                   placeholder="https://meet.google.com/xxx"
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm transition-shadow placeholder:text-gray-300 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-100"
                 />
-                <p className="mt-1 text-[11px] text-gray-400">Optional — add a video link so the host can join online</p>
+                <p className="mt-1 text-[11px] text-gray-400">Optional - add a video link so the host can join online</p>
               </div>
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-gray-600">

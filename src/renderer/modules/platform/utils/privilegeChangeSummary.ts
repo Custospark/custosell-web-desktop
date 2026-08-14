@@ -54,17 +54,17 @@ export function resolveSubscriptionDateField(
 }
 
 function fmtDate(value: string | null | undefined): string {
-  if (!value) return '—';
+  if (!value) return '-';
   const d = new Date(value);
   return Number.isNaN(d.getTime()) ? value : d.toLocaleDateString();
 }
 
 function fmtPaid(value: boolean | undefined): string {
-  return value === undefined ? '—' : value ? 'paid' : 'unpaid';
+  return value === undefined ? '-' : value ? 'paid' : 'unpaid';
 }
 
 function planLabel(planId: number | '', plans: Array<{ id: number; name: string }>): string {
-  if (planId === '') return '—';
+  if (planId === '') return '-';
   return plans.find((p) => p.id === Number(planId))?.name ?? `Plan #${planId}`;
 }
 
@@ -77,7 +77,7 @@ export interface PrivilegeChangeRow {
 
 /**
  * Build an ordered "before → after" summary of every field the admin is about
- * to change. Password is shown only as "will be set" — the stored hash cannot
+ * to change. Password is shown only as "will be set" - the stored hash cannot
  * be read back, so there is no meaningful 'from' value.
  */
 export function buildPrivilegeChangeRows(
@@ -92,13 +92,13 @@ export function buildPrivilegeChangeRows(
   if (payload.account_type) {
     rows.push({
       label: 'Account type',
-      from: single?.account_type ? ACCOUNT_TYPE_LABELS[single.account_type] : '—',
+      from: single?.account_type ? ACCOUNT_TYPE_LABELS[single.account_type] : '-',
       to: ACCOUNT_TYPE_LABELS[payload.account_type],
     });
   }
 
   if (payload.email) {
-    rows.push({ label: 'Email', from: single?.email ?? '—', to: payload.email });
+    rows.push({ label: 'Email', from: single?.email ?? '-', to: payload.email });
   }
 
   if (payload.password) {
@@ -116,7 +116,7 @@ export function buildPrivilegeChangeRows(
   if (payload.billing_cycle) {
     rows.push({
       label: 'Billing cycle',
-      from: sub?.billing_cycle ?? '—',
+      from: sub?.billing_cycle ?? '-',
       to: payload.billing_cycle,
     });
   }
@@ -124,7 +124,7 @@ export function buildPrivilegeChangeRows(
   if (payload.subscription_status) {
     rows.push({
       label: 'Subscription status',
-      from: currentStatus ? STATUS_LABELS[currentStatus] : '—',
+      from: currentStatus ? STATUS_LABELS[currentStatus] : '-',
       to: STATUS_LABELS[payload.subscription_status],
     });
   }

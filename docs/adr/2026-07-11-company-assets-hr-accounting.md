@@ -12,11 +12,11 @@ Organizations need to know which company resources (laptops, phones, furniture) 
 
 ## Decision
 
-1. **One record, two surfaces** — `fixed_assets` is the shared register.
-2. **HR — Company Assets** (`/hr/company-assets`, `hr_full`) owns operational custody: asset tag, serial, category, location, condition, assign / transfer / return, assignment history, employee “Assets issued” panel.
-3. **Accounting — Fixed Assets** (`/accounting/fixed-assets`) owns financial fields and GL: cost, salvage, useful life, book value, run depreciation, schedule.
-4. **Expenses** may optionally set `fixed_asset_id` for repair/maintenance; rollup surfaces on Company Assets detail. Depreciation remains journal-only (Dr 6300 / Cr 1205) — never duplicated from HR.
-5. **Inventory** stays sellable stock — not company assets.
+1. **One record, two surfaces** - `fixed_assets` is the shared register.
+2. **HR - Company Assets** (`/hr/company-assets`, `hr_full`) owns operational custody: asset tag, serial, category, location, condition, assign / transfer / return, assignment history, employee “Assets issued” panel.
+3. **Accounting - Fixed Assets** (`/accounting/fixed-assets`) owns financial fields and GL: cost, salvage, useful life, book value, run depreciation, schedule.
+4. **Expenses** may optionally set `fixed_asset_id` for repair/maintenance; rollup surfaces on Company Assets detail. Depreciation remains journal-only (Dr 6300 / Cr 1205) - never duplicated from HR.
+5. **Inventory** stays sellable stock - not company assets.
 6. **API split:**
    - Accounting: existing `/fixed-assets` CRUD + `run-depreciation` + `schedule` (module `accounting`).
    - HR: `/hr/company-assets` list/show/store/update custody + assign/transfer/return + assignments + maintenance expenses (module `hr` + `hr.full`).
@@ -33,7 +33,7 @@ Organizations need to know which company resources (laptops, phones, furniture) 
 ### Negative
 
 - Users with only HR (no Accounting) can manage custody but must rely on Accounting (or an accountant) for depreciation runs.
-- Creating an asset from HR still needs a valid CoA `account_id` (category maps to 1201–1204 when omitted).
+- Creating an asset from HR still needs a valid CoA `account_id` (category maps to 1201-1204 when omitted).
 
 ## Alternatives considered
 

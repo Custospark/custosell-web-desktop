@@ -14,7 +14,7 @@ interface CustosellBrandLockupProps {
 }
 
 /**
- * Custosell product lockup — logo + gradient wordmark (+ optional tagline),
+ * Custosell product lockup - logo + gradient wordmark (+ optional tagline),
  * mirroring Custocare's `BrandName` treatment. Used in the sidebar header and
  * the top navbar so branding stays consistent.
  */

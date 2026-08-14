@@ -25,7 +25,7 @@ function showsMoreHint(level: string): boolean {
 }
 
 function formatShare(value: number): string {
-  return Number.isFinite(value) ? value.toFixed(2) : '—';
+  return Number.isFinite(value) ? value.toFixed(2) : '-';
 }
 
 export default function DecompositionPreviewTree({ nodes, loading, onOverride }: DecompositionPreviewTreeProps) {

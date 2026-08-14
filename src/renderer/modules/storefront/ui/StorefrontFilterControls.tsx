@@ -111,7 +111,7 @@ export function PriceRange({ minValue, maxValue, bounds, currency, onMin, onMax 
           onChange={(e) => onMin(e.target.value ? Number(e.target.value) : undefined)}
           className={inputCls}
         />
-        <span className="text-xs text-slate-400">–</span>
+        <span className="text-xs text-slate-400">-</span>
         <input
           type="number"
           min={bounds?.min}

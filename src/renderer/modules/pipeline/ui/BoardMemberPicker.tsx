@@ -248,7 +248,7 @@ export default function BoardMemberPicker({
             <option value="">Select staff…</option>
             {filteredAvailableStaff.map((u) => (
               <option key={u.id} value={u.id}>
-                {u.name}{u.email ? ` — ${u.email}` : ''}
+                {u.name}{u.email ? ` - ${u.email}` : ''}
               </option>
             ))}
           </select>
@@ -291,9 +291,9 @@ export default function BoardMemberPicker({
       </div>
 
       <p className="text-xs text-gray-500">
-        <span className="font-medium text-gray-700">Viewer</span> — view only ·{' '}
-        <span className="font-medium text-gray-700">Contributor</span> — move cards & columns ·{' '}
-        <span className="font-medium text-gray-700">Manager</span> — settings, archive & delete
+        <span className="font-medium text-gray-700">Viewer</span> - view only ·{' '}
+        <span className="font-medium text-gray-700">Contributor</span> - move cards & columns ·{' '}
+        <span className="font-medium text-gray-700">Manager</span> - settings, archive & delete
       </p>
 
       {filteredAvailableStaff.length === 0 && staffQuery && (

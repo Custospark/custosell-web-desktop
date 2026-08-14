@@ -15,10 +15,10 @@ Online-first sales pipeline (CRM-lite) for lead tracking, kanban boards, and cus
 
 ## Board features
 
-- **Kanban / Calendar** — Calendar shows leads by `expected_close_date` for the active board.
-- **Board settings** — Gear icon on board header: edit name, description, color, visibility; archive (non-default boards).
-- **Columns** — Add column, edit (rename, color, reorder), delete with lead migration when column has cards.
-- **Lead drawer** — Edit title, expected close date, contact fields; archive lead.
+- **Kanban / Calendar** - Calendar shows leads by `expected_close_date` for the active board.
+- **Board settings** - Gear icon on board header: edit name, description, color, visibility; archive (non-default boards).
+- **Columns** - Add column, edit (rename, color, reorder), delete with lead migration when column has cards.
+- **Lead drawer** - Edit title, expected close date, contact fields; archive lead.
 
 ## Settings
 
@@ -36,7 +36,7 @@ Online-first sales pipeline (CRM-lite) for lead tracking, kanban boards, and cus
 
 ## API
 
-Base: `GET/POST /api/v1/pipeline/*` — see `Backend/routes/api/v1/pipeline.php`.
+Base: `GET/POST /api/v1/pipeline/*` - see `Backend/routes/api/v1/pipeline.php`.
 
 ## Notes
 

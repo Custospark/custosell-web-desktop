@@ -106,5 +106,5 @@ export function selectionLabel(periodFilter: string, periods: AccountingPeriod[]
 
   const first = selected[0];
   const last = selected[selected.length - 1];
-  return `${first.start_date.slice(0, 7)} – ${last.end_date.slice(0, 7)}`;
+  return `${first.start_date.slice(0, 7)} - ${last.end_date.slice(0, 7)}`;
 }

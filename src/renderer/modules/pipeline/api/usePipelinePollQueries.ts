@@ -106,7 +106,7 @@ export function useCreateBoardPoll(boardId: number) {
       }
       void qc.invalidateQueries({ queryKey: pipelineCollaborationKeys.summary(boardId) });
       void qc.invalidateQueries({ queryKey: notificationKeys.all });
-      showToast('success', 'Poll created — team notified');
+      showToast('success', 'Poll created - team notified');
     },
     onError: (err: AxiosError<{ message?: string }>) => {
       void qc.invalidateQueries({ queryKey: pipelineCollaborationKeys.polls(boardId) });

@@ -102,7 +102,7 @@ export function WaitingScreen({ handleVerifyPayment, verifying, popupBlocked, pa
               ) : (
                 <CheckCircle className="w-4 h-4" />
               )}
-              {verifying ? 'Verifying...' : "I've Completed Payment — Verify"}
+              {verifying ? 'Verifying...' : "I've Completed Payment - Verify"}
             </button>
             {verifyMessage && (
               <div className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 text-left">

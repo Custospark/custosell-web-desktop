@@ -12,12 +12,12 @@ interface StorefrontQrCodeProps {
   size?: number;
   className?: string;
   label?: string | null;
-  /** Kept for Shop page — Download PNG beside the QR. */
+  /** Kept for Shop page - Download PNG beside the QR. */
   showDownload?: boolean;
 }
 
 /**
- * Shop QR — self-hosted canvas (no third-party image API).
+ * Shop QR - self-hosted canvas (no third-party image API).
  */
 export function StorefrontQrCode({
   slug,
@@ -91,7 +91,7 @@ export function StorefrontQrCode({
             setDownloading(true);
             void downloadStorefrontQrPng(slug)
               .then(() => showToast('success', 'QR code downloaded'))
-              .catch(() => showToast('error', 'Could not download QR — try again.'))
+              .catch(() => showToast('error', 'Could not download QR - try again.'))
               .finally(() => setDownloading(false));
           }}
           title="Download a print-ready PNG"
@@ -135,7 +135,7 @@ export function StorefrontQrDownloadButton({
         setDownloading(true);
         void downloadStorefrontQrPng(slug)
           .then(() => showToast('success', 'QR code downloaded'))
-          .catch(() => showToast('error', 'Could not download QR — try again.'))
+          .catch(() => showToast('error', 'Could not download QR - try again.'))
           .finally(() => setDownloading(false));
       }}
     >

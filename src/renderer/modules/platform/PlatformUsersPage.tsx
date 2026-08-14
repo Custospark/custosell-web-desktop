@@ -51,7 +51,7 @@ function displayRole(user: PlatformUser): string {
   if (user.role_name) return user.role_name;
   const platformRoles = user.platform_roles ?? [];
   if (platformRoles.length > 0) return platformRoles.join(', ');
-  return '—';
+  return '-';
 }
 type ModalTarget = PlatformUser[];
 
@@ -403,7 +403,7 @@ export default function PlatformUsersPage() {
                 )},
                 { key: 'business', header: 'Business', render: (u) => (
                   <div>
-                    <p className="text-sm text-gray-800">{u.business_name ?? '—'}</p>
+                    <p className="text-sm text-gray-800">{u.business_name ?? '-'}</p>
                     {u.is_platform_admin && (
                       <Badge variant="primary" className="mt-1">Platform operator</Badge>
                     )}
@@ -434,7 +434,7 @@ export default function PlatformUsersPage() {
                   );
                 }},
                 { key: 'joined', header: 'Joined', render: (u) => (
-                  u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'
+                  u.created_at ? new Date(u.created_at).toLocaleDateString() : '-'
                 )},
                 { key: 'actions', header: 'Actions', align: 'center', render: (u) => (
                   <PlatformUserRowActions

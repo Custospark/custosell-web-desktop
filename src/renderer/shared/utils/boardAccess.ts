@@ -42,7 +42,7 @@ export type BoardAccessOptions = {
   projectMembers?: { user_id: number; role: string }[];
 };
 
-/** Board settings (visibility, team, appearance) — owners and managers only. */
+/** Board settings (visibility, team, appearance) - owners and managers only. */
 export function canManageBoardSettings(
   user: AuthUser | null | undefined,
   board: BoardAccessBoard,
@@ -101,7 +101,7 @@ export function isBoardViewer(
   return getSharedBoardMemberRole(user, board) === 'viewer';
 }
 
-/** Move cards, columns, comment, and add resources — contributors and managers. */
+/** Move cards, columns, comment, and add resources - contributors and managers. */
 export function canContributeToBoard(
   user: AuthUser | null | undefined,
   board: BoardAccessBoard,

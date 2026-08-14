@@ -183,8 +183,8 @@ function CreateBoardModalForm({
           title={isEstimates ? 'New personal board' : 'New pipeline board'}
           description={
             isEstimates
-              ? 'Set visibility and invite collaborators the same way as board settings — team, private, or shared with specific people.'
-              : 'Set visibility and invite collaborators the same way as board settings — team, private, or shared with specific people.'
+              ? 'Set visibility and invite collaborators the same way as board settings - team, private, or shared with specific people.'
+              : 'Set visibility and invite collaborators the same way as board settings - team, private, or shared with specific people.'
           }
         />
 
@@ -211,7 +211,7 @@ function CreateBoardModalForm({
               className={cn(pipelineInputClass, 'min-h-[72px] resize-none py-2.5 pl-3')}
               placeholder={isEstimates ? 'What are you tracking on this board?' : 'What kind of opportunities belong here?'}
             />
-            <p className="mt-1 text-xs text-gray-500">Optional — shown in the board switcher</p>
+            <p className="mt-1 text-xs text-gray-500">Optional - shown in the board switcher</p>
           </div>
         </PipelineFormSection>
 
@@ -222,7 +222,7 @@ function CreateBoardModalForm({
               onChange={(e) => setTemplateId(e.target.value ? Number(e.target.value) : '')}
               className={pipelineInputClass}
             >
-              <option value="">No template — start blank</option>
+              <option value="">No template - start blank</option>
               {templates.map((template) => (
                 <option key={template.id} value={template.id}>
                   {template.name}

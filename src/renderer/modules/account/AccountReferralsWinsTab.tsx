@@ -75,7 +75,7 @@ export default function AccountReferralsWinsTab({ earnings }: { earnings: Referr
       </div>
 
       {/* Promo credit is a business-level billing asset (used against subscription
-          charges), so it shows to the business owner only — same gate as the
+          charges), so it shows to the business owner only - same gate as the
           subscription dropdown. Staff and personal accounts never see it. */}
       {isBusinessOwner && (earnings?.available_credit ?? 0) > 0 && (
         <div className="bg-green-50 border border-green-100 rounded-xl px-4 py-3 flex items-center justify-between">

@@ -102,10 +102,10 @@ export default function GuideContactPage() {
         <h2 className="text-sm font-semibold text-gray-900">Feedback vs Contact &amp; Help</h2>
         <ul className="mt-2 space-y-2 text-sm text-gray-700">
           <li>
-            <strong>Feedback</strong> — product ideas, improvements, and non-urgent reports you want tracked in the app.
+            <strong>Feedback</strong> - product ideas, improvements, and non-urgent reports you want tracked in the app.
           </li>
           <li>
-            <strong>Contact &amp; Help</strong> — login problems, sales not syncing, broken features, or anything stopping work today.
+            <strong>Contact &amp; Help</strong> - login problems, sales not syncing, broken features, or anything stopping work today.
           </li>
         </ul>
         <Link

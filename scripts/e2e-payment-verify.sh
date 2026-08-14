@@ -106,7 +106,7 @@ check_money "Final balance" "0" "$IP2_BAL"
 [[ "$INV_ST2" == "paid" ]] || fail "Expected paid got $INV_ST2"
 pass "Invoice paid in full"
 
-echo "=== 9. Second invoice — pay in full at once ==="
+echo "=== 9. Second invoice - pay in full at once ==="
 INV2=$(curl -s "$API/invoices" -X POST "${AUTH[@]}" \
   -d "{\"issue_date\":\"2026-07-05\",\"due_date\":\"2026-07-12\",\"items\":[{\"description\":\"Full pay test\",\"quantity\":1,\"unit_price\":5000,\"subtotal\":5000}],\"tax_total\":0}")
 INV2_ID=$(echo "$INV2" | python -c "import sys,json; d=json.load(sys.stdin); r=d.get('data',d); print(r.get('id',''))")

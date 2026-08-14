@@ -213,14 +213,14 @@ export default function StaffList() {
             { key: 'email', header: 'Email' },
             { key: 'phone', header: 'Phone', render: (item) => {
                 const phone = item.phone || (item.id === businessOwnerId ? business?.phone : null) || null;
-                return phone || <span className="text-gray-400">—</span>;
+                return phone || <span className="text-gray-400">-</span>;
               } },
-            { key: 'role', header: 'Role', render: (item) => item.role?.name || <span className="text-gray-400">—</span> },
+            { key: 'role', header: 'Role', render: (item) => item.role?.name || <span className="text-gray-400">-</span> },
             { key: 'branch', header: 'Branch', render: (item) => {
                 const name = branchName(item);
                 return name
                   ? <span className="inline-flex items-center gap-1.5"><GitBranch className="w-3.5 h-3.5 text-gray-400" />{name}</span>
-                  : <span className="text-gray-400">—</span>;
+                  : <span className="text-gray-400">-</span>;
               } },
             { key: 'actions', header: 'Actions', align: 'center', render: (item) => (
                 <div className="flex items-center justify-center gap-1">

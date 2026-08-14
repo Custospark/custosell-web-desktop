@@ -12,7 +12,7 @@ Related: [architecture.md](./architecture.md) · [auth.md](./auth.md)
 
 ## IndexedDB stores (sales-related)
 
-Part of `CustosellOffline` v13 — see [architecture.md](./architecture.md).
+Part of `CustosellOffline` v13 - see [architecture.md](./architecture.md).
 
 | Store | Purpose |
 |-------|---------|
@@ -99,7 +99,7 @@ Unsynced `OFF-*` sales must sync before refunding.
 
 ## Shift flow (offline)
 
-1. **Clock in** → `completeOfflineClockInInstant()` — negative shift ID, auth `shift_id` updated, `POST /shifts` queued
+1. **Clock in** → `completeOfflineClockInInstant()` - negative shift ID, auth `shift_id` updated, `POST /shifts` queued
 2. Offline sales attach `shift_id` from auth slice
 3. **Clock out** → totals from merged shift sales, `PUT /shifts/:id` queued, auth cleared
 4. **Shift pending sync** badge when local-only
@@ -116,23 +116,23 @@ After session upgrade, `refreshActiveShiftFromServer()` aligns auth with `GET /s
 
 | Status | Meaning |
 |--------|---------|
-| `offline` | Completely offline — local queue, instant sale completion |
-| `slow` | API reachable — **server-first** (not offline) |
+| `offline` | Completely offline - local queue, instant sale completion |
+| `slow` | API reachable - **server-first** (not offline) |
 | `online` | Normal |
 
 See [architecture.md](./architecture.md).
 
 ## Reconnect pipeline
 
-1. `upgradeLocalSessionIfOnline()` — silent auth upgrade ([auth.md](./auth.md))
+1. `upgradeLocalSessionIfOnline()` - silent auth upgrade ([auth.md](./auth.md))
 2. `syncPendingDataIfOnline()` → coordinator
 3. Auth tier → shift opens → sales batch → refunds → shift closes → stock adjustments
 4. `invalidateAfterFullSync()` + catalog snapshot refresh
-5. `purgeSyncedOptimisticFromCache()` — remove `OFF-*` / pending badges
+5. `purgeSyncedOptimisticFromCache()` - remove `OFF-*` / pending badges
 
 ### Sync order (mutations)
 
-1. Shift opens (`POST /shifts`) — remaps local shift IDs on sales, expenses, auth
+1. Shift opens (`POST /shifts`) - remaps local shift IDs on sales, expenses, auth
 2. Sales batch (`POST /sales/batch`)
 3. Refunds (`POST /sales/:id/refund`)
 4. Shift closes (`PUT /shifts/:id`)
@@ -142,9 +142,9 @@ See [architecture.md](./architecture.md).
 
 1. Synced rows deleted from `localSales`, `localRefunds`, `localShifts`, `mutations`
 2. Optimistic cache purge
-3. Server refetch — UI matches online state
+3. Server refetch - UI matches online state
 
-Dashboard uses **server baseline** (`dashboardKeys.server`) + pending overlay — no double-counting.
+Dashboard uses **server baseline** (`dashboardKeys.server`) + pending overlay - no double-counting.
 
 ## Net sales accounting
 
@@ -160,9 +160,9 @@ See `shared/utils/accounting.ts` and dashboard field docs in prior sections.
 
 - Red **offline** banner above layout (dismissible)
 - Amber hints on New Sale, Refunds, My Shift
-- **Pending sync** — unsynced sales/products/etc.
-- **Refund pending** — unsynced refunds
-- **Shift pending sync** — local shift
+- **Pending sync** - unsynced sales/products/etc.
+- **Refund pending** - unsynced refunds
+- **Shift pending sync** - local shift
 - Receipt prefix `OFF-YYMMDD-XXXXXX`
 
 Global banner placement: [../app/shell.md](../app/shell.md).

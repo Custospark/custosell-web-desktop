@@ -11,12 +11,12 @@ interface StorefrontLoginDialogProps {
   onSuccess: () => void;
   title?: string;
   subtitle?: string;
-  /** Cart place-order flow — CTA says create/sign-in & place order. */
+  /** Cart place-order flow - CTA says create/sign-in & place order. */
   placeOrderMode?: boolean;
 }
 
 /**
- * Discover account dialog — create account (default) or sign in.
+ * Discover account dialog - create account (default) or sign in.
  * No dimmed/blurred backdrop so browse + cart stay visible (not “blocked”).
  */
 export function StorefrontLoginDialog({
@@ -24,7 +24,7 @@ export function StorefrontLoginDialog({
   onClose,
   onSuccess,
   title = 'Create an account to continue',
-  subtitle = 'Shop as a customer — no business setup. Carts stay in this browser.',
+  subtitle = 'Shop as a customer - no business setup. Carts stay in this browser.',
   placeOrderMode = false,
 }: StorefrontLoginDialogProps) {
   useEffect(() => {
@@ -45,7 +45,7 @@ export function StorefrontLoginDialog({
         CONFIRM_Z_INDEX_CLASS,
       )}
     >
-      {/* Transparent hit area only — no dim / blur */}
+      {/* Transparent hit area only - no dim / blur */}
       <button
         type="button"
         className="pointer-events-auto absolute inset-0 cursor-default bg-transparent"

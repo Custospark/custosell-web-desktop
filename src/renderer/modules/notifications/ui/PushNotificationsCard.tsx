@@ -24,7 +24,7 @@ export function PushNotificationsCard() {
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-gray-900">Desktop notifications</p>
             <p className="mt-0.5 text-sm leading-snug text-gray-600">
-              Get alerts instantly — even when the app is closed.
+              Get alerts instantly - even when the app is closed.
             </p>
           </div>
           <button

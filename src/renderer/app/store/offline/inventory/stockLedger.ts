@@ -22,7 +22,7 @@ export interface PendingAdjustment {
   syncStatus: SyncStatus;
 }
 
-/** Server already records stock for sale/refund mutations — ledger rows are local-only. */
+/** Server already records stock for sale/refund mutations - ledger rows are local-only. */
 export function isServerOwnedStockReason(reason: string): boolean {
   return reason === 'sale' || reason === 'refund';
 }

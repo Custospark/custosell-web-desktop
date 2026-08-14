@@ -48,7 +48,7 @@ export async function persistOfflineStockAdjustmentInBackground(
 /**
  * Persists the stock ledger + pending adjustment row, then resolves. The UI's
  * mutation awaits this so a durable IndexedDB write is committed before the
- * action is reported complete — closing the hard-power-loss data-loss window.
+ * action is reported complete - closing the hard-power-loss data-loss window.
  */
 export async function completeOfflineStockAdjustmentInstant(
   payload: CreateStockMovementData,

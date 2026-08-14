@@ -34,14 +34,14 @@ export default function FixedAssetsPage() {
     {
       key: 'tag',
       header: 'Tag',
-      render: (item: FixedAsset) => item.asset_tag ?? <span className="text-gray-400">—</span>,
+      render: (item: FixedAsset) => item.asset_tag ?? <span className="text-gray-400">-</span>,
     },
     {
       key: 'assignee',
       header: 'Assignee',
       render: (item: FixedAsset) => {
         const e = item.assigned_employee;
-        if (!e || !item.assigned_employee_id) return <span className="text-gray-400">—</span>;
+        if (!e || !item.assigned_employee_id) return <span className="text-gray-400">-</span>;
         return (
           <Link to={ROUTES.HR.EMPLOYEE(item.assigned_employee_id)} className="text-indigo-600 hover:underline">
             {e.first_name} {e.last_name}
@@ -72,7 +72,7 @@ export default function FixedAssetsPage() {
       header: 'Status',
       render: (item: FixedAsset) => (
         <span className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium', statusColors[item.status ?? ''] ?? 'bg-gray-100 text-gray-500')}>
-          {item.status ? item.status.replace('_', ' ') : '—'}
+          {item.status ? item.status.replace('_', ' ') : '-'}
         </span>
       ),
     },

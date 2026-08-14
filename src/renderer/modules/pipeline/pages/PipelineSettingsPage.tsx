@@ -92,7 +92,7 @@ export default function PipelineSettingsPage() {
         </Card>
         <Card className="p-4">
           <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Open pipeline</p>
-          <p className="mt-1 text-2xl font-semibold text-emerald-700">{insights?.open_leads ?? '—'}</p>
+          <p className="mt-1 text-2xl font-semibold text-emerald-700">{insights?.open_leads ?? '-'}</p>
         </Card>
       </div>
 

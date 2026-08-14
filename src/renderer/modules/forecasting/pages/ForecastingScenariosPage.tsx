@@ -106,7 +106,7 @@ export default function ForecastingScenariosPage() {
                 else setHorizon(String(Math.round(n)));
               }}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-              placeholder="1–24"
+              placeholder="1-24"
             />
           </label>
           <label className="block text-sm">
@@ -182,7 +182,7 @@ export default function ForecastingScenariosPage() {
                   <td className="px-3 py-2 font-medium text-gray-900">{scenario.name}</td>
                   <td className="px-3 py-2 tabular-nums">{scenario.horizon_months}</td>
                   <td className="px-3 py-2 font-mono text-xs">
-                    {scenario.hire_basic_salary == null ? '—' : formatForecastMoney(scenario.hire_basic_salary)}
+                    {scenario.hire_basic_salary == null ? '-' : formatForecastMoney(scenario.hire_basic_salary)}
                   </td>
                   <td className="px-3 py-2 font-mono text-xs">{formatForecastMoney(scenario.extra_monthly_opex)}</td>
                   <td className="px-3 py-2 tabular-nums">{scenario.revenue_uplift_pct}%</td>

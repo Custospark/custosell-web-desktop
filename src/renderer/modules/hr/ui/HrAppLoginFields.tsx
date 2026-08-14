@@ -29,7 +29,7 @@ export function HrAppLoginFields({
   roles,
   emailRequired = true,
   passwordRequired = true,
-  description = 'You set their password now — share it securely. They can change it later from their profile or forgot-password.',
+  description = 'You set their password now - share it securely. They can change it later from their profile or forgot-password.',
   emailHint = 'Creates a new login, or attaches an existing free account. Emails already on another organization are blocked.',
   onEmailBlur,
   emailMessage,

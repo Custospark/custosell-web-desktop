@@ -183,7 +183,7 @@ export default function OrdersPage() {
         <div className="flex items-center gap-2">
           {isOffline ? (
             <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">
-              <WifiOff className="w-3.5 h-3.5" /> Offline — showing local orders
+              <WifiOff className="w-3.5 h-3.5" /> Offline - showing local orders
             </span>
           ) : null}
           <Button variant="secondary" size="sm" onClick={() => void refetch()} disabled={isFetching} className="gap-1.5">
@@ -275,7 +275,7 @@ export default function OrdersPage() {
             className="mb-3 w-full rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 text-left text-sm text-teal-900 hover:bg-teal-100"
           >
             <span className="font-semibold">{onlineOpenCount} open online order{onlineOpenCount === 1 ? '' : 's'}</span>
-            <span className="text-teal-800"> from Order Online — tap to filter</span>
+            <span className="text-teal-800"> from Order Online - tap to filter</span>
           </button>
         ) : null}
         {isLoading ? (

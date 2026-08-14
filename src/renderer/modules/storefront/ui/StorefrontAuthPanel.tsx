@@ -20,7 +20,7 @@ interface StorefrontAuthPanelProps {
 }
 
 /**
- * Discover shopper auth — create account (default) or sign in.
+ * Discover shopper auth - create account (default) or sign in.
  * No business registration; stays in-shell via redirect:false.
  */
 export function StorefrontAuthPanel({
@@ -109,7 +109,7 @@ export function StorefrontAuthPanel({
 
       {mode === 'create' ? (
         <p className="text-[11px] leading-snug text-slate-600">
-          Shop as a customer — no business setup. You&apos;ll appear on each shop&apos;s customer list when you order.
+          Shop as a customer - no business setup. You&apos;ll appear on each shop&apos;s customer list when you order.
         </p>
       ) : (
         <p className="text-[11px] leading-snug text-slate-600">

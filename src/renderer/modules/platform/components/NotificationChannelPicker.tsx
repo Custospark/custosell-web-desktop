@@ -23,7 +23,7 @@ export const NOTIFICATION_CHANNEL_OPTIONS: {
   {
     value: 'both',
     label: 'App and email',
-    description: 'One message in the app and one email — nothing duplicated on the same channel.',
+    description: 'One message in the app and one email - nothing duplicated on the same channel.',
     icon: Radio,
   },
 ];

@@ -16,7 +16,7 @@ Column-aware metrics, goal decomposition, and personal progress for Kanban board
 |-------|------|------------------------|
 | Decade | `decade` | 5-year blocks |
 | 5-year | `five_year` | Years |
-| Year | `year` | Q1–Q4 → months → weeks → days |
+| Year | `year` | Q1-Q4 → months → weeks → days |
 | Quarter | `quarter` | Months → weeks → days |
 | Month | `month` | Weeks → days |
 | Week | `week` | Days |
@@ -44,13 +44,13 @@ Global keys (`cards_won`, `win_rate`, etc.) remain board-wide.
 **Goal:** Win 120 leads in calendar year 2026 on column “Negotiation” (`stage_id=4`).
 
 1. Manager sets type **Goal**, planning level **Year**, target **120**, column **Negotiation**.
-2. Click **Show decomposition preview** (one API call per click — no auto/debounced preview).
+2. Click **Show decomposition preview** (one API call per click - no auto/debounced preview).
 3. On save, allocations persist; read API recomputes **expected_to_date** as time elapses.
 4. Trend chart shows dashed **Expected pace** vs actual `cards_won`.
 
 When the period filter changes (day/week/month/quarter/year), target cards use `period_slice` from the API and show achievement as **x/y** for that window (e.g. Today with a 2/day pace → `1/2`). Coarser goals (month/year) are prorated into the selected view so the denominator matches the period. Percent and overall goal stay as secondary context.
 
-**Assignee roster:** The ownership dropdown prefers board resource members, then project/board roster — not only members with activity in the selected period.
+**Assignee roster:** The ownership dropdown prefers board resource members, then project/board roster - not only members with activity in the selected period.
 
 Manual edits to child periods set `is_override=true` and are recorded in `pipeline_board_target_events`.
 
@@ -64,14 +64,14 @@ Manual edits to child periods set `is_override=true` and are recorded in `pipeli
 
 ## Capacity recommendations
 
-Summary includes `capacity_recommendations` derived from 90-day throughput and dwell time — surfaces bottlenecks (high dwell + high WIP) and sustainable weekly pace per column.
+Summary includes `capacity_recommendations` derived from 90-day throughput and dwell time - surfaces bottlenecks (high dwell + high WIP) and sustainable weekly pace per column.
 
 ## Export
 
 Progress export downloads:
 
-- **JSON** — full summary including `targets[].allocations` decomposition tree
-- **CSV** — team metrics, targets, allocations, column throughput rows
+- **JSON** - full summary including `targets[].allocations` decomposition tree
+- **CSV** - team metrics, targets, allocations, column throughput rows
 
 ## Frontend files
 
@@ -87,7 +87,7 @@ Progress export downloads:
 
 ## Related ADRs
 
-- [2026-07-08-board-progress-targets.md](../adr/2026-07-08-board-progress-targets.md) — v1 Progress canvas
-- [2026-07-08-progress-decomposition-engine.md](../adr/2026-07-08-progress-decomposition-engine.md) — v2 decomposition
-- [2026-07-14-day-weighted-horizon-decomposition.md](../adr/2026-07-14-day-weighted-horizon-decomposition.md) — day-weighted cascade, cumulative + horizon expected
-- [2026-07-13-pipeline-board-seeds-and-owner-module-catalog.md](../adr/2026-07-13-pipeline-board-seeds-and-owner-module-catalog.md) — gallery/upload underpaint + board seeds
+- [2026-07-08-board-progress-targets.md](../adr/2026-07-08-board-progress-targets.md) - v1 Progress canvas
+- [2026-07-08-progress-decomposition-engine.md](../adr/2026-07-08-progress-decomposition-engine.md) - v2 decomposition
+- [2026-07-14-day-weighted-horizon-decomposition.md](../adr/2026-07-14-day-weighted-horizon-decomposition.md) - day-weighted cascade, cumulative + horizon expected
+- [2026-07-13-pipeline-board-seeds-and-owner-module-catalog.md](../adr/2026-07-13-pipeline-board-seeds-and-owner-module-catalog.md) - gallery/upload underpaint + board seeds

@@ -70,7 +70,7 @@ function FieldForm({ name, type, options, required, onNameChange, onTypeChange, 
       )}
       <label className="flex items-center gap-2 text-xs text-gray-600">
         <input type="checkbox" checked={required} onChange={(e) => onRequiredChange(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
-        Required — users must provide a value for this field
+        Required - users must provide a value for this field
       </label>
     </div>
   );

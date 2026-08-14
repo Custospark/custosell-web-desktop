@@ -6,15 +6,15 @@
 
 ## Context
 
-After PO accept, one seller-owned invoice is shared with the buyer (`buyer_business_id`). Buyers were able to record payments and were pushed to a generic Invoices list — which confused AR (what you issue) with AP (what suppliers bill you).
+After PO accept, one seller-owned invoice is shared with the buyer (`buyer_business_id`). Buyers were able to record payments and were pushed to a generic Invoices list - which confused AR (what you issue) with AP (what suppliers bill you).
 
 ## Decision
 
-1. **Seller-only payment recording** — `InvoiceService::canManagePayments` is owner-only. Buyers may still GET/list/PDF received invoices and view payment history.
+1. **Seller-only payment recording** - `InvoiceService::canManagePayments` is owner-only. Buyers may still GET/list/PDF received invoices and view payment history.
 2. **Nav naming**
-   - **Sales invoices** (`/invoices`) — invoices you issue; create/edit/send/record payment.
-   - **Supplier invoices** (`/invoices/supplier`) — invoices from suppliers; view PDF + receipts only.
-3. **In-place viewing** — Purchase orders and Incoming orders open `ViewInvoiceModal` for Invoice / Receipts. Optional “Open in Sales/Supplier invoices” for the full list. No forced navigation into record-payment for buyers.
+   - **Sales invoices** (`/invoices`) - invoices you issue; create/edit/send/record payment.
+   - **Supplier invoices** (`/invoices/supplier`) - invoices from suppliers; view PDF + receipts only.
+3. **In-place viewing** - Purchase orders and Incoming orders open `ViewInvoiceModal` for Invoice / Receipts. Optional “Open in Sales/Supplier invoices” for the full list. No forced navigation into record-payment for buyers.
 
 ## Failure states
 
@@ -28,4 +28,4 @@ After PO accept, one seller-owned invoice is shared with the buyer (`buyer_busin
 
 - Supersedes buyer-can-pay language in [2026-07-11-po-accept-auto-invoice.md](./2026-07-11-po-accept-auto-invoice.md).
 - Buyers still need sales-module access for invoice APIs (unchanged).
-- **Buyer AP GL** is automated separately — see [2026-07-11-buyer-ap-supplier-invoice-automation.md](./2026-07-11-buyer-ap-supplier-invoice-automation.md).
+- **Buyer AP GL** is automated separately - see [2026-07-11-buyer-ap-supplier-invoice-automation.md](./2026-07-11-buyer-ap-supplier-invoice-automation.md).

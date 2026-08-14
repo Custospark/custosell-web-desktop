@@ -92,7 +92,7 @@ export default function IncomeListPage() {
                       {new Date(item.income_date).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3 text-gray-500 hidden sm:table-cell max-w-[200px] truncate">
-                      {item.description || '—'}
+                      {item.description || '-'}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">

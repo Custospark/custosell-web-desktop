@@ -3,7 +3,7 @@ import { CustosellLoader } from '../../../shared/components/loading/CustosellLoa
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { useProjectBoard } from '../api/useProjectQueries';
 
-/** Legacy route — redirects to full-screen project board workspace. */
+/** Legacy route - redirects to full-screen project board workspace. */
 export default function ProjectBoardPage() {
   const { id } = useParams<{ id: string }>();
   const projectId = Number(id);

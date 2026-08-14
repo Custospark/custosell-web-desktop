@@ -83,7 +83,7 @@ export default function ProjectsPage() {
       header: 'Customer',
       render: (item: Project) => (
         <span className={cn('text-sm', item.customer?.name ? 'text-gray-600' : 'text-gray-400 italic')}>
-          {item.customer?.name ?? '—'}
+          {item.customer?.name ?? '-'}
         </span>
       ),
     },
@@ -127,7 +127,7 @@ export default function ProjectsPage() {
       header: 'Due',
       render: (item: Project) => (
         <span className="text-sm tabular-nums text-gray-600">
-          {item.due_date ? formatShiftDate(item.due_date) : '—'}
+          {item.due_date ? formatShiftDate(item.due_date) : '-'}
         </span>
       ),
     },

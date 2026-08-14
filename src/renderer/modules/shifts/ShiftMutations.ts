@@ -46,7 +46,7 @@ export function useClockIn() {
       if (!shift) return;
       qc.setQueryData(shiftKeys.active(), shift);
       if (shift._pendingSync) {
-        showToast('success', 'Shift started locally — will sync when online');
+        showToast('success', 'Shift started locally - will sync when online');
       } else {
         qc.invalidateQueries({ queryKey: shiftKeys.all });
         showToast('success', 'Shift started');
@@ -88,7 +88,7 @@ export function useUpdateShiftOpeningBalance() {
       if (!shift) return;
       qc.setQueryData(shiftKeys.active(), shift);
       if (shift._pendingSync) {
-        showToast('success', 'Opening balance saved locally — will sync when online');
+        showToast('success', 'Opening balance saved locally - will sync when online');
       } else {
         qc.invalidateQueries({ queryKey: shiftKeys.all });
         showToast('success', 'Opening balance saved');
@@ -144,7 +144,7 @@ export function useClockOut() {
       qc.setQueryData(shiftKeys.active(), null);
       qc.setQueryData<Shift[]>(shiftKeys.list(), (old) => [shift as Shift, ...(old ?? [])]);
       if (shift._pendingSync) {
-        showToast('success', 'Shift ended locally — will sync when online');
+        showToast('success', 'Shift ended locally - will sync when online');
       } else {
         qc.invalidateQueries({ queryKey: shiftKeys.all });
         showToast('success', 'Shift ended');

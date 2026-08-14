@@ -16,7 +16,7 @@ import type {
 } from './PlatformTypes';
 import { assertBusinessNotifyPayload, assertBusinessStatusReason } from './platformBusinessValidation';
 
-/** Platform admin views always refetch — never rely on cached snapshots. */
+/** Platform admin views always refetch - never rely on cached snapshots. */
 export const platformFreshQuery = { staleTime: 0, gcTime: 0, networkMode: 'always' as const };
 
 export function isAxiosNotFound(err: unknown): boolean {

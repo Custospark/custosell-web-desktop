@@ -65,7 +65,7 @@ function resolveIdentity(opts: {
 }
 
 /**
- * Multi-business cart hub — Marketplace dock/sheet; guest place-order opens account modal.
+ * Multi-business cart hub - Marketplace dock/sheet; guest place-order opens account modal.
  * Sheet stops above the bottom strip so Shops / Products stay clickable.
  */
 export function StorefrontCartHub({
@@ -197,7 +197,7 @@ export function StorefrontCartHub({
         onError: (err: unknown) => {
           const status = (err as { response?: { status?: number } })?.response?.status;
           if (status === 429) {
-            showToast('error', 'Too many orders — try again in a minute', 5000, 'top-center');
+            showToast('error', 'Too many orders - try again in a minute', 5000, 'top-center');
             return;
           }
           if (status === 401) {
@@ -240,7 +240,7 @@ export function StorefrontCartHub({
       isOpen={loginOpen}
       placeOrderMode
       title="Create an account to place your order"
-      subtitle="Shop as a customer — no business setup. Your cart stays open."
+      subtitle="Shop as a customer - no business setup. Your cart stays open."
       onClose={() => {
         setLoginOpen(false);
         setPendingSlug(null);
@@ -272,7 +272,7 @@ export function StorefrontCartHub({
           <h2 className="text-base font-semibold text-slate-900">Your carts</h2>
           <p className="mt-0.5 text-xs text-slate-600">
             {bags.length === 0
-              ? 'Add from any business — each keeps its own bag.'
+              ? 'Add from any business - each keeps its own bag.'
               : `${bags.length} business${bags.length === 1 ? '' : 'es'} · submit one bag at a time`}
           </p>
         </div>

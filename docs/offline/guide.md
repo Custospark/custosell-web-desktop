@@ -28,4 +28,4 @@ Related: [architecture.md](./architecture.md) · [testing.md](./testing.md)
 ## UI
 
 - Pending submissions show **Pending sync** where applicable.
-- No separate auth banner — uses standard offline/sync indicators ([../app/shell.md](../app/shell.md)).
+- No separate auth banner - uses standard offline/sync indicators ([../app/shell.md](../app/shell.md)).

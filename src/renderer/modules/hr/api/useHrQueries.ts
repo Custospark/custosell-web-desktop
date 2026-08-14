@@ -1,4 +1,4 @@
-/** Barrel re-exports — prefer domain modules for new imports. */
+/** Barrel re-exports - prefer domain modules for new imports. */
 export * from './useHrOrgQueries';
 export * from './useHrEmployeeQueries';
 export * from './useHrAttendanceQueries';

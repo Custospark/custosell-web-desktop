@@ -14,7 +14,7 @@ import {
   IdCard,
 } from 'lucide-react';
 
-/** Public landing capabilities — product names + outcome-led copy. */
+/** Public landing capabilities - product names + outcome-led copy. */
 export interface LandingModule {
   title: string;
   description: string;
@@ -25,7 +25,7 @@ export interface LandingModule {
 export const LANDING_MODULES: LandingModule[] = [
   {
     title: 'Dashboard',
-    description: 'See if today is a good day in seconds — sales, costs, and what needs attention.',
+    description: 'See if today is a good day in seconds - sales, costs, and what needs attention.',
     icon: LayoutDashboard,
     color: 'from-blue-500 to-blue-600',
   },
@@ -38,7 +38,7 @@ export const LANDING_MODULES: LandingModule[] = [
   {
     title: 'E-commerce Storefront',
     description:
-      'Share a public shop link so customers browse your catalog, save wishlists, place order requests, and track status — stock stays tied to your inventory.',
+      'Share a public shop link so customers browse your catalog, save wishlists, place order requests, and track status - stock stays tied to your inventory.',
     icon: Store,
     color: 'from-fuchsia-500 to-fuchsia-600',
   },

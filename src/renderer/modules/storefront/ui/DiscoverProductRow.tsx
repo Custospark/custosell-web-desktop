@@ -14,7 +14,7 @@ interface DiscoverProductRowProps {
   shopSlug: string;
 }
 
-/** Compact product row — small thumb, no hero image waste. */
+/** Compact product row - small thumb, no hero image waste. */
 export const DiscoverProductRow = memo(function DiscoverProductRow({ product, currency, shopSlug }: DiscoverProductRowProps) {
   return (
     <li className={cn(marketplaceGlassPanel, 'flex items-center gap-3 px-3 py-2.5')}>

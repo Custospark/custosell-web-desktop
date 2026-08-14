@@ -325,7 +325,7 @@ export function useRollForecastBudget() {
     onSuccess: (_data, vars) => {
       void qc.invalidateQueries({ queryKey: forecastingKeys.budget(vars.budgetId) });
       void qc.invalidateQueries({ queryKey: [...forecastingKeys.all, 'snapshots'] });
-      showToast('success', 'Forecast rolled — snapshot saved');
+      showToast('success', 'Forecast rolled - snapshot saved');
     },
     onError: (err: AxiosError<{ message?: string }>) => onError(err, 'Could not roll forecast'),
   });

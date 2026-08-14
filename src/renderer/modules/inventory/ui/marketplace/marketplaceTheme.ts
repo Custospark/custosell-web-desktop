@@ -19,7 +19,7 @@ import truck2Img from '../../../../../../assets/storefont-bg-images/truck_2.jpg'
 import warehouseImg from '../../../../../../assets/storefont-bg-images/warehouse.jpg';
 import wideShopImg from '../../../../../../assets/storefont-bg-images/wide_shop.jpg';
 
-/** Marketplace visual tokens — immersive trade floor inspired by board workspaces. */
+/** Marketplace visual tokens - immersive trade floor inspired by board workspaces. */
 
 export interface MarketplaceHeroSlide {
   /** Bundled local background photo (served from the app, no network needed) */
@@ -118,7 +118,7 @@ export const MARKETPLACE_HERO_SLIDES: readonly MarketplaceHeroSlide[] = [
   },
 ] as const;
 
-/** @deprecated Prefer MARKETPLACE_HERO_SLIDES — kept for older imports. */
+/** @deprecated Prefer MARKETPLACE_HERO_SLIDES - kept for older imports. */
 export const MARKETPLACE_HERO_IMAGE = MARKETPLACE_HERO_SLIDES[0].url;
 
 const HERO_OVERLAY =
@@ -185,7 +185,7 @@ export function useMarketplaceHeroBackground(intervalMs = ROTATE_MS): CSSPropert
   };
 }
 
-/** Static style helper (no rotation) — uses first slide. */
+/** Static style helper (no rotation) - uses first slide. */
 export function marketplaceWorkspaceStyle(): CSSProperties {
   const slide = MARKETPLACE_HERO_SLIDES[0];
   return {

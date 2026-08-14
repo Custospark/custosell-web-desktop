@@ -146,7 +146,7 @@ export default function BoardProgressView({
             <p className={cn('mt-1 max-w-2xl text-sm', PROGRESS_SURFACE.textBody)}>{progressBoardSubtitle(ctx)}</p>
             {displaySummary?.period && (
               <p className={cn('mt-1 text-xs', PROGRESS_SURFACE.textMuted)}>
-                {displaySummary.period.start} — {displaySummary.period.end}
+                {displaySummary.period.start} - {displaySummary.period.end}
               </p>
             )}
           </div>
@@ -258,7 +258,7 @@ export default function BoardProgressView({
             <p className="text-sm font-semibold text-amber-900">Targets need attention</p>
             <ul className="mt-1 space-y-0.5">
               {displaySummary?.pace_alerts?.map((alert) => (
-                <li key={alert.target_id} className="text-xs text-amber-800">{alert.title} — {PACE_STATUS_LABELS[alert.pace_status]} ({alert.progress_percent}%)</li>
+                <li key={alert.target_id} className="text-xs text-amber-800">{alert.title} - {PACE_STATUS_LABELS[alert.pace_status]} ({alert.progress_percent}%)</li>
               ))}
             </ul>
           </div>
@@ -279,7 +279,7 @@ export default function BoardProgressView({
           <ul className="mt-2 space-y-2">
             {displaySummary?.capacity_recommendations?.map((rec) => (
               <li key={rec.stage_id} className={cn('text-xs', PROGRESS_SURFACE.textBody)}>
-                <span className="font-medium">{rec.stage_name}</span> — {rec.message}
+                <span className="font-medium">{rec.stage_name}</span> - {rec.message}
                 {rec.suggested_weekly_capacity > 0 && (
                   <span className="text-blue-700"> · ~{rec.suggested_weekly_capacity}/week sustainable</span>
                 )}

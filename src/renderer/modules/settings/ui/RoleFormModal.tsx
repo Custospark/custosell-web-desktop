@@ -79,7 +79,7 @@ export default function RoleFormModal({ open, onClose, role }: RoleFormModalProp
       isOpen={open}
       onClose={onClose}
       title={isEditing ? 'Edit Role' : 'Add Role'}
-      subtitle="Roles are labels for staff — module access is set per person"
+      subtitle="Roles are labels for staff - module access is set per person"
       size="md"
       bodyClassName="px-4 py-4 sm:px-6"
     >
@@ -100,7 +100,7 @@ export default function RoleFormModal({ open, onClose, role }: RoleFormModalProp
         <div className="flex gap-3 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">
           <Info className="w-4 h-4 shrink-0 mt-0.5" aria-hidden />
           <p>
-            Job title only — what they can open is set under Module access below.
+            Job title only - what they can open is set under Module access below.
           </p>
         </div>
 

@@ -174,7 +174,7 @@ export function FixedAssetFormModal({
         <PipelineModalHero
           icon={isEdit ? Pencil : Building2}
           title={isEdit ? 'Edit asset' : 'New fixed asset'}
-          description="Same source of truth as HR Company Assets — financial fields here, custody visible to both."
+          description="Same source of truth as HR Company Assets - financial fields here, custody visible to both."
           tone="indigo"
         />
 
@@ -274,11 +274,11 @@ export function FixedAssetFormModal({
               >
                 <option value="">
                   {assetAccounts[0]
-                    ? `Default: ${assetAccounts[0].code} — ${assetAccounts[0].name}`
+                    ? `Default: ${assetAccounts[0].code} - ${assetAccounts[0].name}`
                     : 'Select account…'}
                 </option>
                 {assetAccounts.map((a) => (
-                  <option key={a.id} value={a.id}>{a.code} — {a.name}</option>
+                  <option key={a.id} value={a.id}>{a.code} - {a.name}</option>
                 ))}
               </select>
             </PipelineIconField>

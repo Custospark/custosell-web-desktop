@@ -23,7 +23,7 @@ export default function BudgetPicker({ value, onChange, budgets, hint }: BudgetP
             onChange={(e) => onChange(e.target.value)}
             className="w-full border-2 border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
           >
-            <option value="">No budget — general</option>
+            <option value="">No budget - general</option>
             {budgets.map((b) => (
               <option key={b.id} value={b.id}>{b.name}</option>
             ))}

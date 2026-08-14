@@ -53,7 +53,7 @@ export default function SecurityActivityTab() {
     <div className="bg-white rounded-xl border border-gray-200 p-5">
       <div className="mb-4">
         <h3 className="text-sm font-semibold text-gray-900">Account Activity</h3>
-        <p className="text-xs text-gray-500 mt-0.5">Sign-ins, sign-outs, verification, and password changes — newest first.</p>
+        <p className="text-xs text-gray-500 mt-0.5">Sign-ins, sign-outs, verification, and password changes - newest first.</p>
       </div>
 
       {isLoading ? (

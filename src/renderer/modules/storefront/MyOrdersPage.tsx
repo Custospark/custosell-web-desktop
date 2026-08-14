@@ -68,7 +68,7 @@ function statusBadge(status: string) {
   }
 }
 
-/** Orders you placed — fetch list once; filter status/search on device. */
+/** Orders you placed - fetch list once; filter status/search on device. */
 export default function MyOrdersPage() {
   const navigate = useNavigate();
   const { setHeader } = useDiscoverShell();
@@ -129,7 +129,7 @@ export default function MyOrdersPage() {
   useEffect(() => {
     setHeader({
       title: 'My Orders',
-      subtitle: 'Orders you placed — each business fulfills its own',
+      subtitle: 'Orders you placed - each business fulfills its own',
       actions: (
         <Button
           variant="secondary"
@@ -191,7 +191,7 @@ export default function MyOrdersPage() {
         </div>
 
         {isLoading ? (
-          <CustosellLoader message="Loading your orders — fetching orders you placed across businesses." />
+          <CustosellLoader message="Loading your orders - fetching orders you placed across businesses." />
         ) : isError ? (
           <p className="py-8 text-center text-sm text-red-600">Could not load your orders.</p>
         ) : filtered.length === 0 ? (
@@ -201,7 +201,7 @@ export default function MyOrdersPage() {
             description={
               allOrders.length === 0
                 ? 'Browse businesses, open a shop, and place an order request.'
-                : 'Try another status or search — filtering is instant on this device.'
+                : 'Try another status or search - filtering is instant on this device.'
             }
             actionLabel="Browse businesses"
             onAction={() => navigate(`${ROUTES.DISCOVER}?focus=shops`)}
@@ -260,7 +260,7 @@ export default function MyOrdersPage() {
                   header: 'Date',
                   render: (o: MyStorefrontOrder) => (
                     <span className="text-sm tabular-nums text-gray-500">
-                      {o.created_at ? new Date(o.created_at).toLocaleDateString() : '—'}
+                      {o.created_at ? new Date(o.created_at).toLocaleDateString() : '-'}
                     </span>
                   ),
                 },

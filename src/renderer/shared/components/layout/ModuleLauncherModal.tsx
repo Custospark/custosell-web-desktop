@@ -192,7 +192,7 @@ export default function ModuleLauncherModal({ open, onClose }: ModuleLauncherMod
 
   const title = 'Go anywhere in Custosell';
   const subtitle = isCompletelyOffline
-    ? 'Some areas need a connection — greyed tiles open when you are online'
+    ? 'Some areas need a connection - greyed tiles open when you are online'
     : 'Open any page you can use';
   const searchPlaceholder = 'Search anything…';
   const countLabel = `${totalCount} page${totalCount === 1 ? '' : 's'}${query.trim() ? ' found' : ''}`;

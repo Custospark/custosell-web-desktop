@@ -21,7 +21,7 @@ export function filterBoardsForWorkspace(
     : boards.filter(boardBelongsToPipelineWorkspace);
 }
 
-/** Project boards and personal estimates boards use task/card terminology — not sales leads. */
+/** Project boards and personal estimates boards use task/card terminology - not sales leads. */
 export function boardUsesTaskTerminology(
   board: Pick<PipelineBoard, 'project_id' | 'workspace'>,
 ): boolean {

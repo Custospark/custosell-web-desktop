@@ -3,7 +3,7 @@ import { countryCodes } from '../../../shared/utils/countryCodes';
 
 /**
  * Authoritative storefront location / currency reference data for the filter
- * UI — East Africa first, then the rest. Pure reference data mirrors the
+ * UI - East Africa first, then the rest. Pure reference data mirrors the
  * Backend's config/storefront-{countries,cities,currencies}.php so the filter
  * bar always shows a complete option set even when few shops have set details.
  *
@@ -12,14 +12,14 @@ import { countryCodes } from '../../../shared/utils/countryCodes';
  * them in the storefront city filter before any business has set them).
  */
 
-/** Curated storefront city list — East Africa first. */
+/** Curated storefront city list - East Africa first. */
 const STOREFRONT_CITIES: string[] = [
   // East Africa
   'Kampala', 'Wakiso', 'Mukono', 'Entebbe', 'Kira', 'Nansana', 'Gulu', 'Lira',
   'Arua', 'Jinja', 'Mbale', 'Soroti', 'Mbarara', 'Fort Portal', 'Masaka',
   'Kabale', 'Hoima', 'Tororo', 'Busia', 'Iganga', 'Kasese', 'Mityana',
   'Ntungamo', 'Rukungiri', 'Kitgum', 'Kotido', 'Moroto', 'Nebbi', 'Pader',
-  // Uganda — full district/town coverage
+  // Uganda - full district/town coverage
   'Abim', 'Adjumani', 'Agago', 'Alebtong', 'Amolatar', 'Amudat', 'Amuria',
   'Amuru', 'Apac', 'Budaka', 'Bududa', 'Bugiri', 'Bugweri', 'Buhweju',
   'Buikwe', 'Bukedea', 'Bukomansimbi', 'Bukwo', 'Bulambuli', 'Buliisa',

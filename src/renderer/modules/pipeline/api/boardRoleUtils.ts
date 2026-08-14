@@ -1,6 +1,6 @@
 export type BoardMemberRole = 'viewer' | 'contributor' | 'manager';
 
-/** Legacy API value `editor` — no longer stored; treat as viewer for permissions. */
+/** Legacy API value `editor` - no longer stored; treat as viewer for permissions. */
 export function normalizeBoardMemberRole(role: string | undefined | null): BoardMemberRole {
   if (role === 'contributor' || role === 'manager') return role;
   if (role === 'editor') return 'contributor';

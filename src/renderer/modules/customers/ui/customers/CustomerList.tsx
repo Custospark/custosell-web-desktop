@@ -21,7 +21,7 @@ import { Link } from 'react-router-dom';
 import { ROUTES } from '../../../../app/routes/constants/shared.paths';
 
 function formatDate(dateStr: string | null): string {
-  if (!dateStr) return '—';
+  if (!dateStr) return '-';
   const d = new Date(dateStr);
   return d.toLocaleDateString('en-UG', { year: 'numeric', month: 'short', day: 'numeric' });
 }
@@ -107,8 +107,8 @@ export default function CustomerList() {
                 {item._pendingSync && <Badge variant="warning">Pending sync</Badge>}
               </div>
             )},
-            { key: 'phone', header: 'Phone', render: (item) => displayCustomerPhone(item.phone) ?? <span className="text-gray-400">—</span> },
-            { key: 'email', header: 'Email', render: (item) => item.email || <span className="text-gray-400">—</span> },
+            { key: 'phone', header: 'Phone', render: (item) => displayCustomerPhone(item.phone) ?? <span className="text-gray-400">-</span> },
+            { key: 'email', header: 'Email', render: (item) => item.email || <span className="text-gray-400">-</span> },
             { key: 'total_purchases', header: 'Total Purchases', render: (item) => formatCurrency(item.total_purchases) },
             { key: 'last_purchase_at', header: 'Last Purchase', render: (item) => formatDate(item.last_purchase_at) },
             { key: 'actions', header: 'Actions', align: 'center', render: (item) => (

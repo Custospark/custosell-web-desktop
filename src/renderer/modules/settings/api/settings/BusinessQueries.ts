@@ -116,7 +116,7 @@ export function useBusiness() {
     if (!query.data) return;
     const info = businessToAuthInfo(query.data);
     const existing = store.getState().auth.user?.business;
-    // Business endpoint subscription is never the source of truth — preserve /auth/me data
+    // Business endpoint subscription is never the source of truth - preserve /auth/me data
     info.subscription = existing?.subscription ?? info.subscription;
     dispatch(setBusiness(info));
   }, [query.data, dispatch]);
@@ -332,7 +332,7 @@ export function useUpdateBusiness() {
 
       dispatch(setBusiness(businessToAuthInfo(business)));
       qc.setQueryData(businessKeys.mine(), business);
-      showToast('success', business._pendingSync ? 'Business settings saved — will sync when online' : 'Business settings updated');
+      showToast('success', business._pendingSync ? 'Business settings saved - will sync when online' : 'Business settings updated');
     },
     onError: (e) => {
       showToast('error', sanitizeErrorMessage(e, 'Failed to update business settings'));

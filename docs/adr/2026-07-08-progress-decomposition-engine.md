@@ -30,9 +30,9 @@ Adopt a **hybrid decomposition model**:
 
 ### Services
 
-- `PipelineColumnMetricsService` — per-stage count, throughput, dwell, overdue; capacity recommendations
-- `PipelineGoalDecompositionService` — preview, persist allocations, expected-to-date
-- `PipelineBoardProgressService` — summary/query/my progress; integrates column metrics and decomposition
+- `PipelineColumnMetricsService` - per-stage count, throughput, dwell, overdue; capacity recommendations
+- `PipelineGoalDecompositionService` - preview, persist allocations, expected-to-date
+- `PipelineBoardProgressService` - summary/query/my progress; integrates column metrics and decomposition
 
 ### API
 

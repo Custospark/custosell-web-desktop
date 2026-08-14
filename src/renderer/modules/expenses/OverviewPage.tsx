@@ -215,7 +215,7 @@ export default function OverviewPage() {
           label: 'Largest Category',
           value: d.expenses_by_category.length
             ? formatCurrency(Math.max(...d.expenses_by_category.map((c) => c.total)))
-            : '—',
+            : '-',
           sub: d.expenses_by_category.length
             ? d.expenses_by_category.reduce((a, b) => (b.total > a.total ? b : a), d.expenses_by_category[0]).category_name
             : 'No categories yet',

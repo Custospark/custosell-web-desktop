@@ -25,7 +25,7 @@ interface InvoiceFromSaleModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  /** Completed sale to bill — combines invoice via sale_id so send won't double-post revenue. */
+  /** Completed sale to bill - combines invoice via sale_id so send won't double-post revenue. */
   linkedSale?: Sale | null;
   /** When set, opens the existing linked invoice instead of the create-draft flow. */
   existingInvoice?: Invoice | null;
@@ -305,7 +305,7 @@ export default function InvoiceFromSaleModal({
                   )}
                 </>
               ) : (
-                'No payment recorded — customer pays when invoice is settled'
+                'No payment recorded - customer pays when invoice is settled'
               )}
             </span>
           </div>

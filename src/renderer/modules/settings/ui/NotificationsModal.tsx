@@ -10,7 +10,7 @@ interface NotificationsModalProps {
 }
 
 /**
- * Buyer notifications settings as a standard modal — mirrors ProfileModal.
+ * Buyer notifications settings as a standard modal - mirrors ProfileModal.
  * Lets an online-shopping account control the order-status sound on this device.
  */
 export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps) {

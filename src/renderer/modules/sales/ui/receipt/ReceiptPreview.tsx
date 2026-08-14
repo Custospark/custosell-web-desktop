@@ -16,7 +16,7 @@ interface ReceiptPreviewProps {
   onNewSale: () => void;
 }
 
-/** Legacy cart receipt preview — same action layout as Sale completed. */
+/** Legacy cart receipt preview - same action layout as Sale completed. */
 export default function ReceiptPreview({ receiptNumber, items, total, paymentMethod, onNewSale }: ReceiptPreviewProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
   const authUser = useAppSelector((s) => s.auth.user);

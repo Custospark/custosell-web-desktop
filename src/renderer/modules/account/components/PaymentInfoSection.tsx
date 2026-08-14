@@ -66,7 +66,7 @@ export function PaymentInfoSection() {
             <h2 className="text-lg font-semibold text-gray-900">Payment Information</h2>
           </div>
           <p className="text-sm text-gray-500 mt-1">
-            Where your referral rewards are paid — mobile money or bank transfer to any bank worldwide.
+            Where your referral rewards are paid - mobile money or bank transfer to any bank worldwide.
           </p>
         </div>
         {hasSavedData && !editing && (

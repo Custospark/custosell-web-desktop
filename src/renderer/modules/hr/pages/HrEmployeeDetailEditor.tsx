@@ -73,7 +73,7 @@ export function HrEmployeeDetailEditor({ employee }: { employee: HrEmployee }) {
 
   async function handleSave(e: FormEvent) {
     e.preventDefault();
-    // Email and password are immutable from HR edit — never send email on update.
+    // Email and password are immutable from HR edit - never send email on update.
     const { email: _omitEmail, ...profile } = form;
     void _omitEmail;
     await updateEmployee.mutateAsync({
@@ -101,7 +101,7 @@ export function HrEmployeeDetailEditor({ employee }: { employee: HrEmployee }) {
         await confirm({
           title: 'Also detach from organization?',
           message:
-            'Detach their login from this business too? Their account stays — they just lose access here. Choose Keep login to delete the HR profile only (they stay on the organization).',
+            'Detach their login from this business too? Their account stays - they just lose access here. Choose Keep login to delete the HR profile only (they stay on the organization).',
           confirmText: 'Detach from organization',
           cancelText: 'Keep login',
           variant: 'warning',
@@ -122,7 +122,7 @@ export function HrEmployeeDetailEditor({ employee }: { employee: HrEmployee }) {
       <HrPageHeader
         icon={UserCircle}
         title={employeeDisplayName(employee)}
-        description={`Employee #${employee.employee_number} — update their profile anytime; changes apply across leave, attendance, and pay.`}
+        description={`Employee #${employee.employee_number} - update their profile anytime; changes apply across leave, attendance, and pay.`}
         actions={
           <div className="flex items-center gap-2">
             <EmployeeStatusBadge status={employee.status} />
@@ -138,7 +138,7 @@ export function HrEmployeeDetailEditor({ employee }: { employee: HrEmployee }) {
         <div className="relative overflow-hidden rounded-2xl border border-white/55 bg-gradient-to-br from-violet-50/90 via-white/90 to-blue-50/80 p-4 shadow-md backdrop-blur-md sm:p-5">
           <div className="mb-4 border-b border-white/50 pb-3">
             <h2 className="text-sm font-semibold text-slate-900">Work performance</h2>
-            <p className="mt-0.5 text-xs text-slate-600">Goals and delivery from Pipeline cards/leads and Project tasks — Progress-style pulse.</p>
+            <p className="mt-0.5 text-xs text-slate-600">Goals and delivery from Pipeline cards/leads and Project tasks - Progress-style pulse.</p>
           </div>
           <HrEmployeePerformanceCard employeeId={employee.id} isFullHr={isFullHr} />
         </div>
@@ -146,7 +146,7 @@ export function HrEmployeeDetailEditor({ employee }: { employee: HrEmployee }) {
         <div className="rounded-2xl border border-white/55 bg-white/85 p-4 shadow-sm backdrop-blur-md sm:p-5">
           <h2 className="text-sm font-semibold text-slate-900">Work performance</h2>
           <p className="mt-1 text-sm text-slate-600">
-            No staff login linked yet — assignees on boards and project tasks use the app account, so link one to unlock evaluation.
+            No staff login linked yet - assignees on boards and project tasks use the app account, so link one to unlock evaluation.
           </p>
         </div>
       )}
@@ -154,7 +154,7 @@ export function HrEmployeeDetailEditor({ employee }: { employee: HrEmployee }) {
       <HrEmployeeAssetsPanel employeeId={employee.id} />
 
       <form onSubmit={(e) => void handleSave(e)} className="space-y-4">
-        <HrFormSection title="Identity" icon={User} description="How they appear across HR — name, number, and status.">
+        <HrFormSection title="Identity" icon={User} description="How they appear across HR - name, number, and status.">
           <div className="grid gap-4 sm:grid-cols-2">
             <HrIconField label="First name" icon={User} required>
               <input required value={form.first_name ?? ''} onChange={(e) => setForm((f) => ({ ...f, first_name: e.target.value }))} className={hrInputClass} />
@@ -179,20 +179,20 @@ export function HrEmployeeDetailEditor({ employee }: { employee: HrEmployee }) {
         <HrFormSection
           title="Contact"
           icon={Mail}
-          description="Phone can be updated here. Email and password cannot — set them when creating a login, or detach/reattach to change access."
+          description="Phone can be updated here. Email and password cannot - set them when creating a login, or detach/reattach to change access."
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <HrIconField
               label="Email"
               icon={Mail}
-              hint={lockedEmail ? 'Locked — not editable from HR.' : 'No email on file. Add a login to set one.'}
+              hint={lockedEmail ? 'Locked - not editable from HR.' : 'No email on file. Add a login to set one.'}
             >
               <input
                 type="email"
                 readOnly
                 disabled
                 value={lockedEmail}
-                placeholder="—"
+                placeholder="-"
                 className={`${hrInputClass} cursor-not-allowed bg-slate-50 text-slate-600`}
               />
             </HrIconField>
@@ -253,7 +253,7 @@ export function HrEmployeeDetailEditor({ employee }: { employee: HrEmployee }) {
             </HrIconField>
           </div>
           <HrIconField label="Notes" icon={MessageSquare}>
-            <textarea rows={3} value={form.notes ?? ''} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder="Internal notes — not shown on payslips" className={hrInputClass} />
+            <textarea rows={3} value={form.notes ?? ''} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder="Internal notes - not shown on payslips" className={hrInputClass} />
           </HrIconField>
         </HrFormSection>
 

@@ -185,7 +185,7 @@ def main():
     if all(checks):
         print("  ACCURACY VERIFIED: statements reconcile with trial balance.")
         return 0
-    print("  MISMATCH DETECTED — see lines above.")
+    print("  MISMATCH DETECTED - see lines above.")
     return 1
 
 

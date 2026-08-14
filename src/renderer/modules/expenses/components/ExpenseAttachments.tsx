@@ -116,7 +116,7 @@ const ExpenseAttachments = forwardRef<ExpenseAttachmentsHandle, ExpenseAttachmen
     return (
       <div>
         <div>
-          <p className="text-xs text-gray-400 mb-3">Upload receipts or invoices — or add a reference link.</p>
+          <p className="text-xs text-gray-400 mb-3">Upload receipts or invoices - or add a reference link.</p>
           {expenseId !== null && <AttachmentList expenseId={expenseId} attachments={attachments} />}
         </div>
         <div className="flex items-center gap-3 mt-3">

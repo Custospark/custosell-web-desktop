@@ -17,7 +17,7 @@ export default function CustomerPurchaseModal({ open, onClose, customerId, custo
   const { data: purchases, isLoading, error } = useCustomerPurchases(customerId);
 
   return (
-    <Modal isOpen={open} onClose={onClose} title={`Purchase History — ${customerName}`} size="lg">
+    <Modal isOpen={open} onClose={onClose} title={`Purchase History - ${customerName}`} size="lg">
       {isLoading ? (
         <LoadingSkeleton variant="table" />
       ) : error ? (

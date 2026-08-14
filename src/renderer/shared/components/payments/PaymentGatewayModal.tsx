@@ -15,7 +15,7 @@ interface PaymentGatewayModalProps {
 
 /**
  * In-app payment gateway overlay for Electron. The PesaPal page is embedded with
- * Electron's <webview> and rendered ABOVE the normal "Waiting for Payment" modal —
+ * Electron's <webview> and rendered ABOVE the normal "Waiting for Payment" modal -
  * exactly like the separate browser popup on web. Closing it (X / Cancel / click
  * outside) only dismisses this overlay; the Waiting-for-Payment modal remains so
  * the user can Verify manually, then Continue once paid.
@@ -84,7 +84,7 @@ export default function PaymentGatewayModal({ url, onClose }: PaymentGatewayModa
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-slate-50">
                 <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
                 <p className="text-base font-semibold text-slate-800">Connecting to secure payment…</p>
-                <p className="text-sm text-slate-500">Complete the payment, then come back — we'll confirm automatically.</p>
+                <p className="text-sm text-slate-500">Complete the payment, then come back - we'll confirm automatically.</p>
               </div>
             )}
 

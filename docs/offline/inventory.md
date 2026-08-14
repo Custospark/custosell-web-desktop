@@ -48,7 +48,7 @@ Logout clears React Query but **keeps** IDB snapshots, so offline re-login still
 
 ## Stock ledger
 
-- `offline/inventory/stockLedger.ts` — local quantity overrides per product
+- `offline/inventory/stockLedger.ts` - local quantity overrides per product
 - Seeded from product catalog snapshot when RQ cache empty (`useSeedStockLedger`)
 - Sale deductions via `completeOfflineSale` batch adjust
 - Manual adjustments offline via `completeOfflineStockAdjustment` → pending row in sync pipeline tier 4
@@ -91,11 +91,11 @@ Editing a pending or failed product create does not duplicate local rows or queu
 2. Log out.
 3. Go offline (DevTools → Network → Offline).
 4. Sign in with the same device credentials.
-5. Open POS or Products — catalog should load from IndexedDB snapshot.
+5. Open POS or Products - catalog should load from IndexedDB snapshot.
 
 ## Residual limitations
 
 - Failed-sync correction scoped to queued **creates** for products; updates/deletes use standard queue behavior.
 - Low-stock and stock-movement endpoints are **not** snapshotted; they require network.
 - Platform admin queries are never persisted.
-- **B2B supply chain** (marketplace, purchase orders, incoming orders, supply listing/profile) is **online-only** — no IndexedDB or mutation-queue path. See [modules/inventory-supply-chain.md](../modules/inventory-supply-chain.md).
+- **B2B supply chain** (marketplace, purchase orders, incoming orders, supply listing/profile) is **online-only** - no IndexedDB or mutation-queue path. See [modules/inventory-supply-chain.md](../modules/inventory-supply-chain.md).

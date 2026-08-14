@@ -7,7 +7,7 @@
 
 HR and owners need a precise answer to: can we clear salaries and statutory obligations this month, next month, and for N months ahead? They also need a hire what-if: if we add someone at salary X, how long can cash keep up?
 
-Historical Cash Flow Statement and liquidity ratios alone cannot answer that — they do not project payroll burn or compare need vs cash.
+Historical Cash Flow Statement and liquidity ratios alone cannot answer that - they do not project payroll burn or compare need vs cash.
 
 ## Decision
 
@@ -45,13 +45,13 @@ Ephemeral compensation → same PAYE/NSSF engine → incremental burn applied fr
 
 ### Companion accounting fixes
 
-Liquidity current liabilities and Cash Flow Statement working-capital changes now include **2110–2112** so ratios/CFS stay consistent with payroll posts.
+Liquidity current liabilities and Cash Flow Statement working-capital changes now include **2110-2112** so ratios/CFS stay consistent with payroll posts.
 
 ## Consequences
 
 - UI: HR → Reports → “Payroll cash runway” (loads on mount).
 - Gate: `hr_full` only (same as statutory reports).
-- Not a full cash forecast ERP — refine later with AR collection assumptions if needed.
+- Not a full cash forecast ERP - refine later with AR collection assumptions if needed.
 - Requires an accounting period; otherwise 422.
 
 ## Related

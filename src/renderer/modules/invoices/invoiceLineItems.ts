@@ -11,7 +11,7 @@ export interface InvoiceLineItem {
   unit?: string | null;
   tax_percentage?: string | null;
   tax_class?: string | null;
-  /** Charged price tier for this line — retained from the sale/cart so invoices show (RP)/(WSP). */
+  /** Charged price tier for this line - retained from the sale/cart so invoices show (RP)/(WSP). */
   priceTier?: 'retail' | 'wholesale';
 }
 

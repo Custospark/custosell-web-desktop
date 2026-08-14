@@ -12,10 +12,10 @@ The `hr` module previously granted the same API and UI surface to every user wit
 
 ## Decision
 
-1. **Addon slug `hr_full`** — assignable alongside base `hr`. Normalized like `estimates_full` (implies base `hr`; owner must hold `hr_full` to grant it to staff).
-2. **Full workspace requires `hr_full` for everyone** — including business owners. Same rule as `estimates_full`: sidebar, route middleware, and `hr.full` APIs key off the stored slug, not ownership. New businesses seed `hr_full` with the full owner module set. Backfill migration for existing owners who already have `hr`.
-3. **Backend** — `module:hr` on the HR route group; admin routes wrapped with `hr.full` (`hasFullHrWorkspace` only). Limited users may clock/request leave only for their linked `HrEmployee`; mismatch or missing link → 403.
-4. **Frontend** — `HrAccessMiddleware` limits limited users to `/hr/attendance`, `/hr/leave`, `/hr/talent`. Sidebar shows only those three items when `hr` is present without `hr_full`. Staff/owner module forms expose a nested “Full HR & Payroll workspace” checkbox (default off for new staff grants). Saving module access refreshes auth user so the sidebar updates immediately.
+1. **Addon slug `hr_full`** - assignable alongside base `hr`. Normalized like `estimates_full` (implies base `hr`; owner must hold `hr_full` to grant it to staff).
+2. **Full workspace requires `hr_full` for everyone** - including business owners. Same rule as `estimates_full`: sidebar, route middleware, and `hr.full` APIs key off the stored slug, not ownership. New businesses seed `hr_full` with the full owner module set. Backfill migration for existing owners who already have `hr`.
+3. **Backend** - `module:hr` on the HR route group; admin routes wrapped with `hr.full` (`hasFullHrWorkspace` only). Limited users may clock/request leave only for their linked `HrEmployee`; mismatch or missing link → 403.
+4. **Frontend** - `HrAccessMiddleware` limits limited users to `/hr/attendance`, `/hr/leave`, `/hr/talent`. Sidebar shows only those three items when `hr` is present without `hr_full`. Staff/owner module forms expose a nested “Full HR & Payroll workspace” checkbox (default off for new staff grants). Saving module access refreshes auth user so the sidebar updates immediately.
 
 ## Consequences
 

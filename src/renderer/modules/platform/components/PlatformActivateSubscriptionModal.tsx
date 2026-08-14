@@ -82,7 +82,7 @@ export function PlatformActivateSubscriptionModal({
                 <option value="">Select a plan...</option>
                 {activePlans.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name} — ${Number(p.price_monthly_usd ?? 0).toFixed(2)}/mo
+                    {p.name} - ${Number(p.price_monthly_usd ?? 0).toFixed(2)}/mo
                   </option>
                 ))}
               </select>

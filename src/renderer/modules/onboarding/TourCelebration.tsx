@@ -21,7 +21,7 @@ interface Petal {
 interface TourCelebrationProps {
   open: boolean;
   onDone: () => void;
-  /** completed | skipped — copy only */
+  /** completed | skipped - copy only */
   reason?: 'completed' | 'skipped';
 }
 
@@ -46,7 +46,7 @@ export function TourCelebration({ open, onDone, reason = 'completed' }: TourCele
     onDoneRef.current = onDone;
   }, [onDone]);
 
-  // One 30s window per open — do not restart when parent re-renders with a new onDone
+  // One 30s window per open - do not restart when parent re-renders with a new onDone
   useEffect(() => {
     if (!open) return;
 
@@ -69,7 +69,7 @@ export function TourCelebration({ open, onDone, reason = 'completed' }: TourCele
 
   const title = 'Welcome to Custosell';
   const body = reason === 'skipped'
-    ? 'No worries for skipping the tour. Your workspace is ready — explore at your pace, and replay anytime from Guide → Tour.'
+    ? 'No worries for skipping the tour. Your workspace is ready - explore at your pace, and replay anytime from Guide → Tour.'
     : 'You’ve finished the tour. Explore the modules you have access to, and replay anytime from Guide → Tour.';
 
   return createPortal(

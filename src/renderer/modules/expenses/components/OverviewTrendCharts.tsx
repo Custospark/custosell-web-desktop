@@ -82,7 +82,7 @@ interface IncomeExpenseLineProps {
   data: OverviewData['monthly_trends'];
 }
 
-/** Line graph of income alongside expense — personal accounts only. */
+/** Line graph of income alongside expense - personal accounts only. */
 export function IncomeExpenseTrend({ data }: IncomeExpenseLineProps) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-5">

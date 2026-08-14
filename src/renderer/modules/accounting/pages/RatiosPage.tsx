@@ -96,8 +96,8 @@ export default function RatiosPage() {
     const changeStr = change !== 0 ? ` ${direction} ${Math.abs(change).toFixed(1)}` : ' → no change';
     const health = getHealth(value, def);
     if (health === 'healthy') return `${info.fullName} is healthy.${changeStr}. ${def.higherIsBetter ? 'Good trend maintained.' : 'Low leverage is safe.'}`;
-    if (health === 'warning') return `${info.fullName} needs attention.${changeStr}. ${def.higherIsBetter ? 'Below the ideal threshold — consider corrective action.' : 'Leverage is increasing — monitor closely.'}`;
-    return `${info.fullName} is in the danger zone.${changeStr}. ${def.higherIsBetter ? 'Immediate action recommended to improve this metric.' : 'High leverage — consider reducing debt urgently.'}`;
+    if (health === 'warning') return `${info.fullName} needs attention.${changeStr}. ${def.higherIsBetter ? 'Below the ideal threshold - consider corrective action.' : 'Leverage is increasing - monitor closely.'}`;
+    return `${info.fullName} is in the danger zone.${changeStr}. ${def.higherIsBetter ? 'Immediate action recommended to improve this metric.' : 'High leverage - consider reducing debt urgently.'}`;
   }
 
   const handleRatioClick = useCallback((key: string) => {

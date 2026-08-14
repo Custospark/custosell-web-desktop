@@ -21,7 +21,7 @@ export interface ReceiptBusinessSnapshot {
 
 interface ReceiptBusinessHeaderProps {
   subtitle: string;
-  /** When set (e.g. supplier invoice viewed by buyer), letterhead uses the issuer — not the logged-in business. */
+  /** When set (e.g. supplier invoice viewed by buyer), letterhead uses the issuer - not the logged-in business. */
   business?: ReceiptBusinessSnapshot | null;
 }
 

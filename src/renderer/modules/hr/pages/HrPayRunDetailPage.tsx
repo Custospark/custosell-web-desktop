@@ -44,7 +44,7 @@ import { formatShiftDateRange } from '../../../shared/utils/formatDateTime';
 import { cn } from '../../../shared/utils/cn';
 
 function formatMoney(n: number | undefined | null) {
-  if (n == null) return '—';
+  if (n == null) return '-';
   return new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n);
 }
 
@@ -96,7 +96,7 @@ export default function HrPayRunDetailPage() {
         <Link to={ROUTES.HR.PAYROLL} className="inline-flex items-center gap-1 text-sm text-indigo-600 hover:underline">
           <ArrowLeft className="h-4 w-4" /> Back to payroll
         </Link>
-        <p className="text-sm text-gray-500">We couldn&apos;t find this pay run — it may have been removed.</p>
+        <p className="text-sm text-gray-500">We couldn&apos;t find this pay run - it may have been removed.</p>
       </div>
     );
   }
@@ -153,7 +153,7 @@ export default function HrPayRunDetailPage() {
       title: isRetryPost ? 'Retry accounting post?' : 'Post pay run?',
       message: isRetryPost
         ? 'This run was marked posted without a journal. Retry will create the accrual journal (Dr Salaries / Cr PAYE·NSSF·Salaries payable). Requires an open accounting period.'
-        : 'Posting locks this run and creates an accounting journal (Dr 6101 / Cr 2110–2112). Requires payroll COA accounts and an open period covering the period end date.',
+        : 'Posting locks this run and creates an accounting journal (Dr 6101 / Cr 2110-2112). Requires payroll COA accounts and an open period covering the period end date.',
       confirmText: isRetryPost ? 'Retry post' : 'Post',
       variant: 'warning',
     });
@@ -193,7 +193,7 @@ export default function HrPayRunDetailPage() {
   const description = payRun.posted_journal_entry_id
     ? `Posted to accounting · journal #${payRun.posted_journal_entry_id}`
     : postFailed
-      ? 'Accounting post failed — fix the period/COA issue, then retry Post.'
+      ? 'Accounting post failed - fix the period/COA issue, then retry Post.'
       : 'Review the lines below, then calculate → approve → post when you\'re confident.';
 
   return (
@@ -364,13 +364,13 @@ export default function HrPayRunDetailPage() {
         </HrSectionCard>
       </div>
 
-      <HrSectionCard title="Pay lines" description="Gross, PAYE, NSSF, and net per employee — calculated from assigned compensation.">
+      <HrSectionCard title="Pay lines" description="Gross, PAYE, NSSF, and net per employee - calculated from assigned compensation.">
         {lines.length === 0 ? (
           <HrEmptyState
             className="border-0 bg-transparent py-10 shadow-none backdrop-blur-none"
             icon={<Receipt className="h-6 w-6" />}
             title="No pay lines yet"
-            description="Assign compensation to active employees, then click Calculate — we'll compute PAYE and NSSF for each person."
+            description="Assign compensation to active employees, then click Calculate - we'll compute PAYE and NSSF for each person."
             action={
               canCalculate ? (
                 <Button

@@ -28,7 +28,7 @@ interface StorefrontProductDetailModalProps {
   currency?: string;
 }
 
-/** Product detail — image, description, stock, ratings; Add or open shop. */
+/** Product detail - image, description, stock, ratings; Add or open shop. */
 export function StorefrontProductDetailModal({
   product,
   isOpen,

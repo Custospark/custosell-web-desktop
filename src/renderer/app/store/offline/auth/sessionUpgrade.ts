@@ -111,7 +111,7 @@ export async function ensureServerSession(): Promise<void> {
     setTimeout(() => reject(new Error('Session upgrade timed out')), 5000),
   );
   await Promise.race([upgradeLocalSessionIfOnline(), timeout]);
-  // swallow — if upgrade fails, let the request proceed without it
+  // swallow - if upgrade fails, let the request proceed without it
 }
 
 /** Silently exchange a device local session for a server session when online. */

@@ -15,7 +15,7 @@ import { BusinessSectionCard, inputClass, selectClass, labelClass, iconClass } f
 import { BrandIcon, hasBrandIcon } from '../../storefront/ui/brandIcons';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 
-/** Standard platforms whose brand icons are configured — offered in the add-link select. */
+/** Standard platforms whose brand icons are configured - offered in the add-link select. */
 const STANDARD_PLATFORMS = ['Facebook', 'Instagram', 'WhatsApp', 'Twitter', 'LinkedIn', 'YouTube', 'TikTok'] as const;
 
 const CUSTOM_OPTION = '__custom__';
@@ -108,7 +108,7 @@ export function BusinessSocialSection() {
     <BusinessSectionCard
       icon={AtSign}
       title="Social links"
-      description="Add your social media and web profiles — they appear on your public storefront."
+      description="Add your social media and web profiles - they appear on your public storefront."
     >
       {isCompletelyOffline && (
         <div className="mb-4 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">

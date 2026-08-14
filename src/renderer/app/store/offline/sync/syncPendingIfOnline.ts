@@ -28,7 +28,7 @@ const SKIPPED_OFFLINE: PendingSyncResult = {
   reason: 'offline',
 };
 
-/** Single in-flight coordinator — all callers join the same run (no parallel double-sync). */
+/** Single in-flight coordinator - all callers join the same run (no parallel double-sync). */
 let activeSyncRun: Promise<PendingSyncResult> | null = null;
 
 let debouncedSyncHandle: ReturnType<typeof setTimeout> | null = null;
@@ -66,7 +66,7 @@ export async function syncPendingDataIfOnline(): Promise<PendingSyncResult> {
   return activeSyncRun;
 }
 
-/** Debounced enqueue follow-up — use after persisting offline work while online. */
+/** Debounced enqueue follow-up - use after persisting offline work while online. */
 export function requestSyncWhenOnline(): void {
   if (isOfflineMode()) return;
 

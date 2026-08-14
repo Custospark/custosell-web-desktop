@@ -7,9 +7,9 @@ type ServiceWorkerMessage = { type?: string; url?: string };
 
 /**
  * Listens to messages sent by the service worker:
- * - `NAVIGATE`    — user tapped a system notification while the app was open;
+ * - `NAVIGATE`    - user tapped a system notification while the app was open;
  *                   route to the deep link (e.g. /account/notifications).
- * - `PUSH_RECEIVED` — a push arrived; refresh the bell so the count is current
+ * - `PUSH_RECEIVED` - a push arrived; refresh the bell so the count is current
  *                   without waiting for the 60s poll.
  * Mount once inside the Router.
  */

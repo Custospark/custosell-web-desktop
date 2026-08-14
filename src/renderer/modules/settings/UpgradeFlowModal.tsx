@@ -330,7 +330,7 @@ export default function UpgradeFlowModal({
             <div>
               <p className="text-lg font-bold text-gray-900">Payment Failed</p>
               <p className="text-sm text-gray-500 mt-1">
-                Your payment could not be processed. Your plan has already been upgraded — you may need to complete payment later.
+                Your payment could not be processed. Your plan has already been upgraded - you may need to complete payment later.
               </p>
             </div>
             <Button type="button" onClick={handleDone} className="w-full gap-2">

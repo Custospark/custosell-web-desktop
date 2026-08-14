@@ -51,7 +51,7 @@ export function LoadingSkeleton({
         <div className="max-w-sm space-y-1.5">
           <p className="text-base font-semibold text-slate-900">{message ?? 'Loading…'}</p>
           <p className="text-sm text-slate-600">
-            {detail ?? 'Hang tight — this usually takes just a moment.'}
+            {detail ?? 'Hang tight - this usually takes just a moment.'}
           </p>
         </div>
         <div className="grid w-full max-w-sm grid-cols-3 gap-2.5">

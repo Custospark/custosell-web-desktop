@@ -344,40 +344,40 @@ export function BusinessLocationSection({
             icon={<MapPin className="h-4 w-4 text-blue-600" />}
             className="md:col-span-2"
           >
-            {baseline.address || '—'}
+            {baseline.address || '-'}
           </BusinessViewField>
           <BusinessViewField label="Town/City" icon={<Building className="h-4 w-4 text-blue-600" />}>
-            {baseline.city || '—'}
+            {baseline.city || '-'}
           </BusinessViewField>
           <BusinessViewField label="State / region" icon={<MapPinned className="h-4 w-4 text-blue-600" />}>
-            {baseline.state || '—'}
+            {baseline.state || '-'}
           </BusinessViewField>
           <BusinessViewField label="Postal code" icon={<Hash className="h-4 w-4 text-blue-600" />}>
-            {baseline.postal_code || '—'}
+            {baseline.postal_code || '-'}
           </BusinessViewField>
           <BusinessViewField label="Country" icon={<Globe className="h-4 w-4 text-blue-600" />}>
-            {getCountryLabel(baseline.country) === 'Not set' ? '—' : getCountryLabel(baseline.country)}
+            {getCountryLabel(baseline.country) === 'Not set' ? '-' : getCountryLabel(baseline.country)}
           </BusinessViewField>
           {!isPersonal && (
             <>
               <BusinessViewField label="Tax / VAT ID" icon={<Tag className="h-4 w-4 text-blue-600" />}>
-                {baseline.tax_id || '—'}
+                {baseline.tax_id || '-'}
               </BusinessViewField>
               <BusinessViewField label="Tax regime" icon={<Scale className="h-4 w-4 text-blue-600" />}>
                 {baseline.tax_regime === 'vat_registered' ? 'VAT registered' : 'Not VAT registered'}
               </BusinessViewField>
               <BusinessViewField label="Tax jurisdiction" icon={<Globe className="h-4 w-4 text-blue-600" />}>
                 {getJurisdictionLabel(baseline.jurisdiction) === 'Not set'
-                  ? '—'
+                  ? '-'
                   : getJurisdictionLabel(baseline.jurisdiction)}
               </BusinessViewField>
               <BusinessViewField label="Business category" icon={<Tag className="h-4 w-4 text-blue-600" />}>
-                {businessCategoryLabel || '—'}
+                {businessCategoryLabel || '-'}
               </BusinessViewField>
             </>
           )}
           <BusinessViewField label="Timezone" icon={<Clock className="h-4 w-4 text-blue-600" />}>
-            {baseline.timezone || '—'}
+            {baseline.timezone || '-'}
           </BusinessViewField>
           <BusinessViewField label="Currency" icon={<Coins className="h-4 w-4 text-blue-600" />}>
             {formatCurrencyLabel(baseline.currency)}

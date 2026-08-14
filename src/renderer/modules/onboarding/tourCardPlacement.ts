@@ -102,7 +102,7 @@ export function placeTourCard(spot: SpotRect | null, measuredHeight?: number): C
 
   const candidates: Candidate[] = [];
 
-  // Below spotlight — caret on top edge, pointing up
+  // Below spotlight - caret on top edge, pointing up
   {
     const top = spot.top + spot.height + GAP + CARET;
     const left = clamp(c.x - width / 2, EDGE_PAD, vw - width - EDGE_PAD);
@@ -112,7 +112,7 @@ export function placeTourCard(spot: SpotRect | null, measuredHeight?: number): C
     candidates.push({ side: 'bottom', top, left, score });
   }
 
-  // Above spotlight — caret on bottom edge, pointing down
+  // Above spotlight - caret on bottom edge, pointing down
   {
     const top = spot.top - height - GAP - CARET;
     const left = clamp(c.x - width / 2, EDGE_PAD, vw - width - EDGE_PAD);
@@ -122,7 +122,7 @@ export function placeTourCard(spot: SpotRect | null, measuredHeight?: number): C
     candidates.push({ side: 'top', top, left, score });
   }
 
-  // Right of spotlight — caret on left edge, pointing left
+  // Right of spotlight - caret on left edge, pointing left
   if (!preferVertical || spaceRight > width + GAP) {
     const left = spot.left + spot.width + GAP + CARET;
     const top = clamp(c.y - height / 2, EDGE_PAD, vh - height - EDGE_PAD);
@@ -132,7 +132,7 @@ export function placeTourCard(spot: SpotRect | null, measuredHeight?: number): C
     candidates.push({ side: 'right', top, left, score });
   }
 
-  // Left of spotlight — caret on right edge, pointing right
+  // Left of spotlight - caret on right edge, pointing right
   if (!preferVertical || spaceLeft > width + GAP) {
     const left = spot.left - width - GAP - CARET;
     const top = clamp(c.y - height / 2, EDGE_PAD, vh - height - EDGE_PAD);

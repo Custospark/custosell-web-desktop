@@ -15,11 +15,11 @@ Introduce **Cabinets** as the top-level container for folders and files.
 | Topic | Choice |
 |-------|--------|
 | User-facing name | **Cabinet** |
-| Gallery route | `/documents` — cabinet cards (like Pipeline boards) |
-| Explorer route | `/documents/cabinets/:id` — scoped explorer |
+| Gallery route | `/documents` - cabinet cards (like Pipeline boards) |
+| Explorer route | `/documents/cabinets/:id` - scoped explorer |
 | In-explorer UX | Switch cabinet + New cabinet (Kanban-style picker) |
 | Cabinet ACL | `all_staff` / `owner_only` / `selected_staff` + member roles (no `inherit`) |
-| Folder/file ACL | Unchanged — `inherit` walks folder chain, then **cabinet ACL** |
+| Folder/file ACL | Unchanged - `inherit` walks folder chain, then **cabinet ACL** |
 | Precedence | Module gate → owner override → resource ACL (if not inherit) → folder chain → cabinet |
 | Migration | Auto-create **General** (`all_staff`) per business; assign existing folders/files |
 | Starter canvases | Seeded with remote gallery images + solid `cover_color` fallback |
@@ -33,18 +33,18 @@ Introduce **Cabinets** as the top-level container for folders and files.
 
 - `GET/POST /documents/cabinets`
 - `GET/PATCH/DELETE /documents/cabinets/{id}`
-- `GET /documents/folders/children` — **`cabinet_id` required**
-- `GET /documents`, uploads, links, root folder create — accept `cabinet_id` for root-level writes
-- `GET /documents/folders/tree?cabinet_id=` — optional cabinet filter for move tree
-- `GET /documents/activity?cabinet_id=` — **`cabinet_id` required**; scoped activity feed per cabinet explorer
+- `GET /documents/folders/children` - **`cabinet_id` required**
+- `GET /documents`, uploads, links, root folder create - accept `cabinet_id` for root-level writes
+- `GET /documents/folders/tree?cabinet_id=` - optional cabinet filter for move tree
+- `GET /documents/activity?cabinet_id=` - **`cabinet_id` required**; scoped activity feed per cabinet explorer
 
 New businesses receive a **General** cabinet via `Business::created` → `DocumentCabinetService::ensureGeneralCabinet()`.
 
 ## Frontend
 
-- `CabinetsPage` — gallery + search + create modal
-- `DocumentsCabinetPage` — header switcher + `DocumentsPanel` scoped to `cabinetId`
-- `DocumentExplorerActivity` — activity query keyed by `cabinetId` (not vault-wide)
+- `CabinetsPage` - gallery + search + create modal
+- `DocumentsCabinetPage` - header switcher + `DocumentsPanel` scoped to `cabinetId`
+- `DocumentExplorerActivity` - activity query keyed by `cabinetId` (not vault-wide)
 - All explorer/list/upload/folder mutations pass `cabinet_id` at cabinet root
 
 ## Consequences

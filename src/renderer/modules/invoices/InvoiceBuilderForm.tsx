@@ -35,15 +35,15 @@ interface InvoiceBuilderSeed {
   lineItems: InvoiceLineItem[];
   customerId?: number | null;
   saleId?: number | null;
-  /** Source branch of the linked sale — carries to the invoice so filtering/printing show it. */
+  /** Source branch of the linked sale - carries to the invoice so filtering/printing show it. */
   locationId?: number | null;
   /** When billing a completed sale, reuse sale tax so invoice total matches collections. */
   saleTaxTotal?: number;
-  /** Sale-level discount already applied at checkout — keeps invoice total aligned. */
+  /** Sale-level discount already applied at checkout - keeps invoice total aligned. */
   saleDiscountAmount?: number;
   /** Amount already collected on the linked sale (carries to invoice). */
   saleAmountPaid?: number;
-  /** Net sale total after refunds — for balance messaging. */
+  /** Net sale total after refunds - for balance messaging. */
   saleNetTotal?: number;
   notes?: string;
 }
@@ -284,7 +284,7 @@ export default function InvoiceBuilderForm({
             </h2>
             <p className="text-sm text-gray-500">
               {isEdit
-                ? 'Adjust items, quantities, customer, and dates — then save'
+                ? 'Adjust items, quantities, customer, and dates - then save'
                 : seed
                   ? 'Review cart items, adjust quantities, add products, then create a draft'
                   : 'Search products and add them to the invoice'}
@@ -335,8 +335,8 @@ export default function InvoiceBuilderForm({
                             ? ` · ${formatCurrency(Math.max(0, (seed.saleNetTotal ?? taxBreakdown.total) - (seed.saleAmountPaid ?? 0)))} will remain due`
                             : ' · paid in full on the sale'
                         }).`
-                      : 'Linked to a completed sale with no payment collected yet — balance settles on the invoice.'
-                    : 'No payment is recorded — the customer pays when the invoice is settled.'}
+                      : 'Linked to a completed sale with no payment collected yet - balance settles on the invoice.'
+                    : 'No payment is recorded - the customer pays when the invoice is settled.'}
               </span>
             </div>
 

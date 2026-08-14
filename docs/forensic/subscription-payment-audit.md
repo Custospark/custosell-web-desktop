@@ -49,7 +49,7 @@ REGISTER → subscribe() → TRIAL (if trial_days>0) or PAST_DUE (if no trial)
 
 ## 🔴 CRITICAL GAPS
 
-### C1 — `activateAfterOnboarding` rejects TRIAL status
+### C1 - `activateAfterOnboarding` rejects TRIAL status
 
 **User story:** As a business owner who registers for a plan with trial days, I expect to pay the onboarding fee and have my trial period begin. Instead, the payment succeeds but the subscription never activates because the backend rejects the TRIAL status.
 
@@ -69,7 +69,7 @@ REGISTER → subscribe() → TRIAL (if trial_days>0) or PAST_DUE (if no trial)
 
 ---
 
-### C2 — `trial_used` set too early; users lose trial period
+### C2 - `trial_used` set too early; users lose trial period
 
 **User story:** As a business owner who registers for a 14-day trial plan and pays the onboarding fee on day 5, I expect to have 9 days of trial remaining. Instead, after payment, my subscription goes directly to ACTIVE and I'm billed immediately. I lose my remaining trial days.
 
@@ -90,7 +90,7 @@ REGISTER → subscribe() → TRIAL (if trial_days>0) or PAST_DUE (if no trial)
 
 ---
 
-### C3 — Bypass dev mode calls `activateAfterOnboarding` for ALL payment types
+### C3 - Bypass dev mode calls `activateAfterOnboarding` for ALL payment types
 
 **User story:** As a developer testing in bypass mode, I expect payment processing to correctly distinguish between onboarding fees, renewals, and subscriptions. Instead, ALL bypassed payments call `activateAfterOnboarding`, which fails or incorrectly activates subscriptions regardless of the actual payment type.
 
@@ -111,11 +111,11 @@ REGISTER → subscribe() → TRIAL (if trial_days>0) or PAST_DUE (if no trial)
 
 ## 🟠 HIGH GAPS
 
-### H1 — `autoApprove` doesn't handle `upgrade_proration` payment type
+### H1 - `autoApprove` doesn't handle `upgrade_proration` payment type
 
 **User story:** As a business owner who upgrades my plan and pays the proration amount, I expect the upgrade to be confirmed when the gateway sends the webhook. Instead, the payment is recorded as completed but no subscription plan change occurs because the webhook handler doesn't know what to do with `upgrade_proration`.
 
-**Root cause:** `GatewayService::autoApprove()` (line 246) has a `match` statement that handles `onboarding`, `subscription`, and `renewal` — but falls to `default => null` for `upgrade_proration`. Currently mitigated by the frontend calling the upgrade mutation after payment, but this creates a race condition if the frontend crashes between payment confirmation and mutation.
+**Root cause:** `GatewayService::autoApprove()` (line 246) has a `match` statement that handles `onboarding`, `subscription`, and `renewal` - but falls to `default => null` for `upgrade_proration`. Currently mitigated by the frontend calling the upgrade mutation after payment, but this creates a race condition if the frontend crashes between payment confirmation and mutation.
 
 **Fix:** Store `{ action: 'upgrade', to_plan_id }` in payment metadata during initiation. Handle `upgrade_proration` in `autoApprove` by reading the metadata and performing the plan change.
 
@@ -130,9 +130,9 @@ REGISTER → subscribe() → TRIAL (if trial_days>0) or PAST_DUE (if no trial)
 
 ---
 
-### H2 — Trial transitions to EXPIRED (terminal) instead of PAST_DUE
+### H2 - Trial transitions to EXPIRED (terminal) instead of PAST_DUE
 
-**User story:** As a business owner whose trial period ends without paying, I expect to enter a grace period where I can still pay and activate. Instead, my subscription goes to EXPIRED — a terminal state — forcing me to create an entirely new subscription and losing all my data context.
+**User story:** As a business owner whose trial period ends without paying, I expect to enter a grace period where I can still pay and activate. Instead, my subscription goes to EXPIRED - a terminal state - forcing me to create an entirely new subscription and losing all my data context.
 
 **Root cause:** `processDueTransitions()` (line 339) sets TRIAL to EXPIRED when `trial_ends_at` passes. EXPIRED is treated as terminal. There's no transition path from EXPIRED to any other state.
 
@@ -150,7 +150,7 @@ REGISTER → subscribe() → TRIAL (if trial_days>0) or PAST_DUE (if no trial)
 
 ---
 
-### H3 — `grace_used` guard silently swallowed; subscription never transitions
+### H3 - `grace_used` guard silently swallowed; subscription never transitions
 
 **User story:** As a business owner whose subscription goes past due and is reactivated after payment, I expect that if I miss the NEXT payment, I'll go past due again. Instead, my subscription stays ACTIVE forever because the grace period was already used once and the exception is silently caught.
 
@@ -168,7 +168,7 @@ REGISTER → subscribe() → TRIAL (if trial_days>0) or PAST_DUE (if no trial)
 
 ---
 
-### H4 — Payment-first flow race condition on frontend crash
+### H4 - Payment-first flow race condition on frontend crash
 
 **User story:** As a business owner who clicks "Upgrade", pays through the gateway, and closes the browser tab before the confirmation page loads, I expect my plan to be upgraded. Instead, the payment is collected but my subscription plan never changes because the upgrade mutation was never called.
 
@@ -189,7 +189,7 @@ REGISTER → subscribe() → TRIAL (if trial_days>0) or PAST_DUE (if no trial)
 
 ---
 
-### H5 — No idempotency on payment initiation (double-charge risk)
+### H5 - No idempotency on payment initiation (double-charge risk)
 
 **User story:** As a business owner who double-clicks "Pay Now" due to a slow network, I expect only one payment to be processed. Instead, two payments are initiated and I could be charged twice.
 
@@ -213,7 +213,7 @@ REGISTER → subscribe() → TRIAL (if trial_days>0) or PAST_DUE (if no trial)
 
 ## 🟡 MEDIUM GAPS
 
-### M1 — SubscriptionGuard has no offline fallback
+### M1 - SubscriptionGuard has no offline fallback
 
 **User story:** As a business owner using Custosell offline, I expect to access my business routes when I have a valid subscription. Instead, the SubscriptionGuard shows a permanent loading spinner because the access-check API call fails offline.
 
@@ -231,9 +231,9 @@ REGISTER → subscribe() → TRIAL (if trial_days>0) or PAST_DUE (if no trial)
 
 ---
 
-### M2 — `getByBusiness` double-fetches on every route request
+### M2 - `getByBusiness` double-fetches on every route request
 
-**User story:** As a developer, I expect the subscription lookup for a business to be efficient. Instead, every request that checks subscription access performs TWO database queries — one for the transition check and one for the fresh fetch.
+**User story:** As a developer, I expect the subscription lookup for a business to be efficient. Instead, every request that checks subscription access performs TWO database queries - one for the transition check and one for the fresh fetch.
 
 **Root cause:** `getByBusiness()` calls `processDueTransitions()` which may update the subscription, then calls `findByBusiness()` again to get a fresh copy. The repository `update()` typically returns the fresh model, so the second fetch is redundant.
 
@@ -247,9 +247,9 @@ REGISTER → subscribe() → TRIAL (if trial_days>0) or PAST_DUE (if no trial)
 
 ---
 
-### M3 — No subscription lifecycle notifications
+### M3 - No subscription lifecycle notifications
 
-**User story:** As a business owner, I expect to receive email or SMS notifications when my trial is ending soon, when my payment is due, or when my subscription is suspended. Instead, there are no notifications — I only find out when I'm locked out.
+**User story:** As a business owner, I expect to receive email or SMS notifications when my trial is ending soon, when my payment is due, or when my subscription is suspended. Instead, there are no notifications - I only find out when I'm locked out.
 
 **Root cause:** No notification classes exist for subscription events.
 
@@ -262,7 +262,7 @@ REGISTER → subscribe() → TRIAL (if trial_days>0) or PAST_DUE (if no trial)
 
 ---
 
-### M4 — Upgrade payment metadata missing `to_plan_id`
+### M4 - Upgrade payment metadata missing `to_plan_id`
 
 **User story:** As a business owner upgrading my plan and paying the proration amount, I expect the upgrade to be fully traceable end-to-end. Instead, the payment record doesn't store which plan I was upgrading to, making it impossible to reconcile upgrades from the payment record alone.
 
@@ -277,9 +277,9 @@ REGISTER → subscribe() → TRIAL (if trial_days>0) or PAST_DUE (if no trial)
 
 ---
 
-### M5 — No cancel subscription frontend UI
+### M5 - No cancel subscription frontend UI
 
-**User story:** As a business owner, I expect to cancel my subscription from the settings page. Instead, there is no cancel button — I would need to call the API directly.
+**User story:** As a business owner, I expect to cancel my subscription from the settings page. Instead, there is no cancel button - I would need to call the API directly.
 
 **Root cause:** The subscription settings page has no cancellation UI. The backend endpoint (`POST /subscriptions/{id}/cancel`) exists but is not exposed on the frontend.
 
@@ -292,7 +292,7 @@ REGISTER → subscribe() → TRIAL (if trial_days>0) or PAST_DUE (if no trial)
 
 ---
 
-### M6 — Stale pending payments have no timeout
+### M6 - Stale pending payments have no timeout
 
 **User story:** As a business owner who initiates a payment but never completes it, I expect the pending payment to eventually expire. Instead, it stays PENDING forever with no cleanup.
 
@@ -306,7 +306,7 @@ REGISTER → subscribe() → TRIAL (if trial_days>0) or PAST_DUE (if no trial)
 
 ---
 
-### M7 — `PaymentService::complete()` doesn't trigger subscription changes
+### M7 - `PaymentService::complete()` doesn't trigger subscription changes
 
 **User story:** As a developer calling `PaymentService::complete()` to mark a payment as done, I expect the subscription to be updated if needed. Instead, the subscription state remains unchanged unless `GatewayService::autoApprove()` is used.
 
@@ -321,23 +321,23 @@ REGISTER → subscribe() → TRIAL (if trial_days>0) or PAST_DUE (if no trial)
 
 ## ⚪ LOW GAPS
 
-### L1 — Plan price changes don't propagate to existing subscriptions
+### L1 - Plan price changes don't propagate to existing subscriptions
 
 If an admin changes a plan's price, existing subscriptions with pricing snapshots keep the old price. No recalculation trigger exists.
 
-### L2 — Webhook signature verification always returns true
+### L2 - Webhook signature verification always returns true
 
 `PesaPalGateway::verifyWebhookSignature()` returns `true` unconditionally. Any POST to the webhook endpoint is accepted.
 
-### L3 — No billing payment receipt PDF
+### L3 - No billing payment receipt PDF
 
 Only operational payments (sales/invoices) get PDF receipts. Billing/subscription payments don't generate receipts.
 
-### L4 — No rate limiting on payment initiation
+### L4 - No rate limiting on payment initiation
 
 Repeated failed payment initiations are not throttled.
 
-### L5 — Console commands not documented
+### L5 - Console commands not documented
 
 `SubscriptionsRenew`, `SubscriptionsExpireTrials`, `SubscriptionsSuspendPastDue`, `SubscriptionsCancelAtPeriodEnd` exist but have no documentation or scheduled frequency documentation.
 
@@ -346,19 +346,19 @@ Repeated failed payment initiations are not throttled.
 ## Implementation Order
 
 ```
-Phase 1 — Critical (C1, C2, C3)
+Phase 1 - Critical (C1, C2, C3)
   ├── Fix C1: activateAfterOnboarding accepts TRIAL status
   ├── Fix C2: trial_used set correctly
   └── Fix C3: bypass flow checks payment_type
 
-Phase 2 — Race conditions & state corruption (H1, H2, H3, H4, H5)
+Phase 2 - Race conditions & state corruption (H1, H2, H3, H4, H5)
   ├── Fix H1: autoApprove handles upgrade_proration
   ├── Fix H2: TRIAL → PAST_DUE not EXPIRED
   ├── Fix H3: grace_used → SUSPENDED directly
   ├── Fix H4: action intent in metadata + backend handling
   └── Fix H5: idempotency key
 
-Phase 3 — Functional completeness (M1, M2, M3, M4, M5, M6, M7)
+Phase 3 - Functional completeness (M1, M2, M3, M4, M5, M6, M7)
   ├── Fix M1: SubscriptionGuard offline fallback
   ├── Fix M2: getByBusiness single-fetch
   ├── Fix M3: subscription notifications
@@ -367,7 +367,7 @@ Phase 3 — Functional completeness (M1, M2, M3, M4, M5, M6, M7)
   ├── Fix M6: stale payment reaper
   └── Fix M7: PaymentService.complete()
 
-Phase 4 — Polish (L1, L2, L3, L4, L5)
+Phase 4 - Polish (L1, L2, L3, L4, L5)
 ```
 
 ## Acceptance Criteria

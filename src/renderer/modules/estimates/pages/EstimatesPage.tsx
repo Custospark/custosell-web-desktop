@@ -194,7 +194,7 @@ export default function EstimatesPage() {
       header: 'Valid until',
       render: (item: Estimate) => (
         <span className="text-sm tabular-nums text-gray-600">
-          {item.valid_until ? formatShiftDate(item.valid_until) : '—'}
+          {item.valid_until ? formatShiftDate(item.valid_until) : '-'}
         </span>
       ),
     },

@@ -54,7 +54,7 @@ export function validatePaymentForm(form: PaymentFormState): PaymentFormErrors {
     if (!digits) {
       errors.mobile_money_number = 'Enter the mobile money number';
     } else if (digits.length < 6 || digits.length > 15) {
-      errors.mobile_money_number = 'Enter a valid number (6–15 digits)';
+      errors.mobile_money_number = 'Enter a valid number (6-15 digits)';
     }
   } else if (form.payment_method === 'bank') {
     if (!form.bank_name.trim()) {
@@ -67,7 +67,7 @@ export function validatePaymentForm(form: PaymentFormState): PaymentFormErrors {
     if (!accountDigits) {
       errors.bank_account_number = 'Enter the account number';
     } else if (accountDigits.replace(/\D/g, '').length < 6 || accountDigits.length > 30) {
-      errors.bank_account_number = 'Enter a valid account number (6–30 digits)';
+      errors.bank_account_number = 'Enter a valid account number (6-30 digits)';
     }
     if (!form.bank_branch.trim()) {
       errors.bank_branch = 'Enter the branch';

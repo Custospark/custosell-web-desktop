@@ -15,19 +15,19 @@ Oscar requested customer analytics so owners can see segment mix, buying frequen
 ## What changed
 
 ### Backend (`Backend/`)
-- `app/Services/CustomerService.php` + `app/Services/Contracts/CustomerServiceInterface.php` — new `getOverview()` aggregation.
-- `app/Http/Controllers/Api/CustomerController.php` — new `overview()` action.
-- `routes/api/v1/customers.php` — `GET /customers/overview` registered **before** `/{customer}` so the literal route wins over the parameterised one.
+- `app/Services/CustomerService.php` + `app/Services/Contracts/CustomerServiceInterface.php` - new `getOverview()` aggregation.
+- `app/Http/Controllers/Api/CustomerController.php` - new `overview()` action.
+- `routes/api/v1/customers.php` - `GET /customers/overview` registered **before** `/{customer}` so the literal route wins over the parameterised one.
 
 Overview payload: totals (customers, active, repeat rate), revenue, segment breakdown, frequency buckets, per-month new-customer and revenue trends, top-5 customers.
 
 ### Frontend (`Frontend/`)
-- `src/renderer/shared/api/endpoints/endpoints.ts` — `CUSTOMERS.OVERVIEW`.
-- `src/renderer/modules/customers/api/customers/CustomerTypes.ts` — `CustomerOverviewData`, `CustomerSegment`, `CustomerFrequencyBucket`, `CustomerMonthTrend`, `TopCustomer`.
-- `src/renderer/modules/customers/api/customers/CustomerQueries.ts` — `useCustomerOverview` hook (always-fresh: `staleTime: 0`, refetch on mount + window focus).
-- `src/renderer/modules/customers/CustomerOverviewPage.tsx` — stat cards, segment/frequency donuts, monthly trends bars, top-5 list.
-- `src/renderer/app/routes/index.tsx` — route under `ModuleAccessMiddleware module="customers"`, registered before the index route.
-- `src/renderer/modules/customers/ui/customers/CustomerList.tsx` — Overview button in header.
+- `src/renderer/shared/api/endpoints/endpoints.ts` - `CUSTOMERS.OVERVIEW`.
+- `src/renderer/modules/customers/api/customers/CustomerTypes.ts` - `CustomerOverviewData`, `CustomerSegment`, `CustomerFrequencyBucket`, `CustomerMonthTrend`, `TopCustomer`.
+- `src/renderer/modules/customers/api/customers/CustomerQueries.ts` - `useCustomerOverview` hook (always-fresh: `staleTime: 0`, refetch on mount + window focus).
+- `src/renderer/modules/customers/CustomerOverviewPage.tsx` - stat cards, segment/frequency donuts, monthly trends bars, top-5 list.
+- `src/renderer/app/routes/index.tsx` - route under `ModuleAccessMiddleware module="customers"`, registered before the index route.
+- `src/renderer/modules/customers/ui/customers/CustomerList.tsx` - Overview button in header.
 
 ### Follow-up (same day)
 

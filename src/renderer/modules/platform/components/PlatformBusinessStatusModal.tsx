@@ -63,7 +63,7 @@ export function PlatformBusinessStatusModal({
 
   const title = isBulk
     ? `Update status for ${businesses.length} businesses`
-    : `Change status — ${single?.name ?? 'business'}`;
+    : `Change status - ${single?.name ?? 'business'}`;
 
   return (
     <Modal
@@ -78,7 +78,7 @@ export function PlatformBusinessStatusModal({
         <PipelineModalHero
           icon={Shield}
           tone="indigo"
-          title={isBulk ? 'Update several accounts' : `Current status: ${single ? STATUS_LABELS[single.status] : '—'}`}
+          title={isBulk ? 'Update several accounts' : `Current status: ${single ? STATUS_LABELS[single.status] : '-'}`}
           description="Restricted and suspended accounts cannot sign in. The change is audited and sent via the chosen channel."
         />
 

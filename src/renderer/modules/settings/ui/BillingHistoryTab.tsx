@@ -56,10 +56,10 @@ function itemTitle(item: HistoryItem): string {
   if (item.type === 'payment') {
     const amount = formatMoney(item.amount, item.currency);
     const extra = item.topup_months ? ` (${item.topup_months} months)` : '';
-    return `${item.event}${extra} — ${amount}`;
+    return `${item.event}${extra} - ${amount}`;
   }
   if (item.type === 'credit') {
-    return `${item.event} — ${formatMoney(item.amount, item.currency)}`;
+    return `${item.event} - ${formatMoney(item.amount, item.currency)}`;
   }
   if (item.change_type === 'upgrade') {
     return `Upgrade to ${item.to_plan ?? ''}`.trim();
@@ -97,7 +97,7 @@ export default function HistoryTab() {
     <div className="bg-white rounded-xl border border-gray-200 p-5">
       <div className="mb-4">
         <h3 className="text-sm font-semibold text-gray-900">Billing History</h3>
-        <p className="text-xs text-gray-500 mt-0.5">Every charge, top-up, plan change, and credit application — newest first.</p>
+        <p className="text-xs text-gray-500 mt-0.5">Every charge, top-up, plan change, and credit application - newest first.</p>
       </div>
 
       <PaymentHistory mode="pending-only" className="mb-5" />

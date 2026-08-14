@@ -82,7 +82,7 @@ function UpdateOrderForm({ onClose }: { onClose: () => void }) {
       </div>
 
       <p className="text-xs text-gray-500">
-        {count} item{count === 1 ? '' : 's'} — saves changes to this open order only.
+        {count} item{count === 1 ? '' : 's'} - saves changes to this open order only.
       </p>
 
       <div>

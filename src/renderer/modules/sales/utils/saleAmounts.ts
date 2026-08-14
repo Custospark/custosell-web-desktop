@@ -12,7 +12,7 @@ function refundedAmountFromItems(
   return (sale.sale_items ?? []).reduce((sum, item) => sum + toAmount(item.refunded_amount), 0);
 }
 
-/** Line items are authoritative when present — header refunds can be stale after offline refund. */
+/** Line items are authoritative when present - header refunds can be stale after offline refund. */
 export function refundedAmount(sale: Pick<Sale | SaleWithSyncMeta, 'refunds' | 'sale_items' | 'total_amount'>): number {
   if (sale.sale_items && sale.sale_items.length > 0) {
     return refundedAmountFromItems(sale);

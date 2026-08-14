@@ -23,7 +23,7 @@ export default function HrSettingsPage() {
       <HrPageHeader
         icon={Shield}
         title="HR settings"
-        description="Guidance, setup order, and audit activity. Use the main app sidebar to jump between People, Payroll, Leave, and the rest — no separate HR menu here."
+        description="Guidance, setup order, and audit activity. Use the main app sidebar to jump between People, Payroll, Leave, and the rest - no separate HR menu here."
       />
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -33,13 +33,13 @@ export default function HrSettingsPage() {
               <Users className="mt-0.5 h-4 w-4 shrink-0 text-indigo-600" />
               <span>
                 <Link to={ROUTES.HR.PEOPLE} className="font-medium text-indigo-700 hover:underline">People</Link>
-                {' '}are HR profiles. Optionally link them to Settings → Staff for login access — one person, one account.
+                {' '}are HR profiles. Optionally link them to Settings → Staff for login access - one person, one account.
               </span>
             </li>
             <li className="flex gap-3">
               <Compass className="mt-0.5 h-4 w-4 shrink-0 text-indigo-600" />
               <span>
-                Departments and positions organize your org chart before you assign employees — find them in the main sidebar under HR & Payroll.
+                Departments and positions organize your org chart before you assign employees - find them in the main sidebar under HR & Payroll.
               </span>
             </li>
             <li className="flex gap-3">
@@ -72,7 +72,7 @@ export default function HrSettingsPage() {
 
       <HrSectionCard
         title="Recent audit log"
-        description="Sensitive HR actions recorded by the API — helpful when you need to trace who changed what."
+        description="Sensitive HR actions recorded by the API - helpful when you need to trace who changed what."
       >
         {isLoading ? (
           <div className="flex justify-center py-10"><CustosellLoader /></div>
@@ -96,9 +96,9 @@ export default function HrSettingsPage() {
                   {logs.map((log) => (
                     <tr key={log.id}>
                       <td className="px-3 py-2 text-xs text-gray-500">
-                        {log.created_at ? formatShiftDateTime(log.created_at) : '—'}
+                        {log.created_at ? formatShiftDateTime(log.created_at) : '-'}
                       </td>
-                      <td className="px-3 py-2">{log.actor?.name ?? (log.actor_user_id ? `#${log.actor_user_id}` : '—')}</td>
+                      <td className="px-3 py-2">{log.actor?.name ?? (log.actor_user_id ? `#${log.actor_user_id}` : '-')}</td>
                       <td className="px-3 py-2 font-medium text-gray-900">{log.action}</td>
                       <td className="px-3 py-2 text-gray-600">
                         {log.subject_type}
@@ -111,7 +111,7 @@ export default function HrSettingsPage() {
             </div>
             <div className="flex flex-wrap items-center justify-between gap-3 pt-3 text-sm text-gray-500">
               <span>
-                Showing {totalLogs === 0 ? 0 : (currentPage - 1) * AUDIT_PAGE_SIZE + 1}–
+                Showing {totalLogs === 0 ? 0 : (currentPage - 1) * AUDIT_PAGE_SIZE + 1}-
                 {Math.min(currentPage * AUDIT_PAGE_SIZE, totalLogs)} of {totalLogs}
               </span>
               <div className="flex items-center gap-1">

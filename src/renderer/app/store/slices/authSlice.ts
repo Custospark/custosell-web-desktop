@@ -288,7 +288,7 @@ const authSlice = createSlice({
         state.user.business = {
           ...state.user.business,
           ...incoming,
-          // Never let business endpoint overwrite subscription — /auth/me is the source of truth
+          // Never let business endpoint overwrite subscription - /auth/me is the source of truth
           subscription: state.user.business?.subscription ?? incoming.subscription,
         };
         console.log('[DEBUG] setBusiness - FINAL sub status:', state.user.business?.subscription?.status);

@@ -1,4 +1,4 @@
-CUSTOSELL — OFFLINE TESTING (QUICK REFERENCE)
+CUSTOSELL - OFFLINE TESTING (QUICK REFERENCE)
 ==============================================
 
 Full documentation: docs/offline/testing.md
@@ -16,7 +16,7 @@ DEV VS PRODUCTION
 -----------------
 - Dev (npm run dev:react): IDB + RQ work; use production build for full SW test
 - Production: npm run react:build && serve dist/web -l 3000
-- Electron: npm run build:win — no SW, full IDB offline
+- Electron: npm run build:win - no SW, full IDB offline
 
 QUICK SMOKE TEST
 ----------------

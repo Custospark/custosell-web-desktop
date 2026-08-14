@@ -1,4 +1,4 @@
-# ADR — Service worker serves static assets network-first (never cache-first online)
+# ADR - Service worker serves static assets network-first (never cache-first online)
 
 - **Date:** 2026-08-14
 - **Status:** Accepted
@@ -14,11 +14,11 @@ Uncaught SyntaxError: The requested module './user-plus-ed_YL5Ph.js' does not
 provide an export named 't' (at index-*.js:2:3257)
 ```
 
-Investigation showed the **build was always internally consistent** — `index.html`
+Investigation showed the **build was always internally consistent** - `index.html`
 referenced chunk hashes that all existed in the same `dist/web` folder. The error
 came from **stale service-worker caching**: `sw.js` served JS/CSS **cache-first**,
 so a browser holding an old SW (and its cached old chunks) kept resolving a new
-entry chunk's imports against **old hashed chunk files** — a mixed build in the
+entry chunk's imports against **old hashed chunk files** - a mixed build in the
 browser's cache.
 
 Two things amplified it:
@@ -28,7 +28,7 @@ Two things amplified it:
    cache-first behavior) long after a new build shipped.
 2. **Inconsistent manual deploys** (`cp -r src/* dest/` without wiping the
    destination, and bash `*` not matching dotfiles) left mixed folders on the
-   server — new `index.html` alongside old/missing chunks — which the cache-first
+   server - new `index.html` alongside old/missing chunks - which the cache-first
    SW then served.
 
 Earlier versions (≤ 4.0.0) used a hardcoded `CACHE_VERSION = 'v1'` + cache-first
@@ -69,7 +69,7 @@ serves them from its own cache when online.
 
 So every load revalidates the SW (a new SW activates and purges old caches via the
 `activate` handler) and fetches a fresh shell that references the current build's
-hashes — even a browser still on an old SW cannot resolve a stale chunk mix.
+hashes - even a browser still on an old SW cannot resolve a stale chunk mix.
 
 ### 3. Force SW updates (`registerServiceWorker.ts`)
 
@@ -78,7 +78,7 @@ hashes — even a browser still on an old SW cannot resolve a stale chunk mix.
 
 ### 4. `CACHE_VERSION`
 
-Kept at the v4 baseline `'v1'`. The per-build timestamp stamping was removed — it
+Kept at the v4 baseline `'v1'`. The per-build timestamp stamping was removed - it
 was not the fix. Network-first is the fix; version stamping may be reintroduced
 later purely as an offline-cache-purge optimization, but never with cache-first.
 
@@ -107,14 +107,14 @@ Network-first keeps all of that while eliminating stale-chunk errors online.
   SW → new SW activates → purges old caches). Worst case is one stale load during
   the transition, which is eliminated once the fresh `index.html` is fetched.
 - Staging (`staging.custosell.com`) and production (`custosell.com`) are
-  independent — separate origins, SW scopes, and caches — so staging issues never
+  independent - separate origins, SW scopes, and caches - so staging issues never
   affect production.
 
 ## References
 
-- `public/sw.js` — `networkFirstStatic`, `CACHE_VERSION = 'v1'`
-- `src/renderer/app/sw/registerServiceWorker.ts` — `updateViaCache: 'none'`,
+- `public/sw.js` - `networkFirstStatic`, `CACHE_VERSION = 'v1'`
+- `src/renderer/app/sw/registerServiceWorker.ts` - `updateViaCache: 'none'`,
   forced `registration.update()`
-- `deploy/htaccess.staging` — no-cache for `sw.js` and `index.html`, immutable for
+- `deploy/htaccess.staging` - no-cache for `sw.js` and `index.html`, immutable for
   hashed assets
-- `scripts/deploy-to-backend.mjs` — consistent wipe + copy (`cp -rT`)
+- `scripts/deploy-to-backend.mjs` - consistent wipe + copy (`cp -rT`)

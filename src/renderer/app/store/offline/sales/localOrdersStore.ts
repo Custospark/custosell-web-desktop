@@ -28,7 +28,7 @@ export const localOrdersStore = {
   ): Promise<string> {
     const db = await getOfflineDb();
     if (!db.objectStoreNames.contains('localOrders')) {
-      throw new Error('localOrders store unavailable — refresh the app to upgrade offline DB');
+      throw new Error('localOrders store unavailable - refresh the app to upgrade offline DB');
     }
     const localId = order._localId ?? `order-${order.id}`;
     const record: LocalOrderRecord = {

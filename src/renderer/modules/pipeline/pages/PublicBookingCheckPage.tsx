@@ -99,7 +99,7 @@ export default function PublicBookingCheckPage() {
           {booking.start_date && (
             <p className="mt-1 text-sm text-gray-500">
               {formatDate(booking.start_date)} · {formatTime(booking.start_date)}
-              {booking.end_date && ` — ${formatTime(booking.end_date)}`}
+              {booking.end_date && ` - ${formatTime(booking.end_date)}`}
             </p>
           )}
         </div>
@@ -110,7 +110,7 @@ export default function PublicBookingCheckPage() {
               <CalendarDays className="h-4 w-4 shrink-0" />
               <span>{formatDate(booking.start_date)}</span>
               <Clock className="h-4 w-4 shrink-0" />
-              <span>{formatTime(booking.start_date)}{booking.end_date ? ` — ${formatTime(booking.end_date)}` : ''}</span>
+              <span>{formatTime(booking.start_date)}{booking.end_date ? ` - ${formatTime(booking.end_date)}` : ''}</span>
             </div>
           )}
 

@@ -159,7 +159,7 @@ export function useConfirmPayment(paymentId: number) {
     onSuccess: (data) => {
       if (data?.success) {
         showToast('success', data.message || 'Payment confirmed.');
-        // Payment was reconciled and the subscription applied — refresh the
+        // Payment was reconciled and the subscription applied - refresh the
         // user profile so access/modules update immediately (no re-login).
         queryClient.invalidateQueries({ queryKey: ['account', 'profile'] });
         queryClient.invalidateQueries({ queryKey: ['subscription', 'access'] });

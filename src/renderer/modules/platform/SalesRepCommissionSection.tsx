@@ -75,7 +75,7 @@ function SafetyHint({ discountRate, commissionRate }: { discountRate: string; co
   return (
     <div className={`rounded-lg border px-3 py-2.5 ${ok ? 'border-indigo-100 bg-indigo-50/60' : 'border-amber-200 bg-amber-50/60'}`}>
       <p className={`text-xs font-semibold ${ok ? 'text-indigo-700' : 'text-amber-700'}`}>
-        {ok ? 'How this code splits' : 'This split breaks the rule — company must earn the most'}
+        {ok ? 'How this code splits' : 'This split breaks the rule - company must earn the most'}
       </p>
       <p className="mt-0.5 text-xs text-indigo-600">
         {ok ? (

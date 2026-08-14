@@ -15,7 +15,7 @@ interface MyOrderDocActionsProps {
 const iconBtn =
   'rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 disabled:opacity-50';
 
-/** B2C My Orders actions — sparse icon controls (Sales History / completed Orders style). */
+/** B2C My Orders actions - sparse icon controls (Sales History / completed Orders style). */
 export function MyOrderDocActions({
   order,
   busy,

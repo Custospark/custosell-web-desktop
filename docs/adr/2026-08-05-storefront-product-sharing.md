@@ -1,4 +1,4 @@
-# Storefront Product Sharing — Public Deep Links
+# Storefront Product Sharing - Public Deep Links
 
 Date: 2026-08-05
 Status: Implemented
@@ -6,17 +6,17 @@ Status: Implemented
 ## Goal
 
 Let a customer share a **specific product** in a storefront to a friend via a
-public deep link — just like the existing `@slug` shop share links, but pointing
+public deep link - just like the existing `@slug` shop share links, but pointing
 straight at one product instead of the whole catalog.
 
 ## Decisions (confirmed with Oscar via selectables)
 
-1. **Identity** — the **product slug** (auto-generated from the product name;
+1. **Identity** - the **product slug** (auto-generated from the product name;
    users never type or choose it).
-2. **Scope** — links are **shop-scoped** (`/@slug/p/<productSlug>`); the same
+2. **Scope** - links are **shop-scoped** (`/@slug/p/<productSlug>`); the same
    product-slug only resolves inside its owning shop.
-3. **Affordance** — **copy-link button only** in the product detail modal.
-4. **Guests** — **yes, public**. Already-issued shop links and QR codes are
+3. **Affordance** - **copy-link button only** in the product detail modal.
+4. **Guests** - **yes, public**. Already-issued shop links and QR codes are
    unaffected.
 
 ## URL Contract

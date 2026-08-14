@@ -126,7 +126,7 @@ export default function BusinessSettingsPage() {
               </div>
               <div>
                 <h2 className="text-sm font-semibold text-red-800">Danger Zone</h2>
-                <p className="text-xs text-red-600 mt-0.5">Irreversible actions — proceed with caution</p>
+                <p className="text-xs text-red-600 mt-0.5">Irreversible actions - proceed with caution</p>
               </div>
             </div>
 

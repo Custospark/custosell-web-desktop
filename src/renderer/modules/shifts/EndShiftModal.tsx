@@ -71,7 +71,7 @@ export default function EndShiftModal({
     <Modal
       isOpen={open}
       onClose={onClose}
-      title="End Shift — Drawer Reconciliation"
+      title="End Shift - Drawer Reconciliation"
       subtitle="Count the drawer before closing. You can still end the shift if it doesn't match."
       size="md"
     >
@@ -154,7 +154,7 @@ export default function EndShiftModal({
             {varianceLabel ?? 'Enter counted cash to see variance'}
           </span>
           <span className="font-bold tabular-nums">
-            {variance !== null ? formatCurrency(Math.abs(variance)) : '—'}
+            {variance !== null ? formatCurrency(Math.abs(variance)) : '-'}
           </span>
         </div>
 
@@ -179,7 +179,7 @@ export default function EndShiftModal({
                 Check for expenses or errors before closing.
               </>
             )}{' '}
-            A mismatch won&apos;t block closing — the variance is recorded on your report.
+            A mismatch won&apos;t block closing - the variance is recorded on your report.
           </p>
         </div>
 

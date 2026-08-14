@@ -78,7 +78,7 @@ export function StaffModuleAccessFields({
               <span>
                 <span className="block text-sm font-medium text-gray-800">Full Projects &amp; Estimates workspace</span>
                 <span className="mt-0.5 block text-xs text-gray-600">
-                  Grants full access to estimates, projects, insights, templates, project boards, and costing reports — not just project boards.
+                  Grants full access to estimates, projects, insights, templates, project boards, and costing reports - not just project boards.
                 </span>
               </span>
             </label>
@@ -96,14 +96,14 @@ export function StaffModuleAccessFields({
               <span>
                 <span className="block text-sm font-medium text-gray-800">Full HR &amp; Payroll workspace</span>
                 <span className="mt-0.5 block text-xs text-gray-600">
-                  Grants people admin, departments, payroll, reports, and leave approval — not just attendance, leave requests, and talent tasks.
+                  Grants people admin, departments, payroll, reports, and leave approval - not just attendance, leave requests, and talent tasks.
                 </span>
               </span>
             </label>
           </div>
         )}
         {!modulesLocked && modules.length === 0 && (
-          <p className="text-xs text-amber-700 mt-3">No business modules selected — they will only see Account and Guide.</p>
+          <p className="text-xs text-amber-700 mt-3">No business modules selected - they will only see Account and Guide.</p>
         )}
       </div>
     </div>

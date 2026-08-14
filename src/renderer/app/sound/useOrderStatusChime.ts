@@ -21,7 +21,7 @@ function labelFor(status: string): string {
 }
 
 /**
- * Buyer-side alert — watches the polled "My Orders" list and fires a single
+ * Buyer-side alert - watches the polled "My Orders" list and fires a single
  * chime + toast when an order's status changes (open → completed/invoiced/etc).
  *
  * Skips the first render (baseline) and any status that is unknown/unlabelled.

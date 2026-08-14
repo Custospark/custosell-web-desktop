@@ -38,7 +38,7 @@ interface DocumentExplorerToolbarProps {
 }
 
 /**
- * Collapsible documents toolbar — upload/import/folder/link actions plus search
+ * Collapsible documents toolbar - upload/import/folder/link actions plus search
  * and tag filter. The whole block can be collapsed to give the file tree more
  * working space; a toggle in the cabinet-name row restores it.
  */
@@ -75,7 +75,7 @@ export default function DocumentExplorerToolbar({
       )}
       {isViewerOnly && (
         <p className="mb-2 rounded-lg border border-amber-200/80 bg-amber-50 px-2.5 py-1.5 text-[11px] leading-snug text-amber-900">
-          You have viewer access on this cabinet — you can browse and download, but cannot add or change files.
+          You have viewer access on this cabinet - you can browse and download, but cannot add or change files.
         </p>
       )}
 

@@ -294,11 +294,11 @@ export default function ProductList() {
                 </div>
               </div>
             ) },
-            { key: 'barcode', header: 'Barcode', render: (item) => item.barcode || <span className="text-gray-400">—</span> },
-            { key: 'category', header: 'Category', render: (item) => item.category?.name || <span className="text-gray-400">—</span> },
-            { key: 'unit', header: 'Unit', render: (item) => item.unit || <span className="text-gray-400">—</span> },
+            { key: 'barcode', header: 'Barcode', render: (item) => item.barcode || <span className="text-gray-400">-</span> },
+            { key: 'category', header: 'Category', render: (item) => item.category?.name || <span className="text-gray-400">-</span> },
+            { key: 'unit', header: 'Unit', render: (item) => item.unit || <span className="text-gray-400">-</span> },
             { key: 'unit_price', header: 'Unit Price', render: (item) => formatCurrency(item.unit_price) },
-            { key: 'wholesale_price', header: 'Wholesale', render: (item) => item.wholesale_price ? formatCurrency(item.wholesale_price) : <span className="text-gray-400">—</span> },
+            { key: 'wholesale_price', header: 'Wholesale', render: (item) => item.wholesale_price ? formatCurrency(item.wholesale_price) : <span className="text-gray-400">-</span> },
             { key: 'stock_quantity', header: 'Stock Qty', render: (item) => {
                 if (isServiceItem(item)) {
                   return <span className="text-xs font-medium text-blue-600">Service</span>;

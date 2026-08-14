@@ -50,7 +50,7 @@ export function PlatformBusinessResetModal({
       isOpen={open}
       onClose={handleClose}
       title={`Wipe data for ${businessName}?`}
-      subtitle="Transactional data is removed — estimates, CRM, and documents are preserved"
+      subtitle="Transactional data is removed - estimates, CRM, and documents are preserved"
       size="lg"
       bodyClassName="px-4 py-4 sm:px-6"
     >

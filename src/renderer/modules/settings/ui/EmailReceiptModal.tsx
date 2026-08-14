@@ -80,7 +80,7 @@ export default function EmailReceiptModal({
             {reference ? `Receipt ${reference}` : `Receipt #${paymentId}`}
           </p>
           <p className="mt-1.5 text-xs text-blue-700/80">
-            {amountLabel} — we'll email the receipt as a PDF attachment.
+            {amountLabel} - we'll email the receipt as a PDF attachment.
           </p>
         </div>
 

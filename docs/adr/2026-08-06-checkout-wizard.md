@@ -1,4 +1,4 @@
-# ADR — Checkout Wizard: Split POS into Items → Customer & Payment steps
+# ADR - Checkout Wizard: Split POS into Items → Customer & Payment steps
 
 - **Date:** 2026-08-06
 - **Status:** Accepted
@@ -8,8 +8,8 @@
 
 Refactor the Point of Sale screen from a single long column (search + cart + customer/billing all stacked) into a clear **two-step checkout wizard**, driven by local component state in `NewSale.tsx`:
 
-1. **Items** — search, add, and manage the cart.
-2. **Customer & Payment** — customer details, payment method, installments, amount, discount, and Complete Sale.
+1. **Items** - search, add, and manage the cart.
+2. **Customer & Payment** - customer details, payment method, installments, amount, discount, and Complete Sale.
 
 No routing changes, no data-model changes, and all sale/order/invoice logic is preserved. The cart and sale state stay in the existing `salesSlice` (Redux), so switching steps never re-fetches or rebuilds the cart.
 
@@ -21,7 +21,7 @@ The previous layout stacked the search/cart and the customer/payment forms on on
 
 - `NewSale.tsx` → thin orchestrator owning the `step` state, a header, a two-pill stepper (Items → Customer & Payment), a Back-to-Items affordance on step 2, and conditional rendering.
 - New `ui/SaleItemsStep.tsx` → extracts Step 1 UI: animated search bar + results dropdown, cart table, Clear All, secondary action toolbar (Generate/Manage Invoice, Manage Orders, Update/Hold/Take Order), and the wizard's own modals (Held/Hold/Update/Quantity/Invoice). Includes a sticky bottom bar with item count and a `Continue to Payment` CTA that is disabled until the cart has items.
-- `ui/BillingControls.tsx` → Step 2, split into two **equal-width** columns on `lg+` (`flex-1` each) that stack columnar on smaller screens: **left** = Customer, Payment Method, Pay-in-installments; **right** = Amount Tendered, Discount, Total (with Change Due / Paying now), and Complete Sale. Sections are numbered (1–4) and the Total card / CTA use the shared gradient for a polished finish. No duplicated itemised cart list.
+- `ui/BillingControls.tsx` → Step 2, split into two **equal-width** columns on `lg+` (`flex-1` each) that stack columnar on smaller screens: **left** = Customer, Payment Method, Pay-in-installments; **right** = Amount Tendered, Discount, Total (with Change Due / Paying now), and Complete Sale. Sections are numbered (1-4) and the Total card / CTA use the shared gradient for a polished finish. No duplicated itemised cart list.
 - `ui/CheckoutStepper.tsx` → shared gradient banner header: step-of-2 counter, tappable Back button, heading/subtitle per step, and a two-segment progress track. Replaces the earlier quiet pill header.
 - After `Complete Sale`, the wizard auto-reset to Step 1 with a fresh cart (`onSaleCompleted` flips the step; `clearCart()` empties the cart); the modal stays visible until the cashier dismisses it.
 
@@ -42,7 +42,7 @@ The wizard was refined into a standard, device-agnostic flow. Only frontend UI c
 
 ### Standard stepper, on-system header (revert of the gradient banner)
 
-`CheckoutStepper.tsx` no longer uses a gradient banner/pills. The header is the on-system "Point of Sale" title + subtitle, and progress is a **standard numbered stepper** (Items → Payment) with circular markers — active = blue filled + `ring-4 ring-blue-100`, done = blue check, todo = outlined gray — and a connector line that fills blue when done. Title + stepper share one same-row group on desktop **and** mobile.
+`CheckoutStepper.tsx` no longer uses a gradient banner/pills. The header is the on-system "Point of Sale" title + subtitle, and progress is a **standard numbered stepper** (Items → Payment) with circular markers - active = blue filled + `ring-4 ring-blue-100`, done = blue check, todo = outlined gray - and a connector line that fills blue when done. Title + stepper share one same-row group on desktop **and** mobile.
 
 The Items marker is **clickable back** when on the payment step (`onBack` on the step), with a `focus-visible` ring for keyboard users.
 
@@ -51,12 +51,12 @@ The Items marker is **clickable back** when on the payment step (`onBack` on the
 `BillingControls.tsx` section numbers adapt to context via `showAmountEntry = installmentMode || paymentMethod === 'cash'`:
 
 - **Cash or installments:** Customer (1) · Payment (2) · Amount (3) · Discount (4).
-- **Card / Mobile / Other:** the "Amount received" entry is hidden, so **Discount renumbers to 3** — no dead number with no section.
+- **Card / Mobile / Other:** the "Amount received" entry is hidden, so **Discount renumbers to 3** - no dead number with no section.
 
 ### Decision-point Back + Complete, no duplicated amount
 
-- **Desktop (lg+):** the right column holds `[← Back to Items (n)] [Complete Sale]` as a `hidden lg:flex` row — the two end-of-flow actions live together at the commitment point.
-- **Mobile (<lg):** `StickyMobileSummary.tsx` is the single canonical control — **Total on its own full-width row above** a `Back to Items (n) | Complete Sale` pair, `sticky bottom-0`, thumb-reach. The in-form Total card is `hidden lg:block` and the in-column Back/Complete row is `hidden lg:flex`, so the amount and the actions are **never shown twice** on small screens.
+- **Desktop (lg+):** the right column holds `[← Back to Items (n)] [Complete Sale]` as a `hidden lg:flex` row - the two end-of-flow actions live together at the commitment point.
+- **Mobile (<lg):** `StickyMobileSummary.tsx` is the single canonical control - **Total on its own full-width row above** a `Back to Items (n) | Complete Sale` pair, `sticky bottom-0`, thumb-reach. The in-form Total card is `hidden lg:block` and the in-column Back/Complete row is `hidden lg:flex`, so the amount and the actions are **never shown twice** on small screens.
 
 ### Keyboard fast-path + focus hygiene
 

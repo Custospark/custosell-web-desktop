@@ -256,7 +256,7 @@ export default function BoardConversationModal({
           <>
             {!canContributeResolved && (
               <p className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-900">
-                You have viewer access — discussion is read-only. You cannot post, reply, react, or edit messages.
+                You have viewer access - discussion is read-only. You cannot post, reply, react, or edit messages.
               </p>
             )}
             <BoardConversationUnreadBadge totalMessages={totalMessages} unreadCount={unreadCount} />

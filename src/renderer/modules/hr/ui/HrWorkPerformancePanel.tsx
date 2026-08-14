@@ -36,7 +36,7 @@ function roundGoalNumber(value: number): number {
   return nearest;
 }
 
-/** Period achievement as x/y — e.g. day target 2 → 1/2. */
+/** Period achievement as x/y - e.g. day target 2 → 1/2. */
 function goalRatioLabel(actual: number, expected: number): string {
   return `${roundGoalNumber(actual)}/${roundGoalNumber(expected)}`;
 }
@@ -54,7 +54,7 @@ function goalPeriodCaption(goal: HrPerformanceGoalItem): string {
   if (goal.period_start && goal.period_end) {
     const range = goal.period_start === goal.period_end
       ? goal.period_start
-      : `${goal.period_start} – ${goal.period_end}`;
+      : `${goal.period_start} - ${goal.period_end}`;
     return label ? `${label} · ${range}` : range;
   }
   return label ?? 'Selected period';
@@ -143,7 +143,7 @@ export function HrWorkPerformancePanel({
               </h3>
               <p className={cn('mt-1 text-xs', TALENT_SURFACE.textMuted)}>
                 {isFullHr
-                  ? 'See whether people are meeting board goals from Pipeline cards/leads and Project tasks — same pulse as My progress on boards.'
+                  ? 'See whether people are meeting board goals from Pipeline cards/leads and Project tasks - same pulse as My progress on boards.'
                   : 'Your contribution toward Pipeline/Projects goals, cards, and tasks.'}
               </p>
             </div>
@@ -268,7 +268,7 @@ function PerformanceSnapshotDetail({ snapshot }: { snapshot: HrPerformanceSnapsh
                 {paceAlerts.length > 0 ? (
                   paceAlerts.map((goal) => (
                     <li key={goal.id} className="text-xs text-amber-800">
-                      {goal.title} — {goal.pace_status.replace('_', ' ')} ·{' '}
+                      {goal.title} - {goal.pace_status.replace('_', ' ')} ·{' '}
                       {goalRatioLabel(goal.actual_value, goal.expected_value ?? goal.target_value)}{' '}
                       ({goal.progress_percent}%)
                     </li>
@@ -288,7 +288,7 @@ function PerformanceSnapshotDetail({ snapshot }: { snapshot: HrPerformanceSnapsh
         <div className={TALENT_SURFACE.metricCard}>
           <p className={cn('text-xs', TALENT_SURFACE.textMuted)}>Goal progress</p>
           <p className={cn('mt-1 text-2xl font-bold', TALENT_SURFACE.textTitle)}>
-            {snapshot.goals.total > 0 ? `${snapshot.goals.average_progress_percent}%` : '—'}
+            {snapshot.goals.total > 0 ? `${snapshot.goals.average_progress_percent}%` : '-'}
           </p>
           <p className={cn('mt-1 text-[11px]', TALENT_SURFACE.textMuted)}>
             {snapshot.goals.total > 0
@@ -319,7 +319,7 @@ function PerformanceSnapshotDetail({ snapshot }: { snapshot: HrPerformanceSnapsh
           <div className="flex items-center gap-2">
             <Target className="h-4 w-4 text-violet-600" />
             <h4 className={cn('text-sm font-semibold', TALENT_SURFACE.textTitle)}>
-              {employeeDisplayName(snapshot.employee)} — goals
+              {employeeDisplayName(snapshot.employee)} - goals
             </h4>
           </div>
           <PaceBadge status={snapshot.verdict} label={snapshot.verdict_label} />
@@ -432,7 +432,7 @@ function PerformanceSnapshotDetail({ snapshot }: { snapshot: HrPerformanceSnapsh
 
       <p className={cn('text-center text-[11px]', TALENT_SURFACE.textMuted)}>
         {snapshot.period
-          ? `${snapshot.period.start} — ${snapshot.period.end}`
+          ? `${snapshot.period.start} - ${snapshot.period.end}`
           : `Snapshot · ${formatShiftDate(snapshot.evaluated_at.slice(0, 10))}`}
       </p>
     </div>

@@ -39,7 +39,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [shell.md](./app/shell.md) | Status banners, navbar, layout chrome |
 | [service-worker.md](./app/service-worker.md) | Web production caching (static + API GET) |
 | [referral/README.md](./referral/README.md) | Referral & commission system |
-| [vera-logic.md](./vera-logic.md) | Vera Logic — repo rules & contracts gate (`npm run vera:logic`) |
+| [vera-logic.md](./vera-logic.md) | Vera Logic - repo rules & contracts gate (`npm run vera:logic`) |
 
 ## Compliance
 
@@ -53,7 +53,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 |----------|----------|
 | [desktop-release.md](./platform/desktop-release.md) | Electron desktop builds |
 | [estimates-module.md](./estimates-module.md) | Project estimates, costing, projects, job delivery |
-| [documents-module.md](./documents-module.md) | Business file vault — folders, ACL, tags, cross-module links |
+| [documents-module.md](./documents-module.md) | Business file vault - folders, ACL, tags, cross-module links |
 | [design-system.md](./product/design-system.md) | Colors, typography, UI patterns |
 | [sales-conversation.ipynb](./product/sales-conversation.ipynb) | Sales role-play simulator (GTM) |
 | [intent-and-tour.md](./product/intent-and-tour.md) | Post-register intent cards + shell product tour |
@@ -65,7 +65,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | Document | Contents |
 |----------|----------|
 | [subscription-payment-audit.md](./forensic/subscription-payment-audit.md) | Prior subscription/payment C/H/M/L audit (critical, high, medium, low gaps) |
-| [subscription-amount-accuracy.md](./forensic/subscription-amount-accuracy.md) | Master scenario doc — every subscription/payment action, amounts shown vs sent, credits, proration, rewards + real-number test matrix |
+| [subscription-amount-accuracy.md](./forensic/subscription-amount-accuracy.md) | Master scenario doc - every subscription/payment action, amounts shown vs sent, credits, proration, rewards + real-number test matrix |
 
 ## Future work
 
@@ -84,18 +84,18 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 
 | Document | Contents |
 |----------|----------|
-| [2026-08-14-service-worker-network-first.md](./adr/2026-08-14-service-worker-network-first.md) | SW serves static assets network-first (never cache-first online) — fixes stale-chunk "does not provide an export" errors; no-cache `sw.js`/`index.html`, forced SW updates, consistent deploys |
+| [2026-08-14-service-worker-network-first.md](./adr/2026-08-14-service-worker-network-first.md) | SW serves static assets network-first (never cache-first online) - fixes stale-chunk "does not provide an export" errors; no-cache `sw.js`/`index.html`, forced SW updates, consistent deploys |
 | [2026-08-13-onboarding-welcome-optional-tour.md](./adr/2026-08-13-onboarding-welcome-optional-tour.md) | Intent modal welcomes the user by name; goal picking optional; tour is a choice (Take the tour / No thanks), never forced |
 | [2026-08-13-platform-conversions-dashboard.md](./adr/2026-08-13-platform-conversions-dashboard.md) | Platform → Conversions subnav: trial→paid funnel stats, monthly trend + yearly distribution charts, new `converted_at` timestamp + `platform.conversions.view` permission |
 | [2026-08-13-register-default-highest-tier-plan.md](./adr/2026-08-13-register-default-highest-tier-plan.md) | New business registrations default to the highest-tier plan (full-value trial) instead of the cheapest; explicit pricing-page selection still wins |
-| [2026-08-11-offline-sync-durable-id-maps-dependency-guard.md](./adr/2026-08-11-offline-sync-durable-id-maps-dependency-guard.md) | Offline sync hang fix — durable entity id maps (DB v14), dependency guard in `getPending()`, business-scoped mutation queue |
+| [2026-08-11-offline-sync-durable-id-maps-dependency-guard.md](./adr/2026-08-11-offline-sync-durable-id-maps-dependency-guard.md) | Offline sync hang fix - durable entity id maps (DB v14), dependency guard in `getPending()`, business-scoped mutation queue |
 | [2026-08-13-payment-initiate-opens-redirect-url.md](./adr/2026-08-13-payment-initiate-opens-redirect-url.md) | Payment gateway redirects open via a synchronous popup (Google sign-in pattern), device-aware: desktop popup, Electron secure in-app modal child window (system-browser fallback), mobile tab; manual "Open Payment Page" fallback, no hanging on polling |
 | [2026-08-13-business-scope-offline-local-stores-stock.md](./adr/2026-08-13-business-scope-offline-local-stores-stock.md) | Business-scope all offline local stores + stock ledger (DB v15) so shared-device work never leaks between businesses |
 | [2026-08-13-offline-write-durability-across-shutdown.md](./adr/2026-08-13-offline-write-durability-across-shutdown.md) | Offline writes survive shutdown: tracked in-flight writes, awaited primary flows, flush barrier (pagehide/beforeunload/before-quit IPC), storage.persist() |
-| [2026-08-11-responsive-accounting-views.md](./adr/2026-08-11-responsive-accounting-views.md) | Responsive accounting views — COA mobile cards + scroll-safe tree + wrap-safe header; financial-ratio tooltip hover + tap, viewport-clamped |
+| [2026-08-11-responsive-accounting-views.md](./adr/2026-08-11-responsive-accounting-views.md) | Responsive accounting views - COA mobile cards + scroll-safe tree + wrap-safe header; financial-ratio tooltip hover + tap, viewport-clamped |
 | [2026-07-27-businessQueries-subscription-overwrite-gate-fix.md](./adr/2026-07-27-businessQueries-subscription-overwrite-gate-fix.md) | `useBusiness` subscription overwrite → gate redirect loop after onboarding payment |
-| [2026-08-03-renewal-top-up.md](./adr/2026-08-03-renewal-top-up.md) | Renewal top-up picker — flexible prepay (1–60 months), prorated amount, anchored to next_billing_date |
-| [2026-07-25-subscription-persistence-businessQueries-overwrite.md](./adr/2026-07-25-subscription-persistence-businessQueries-overwrite.md) | BusinessQueries `setBusiness` overwrite — subscription drop on `GET /businesses/mine` |
+| [2026-08-03-renewal-top-up.md](./adr/2026-08-03-renewal-top-up.md) | Renewal top-up picker - flexible prepay (1-60 months), prorated amount, anchored to next_billing_date |
+| [2026-07-25-subscription-persistence-businessQueries-overwrite.md](./adr/2026-07-25-subscription-persistence-businessQueries-overwrite.md) | BusinessQueries `setBusiness` overwrite - subscription drop on `GET /businesses/mine` |
 | [2026-07-04-accounting-module-architecture.md](./adr/2026-07-04-accounting-module-architecture.md) | Double-entry accounting module |
 | [2026-07-08-pipeline-board-member-roles.md](./adr/2026-07-08-pipeline-board-member-roles.md) | Pipeline board viewer / contributor / manager roles |
 | [2026-07-08-staff-drawer-module-access-parity.md](./adr/2026-07-08-staff-drawer-module-access-parity.md) | Staff drawer module access matches Module Access; owner email read-only |
@@ -106,16 +106,16 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-07-08-progress-decomposition-engine.md](./adr/2026-07-08-progress-decomposition-engine.md) | Column-aware metrics, hybrid goal decomposition, planning hierarchy |
 | [2026-07-10-documents-acl-and-folder-model.md](./adr/2026-07-10-documents-acl-and-folder-model.md) | Documents module ACL, live inheritance, folder tree |
 | [2026-07-10-documents-explorer-scale.md](./adr/2026-07-10-documents-explorer-scale.md) | Explorer scale limits and enterprise roadmap |
-| [2026-07-10-document-cabinets.md](./adr/2026-07-10-document-cabinets.md) | Document cabinets — gallery, scoped explorer, cabinet ACL |
-| [2026-07-10-hr-payroll-module.md](./adr/2026-07-10-hr-payroll-module.md) | HR & Payroll module — people, leave, Uganda payroll |
-| [2026-07-10-hr-full-module-access.md](./adr/2026-07-10-hr-full-module-access.md) | `hr_full` addon — limited vs full HR workspace |
+| [2026-07-10-document-cabinets.md](./adr/2026-07-10-document-cabinets.md) | Document cabinets - gallery, scoped explorer, cabinet ACL |
+| [2026-07-10-hr-payroll-module.md](./adr/2026-07-10-hr-payroll-module.md) | HR & Payroll module - people, leave, Uganda payroll |
+| [2026-07-10-hr-full-module-access.md](./adr/2026-07-10-hr-full-module-access.md) | `hr_full` addon - limited vs full HR workspace |
 | [2026-07-10-hr-work-performance-from-pipeline.md](./adr/2026-07-10-hr-work-performance-from-pipeline.md) | Evaluate employees from Pipeline/Projects goals & tasks |
 | [2026-07-10-hr-payroll-accounting-bridge.md](./adr/2026-07-10-hr-payroll-accounting-bridge.md) | Fail-hard payroll post, split liabilities, settle/remit/void |
-| [2026-07-10-product-vs-service-sales.md](./adr/2026-07-10-product-vs-service-sales.md) | Product vs service catalog — stock skip, revenue 4100/4200 |
+| [2026-07-10-product-vs-service-sales.md](./adr/2026-07-10-product-vs-service-sales.md) | Product vs service catalog - stock skip, revenue 4100/4200 |
 | [2026-07-10-payroll-affordability-cash-runway.md](./adr/2026-07-10-payroll-affordability-cash-runway.md) | Payroll cash check, N-month runway, hire what-if |
-| [2026-07-11-forecasting-module.md](./adr/2026-07-11-forecasting-module.md) | Financial Forecasting FE — cash, BvA, budgets, KPIs, scenarios |
+| [2026-07-11-forecasting-module.md](./adr/2026-07-11-forecasting-module.md) | Financial Forecasting FE - cash, BvA, budgets, KPIs, scenarios |
 | [2026-07-11-stock-movement-actor-attribution.md](./adr/2026-07-11-stock-movement-actor-attribution.md) | Stock History shows logged-in user; BE `created_by` + backfill |
-| [2026-07-11-navbar-module-launcher.md](./adr/2026-07-11-navbar-module-launcher.md) | Navbar Apps modal — per-user module switcher |
+| [2026-07-11-navbar-module-launcher.md](./adr/2026-07-11-navbar-module-launcher.md) | Navbar Apps modal - per-user module switcher |
 | [2026-07-11-hr-overview-dashboard.md](./adr/2026-07-11-hr-overview-dashboard.md) | Full-access HR dashboard at `/hr/overview` |
 | [2026-07-11-pos-orders-persistence.md](./adr/2026-07-11-pos-orders-persistence.md) | POS Hold/Take orders persist to DB; open→completed→invoiced |
 | [2026-07-11-inventory-supply-chain-b2b.md](./adr/2026-07-11-inventory-supply-chain-b2b.md) | B2B marketplace + purchase orders (online-only, opt-in listings) |
@@ -128,7 +128,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-07-11-intent-and-app-tour.md](./adr/2026-07-11-intent-and-app-tour.md) | Owner intent + app-wide tour; never auto-set modules |
 | [2026-07-11-marketplace-supplier-list.md](./adr/2026-07-11-marketplace-supplier-list.md) | Per-business My suppliers shortlist (FE+BE) |
 | [2026-07-11-company-assets-hr-accounting.md](./adr/2026-07-11-company-assets-hr-accounting.md) | Company Assets (HR custody) ↔ Fixed Assets (Accounting) |
-| [2026-07-12-efris-fiscalization.md](./adr/2026-07-12-efris-fiscalization.md) | URA EFRIS — API, both POS+invoices, sync-later, master flag |
+| [2026-07-12-efris-fiscalization.md](./adr/2026-07-12-efris-fiscalization.md) | URA EFRIS - API, both POS+invoices, sync-later, master flag |
 | [2026-07-12-custosell-business-os-brand.md](./adr/2026-07-12-custosell-business-os-brand.md) | Tagline: Your Business Operating System; auth/shell + landing |
 | [2026-07-12-public-storefront.md](./adr/2026-07-12-public-storefront.md) | Public `/@slug` shops + Discover; order requests → Orders |
 | [2026-07-12-storefront-multi-cart-submit-auth.md](./adr/2026-07-12-storefront-multi-cart-submit-auth.md) | Multi-business cart bags + submit-time sign-in |
@@ -154,9 +154,9 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-07-14-board-poll-delete-import-storefront.md](./adr/2026-07-14-board-poll-delete-import-storefront.md) | Board 30s poll, delete, Excel card import, visibility/role, product shop UX |
 | [2026-07-14-order-lists-30s-poll.md](./adr/2026-07-14-order-lists-30s-poll.md) | PO / Incoming / Sales / Storefront order lists poll every 30s when open |
 | [2026-07-18-data-export-and-account-deletion.md](./adr/2026-07-18-data-export-and-account-deletion.md) | Business data export API + self-service account deletion |
-| [2026-07-26-multi-currency-exchange-rate.md](./adr/2026-07-26-multi-currency-exchange-rate.md) | Multi-currency pricing & payment routing — USD-primary display, payment currency selection, backend validation |
-| [2026-07-26-upgrade-flow-proration.md](./adr/2026-07-26-upgrade-flow-proration.md) | Upgrade flow fix — proration display, metadata validation, cross-stack |
-| [2026-07-31-full-price-minus-credit-plan-changes.md](./adr/2026-07-31-full-price-minus-credit-plan-changes.md) | Unified plan-change rule — charge full new plan price, deduct unused credit, reset billing period |
+| [2026-07-26-multi-currency-exchange-rate.md](./adr/2026-07-26-multi-currency-exchange-rate.md) | Multi-currency pricing & payment routing - USD-primary display, payment currency selection, backend validation |
+| [2026-07-26-upgrade-flow-proration.md](./adr/2026-07-26-upgrade-flow-proration.md) | Upgrade flow fix - proration display, metadata validation, cross-stack |
+| [2026-07-31-full-price-minus-credit-plan-changes.md](./adr/2026-07-31-full-price-minus-credit-plan-changes.md) | Unified plan-change rule - charge full new plan price, deduct unused credit, reset billing period |
 | [2026-08-01-product-modal-inline-add-category.md](./adr/2026-08-01-product-modal-inline-add-category.md) | Inline "Add Category" in product modal; category drawer converted to standard modal |
 | [2026-08-01-product-listing-bulk-and-row-actions.md](./adr/2026-08-01-product-listing-bulk-and-row-actions.md) | Product bulk List/Unlist actions (shop + supply) and per-row Actions menu |
 | [2026-08-01-product-list-supply-filter-and-dropdown-fix.md](./adr/2026-08-01-product-list-supply-filter-and-dropdown-fix.md) | Supply listing filter + badge, responsive bulk bar, un-clipped row actions menu |
@@ -165,24 +165,24 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 | [2026-08-01-business-income-budget-sidebar.md](./adr/2026-08-01-business-income-budget-sidebar.md) | Business accounts get Income + Budgets under "Income & Expenses"; budget label "Budgets" (business) vs "My Budgets" (personal) |
 | [2026-08-01-header-quick-access-profile-nav.md](./adr/2026-08-01-header-quick-access-profile-nav.md) | Apps/Tour/Tutorials under Profile; Open Orders (live badge) + Products quick access; mobile header + bottom-tab distribution; tour updated |
 | [2026-08-01-expenses-overview-fresh-and-form-guidance.md](./adr/2026-08-01-expenses-overview-fresh-and-form-guidance.md) | Income & Expenses Overview always-fresh; expense form guides required-field validation |
-| [2026-08-01-customers-overview-dashboard.md](./adr/2026-08-01-customers-overview-dashboard.md) | Customers analytics overview — `GET /customers/overview`, FE dashboard, segments/frequency/trends/top-5 |
+| [2026-08-01-customers-overview-dashboard.md](./adr/2026-08-01-customers-overview-dashboard.md) | Customers analytics overview - `GET /customers/overview`, FE dashboard, segments/frequency/trends/top-5 |
 | [2026-08-01-readonly-email-and-personal-slice-sync.md](./adr/2026-08-01-readonly-email-and-personal-slice-sync.md) | Email read-only in Account Profile; personal-account shared fields mirrored from Business Settings to auth slice |
 | [2026-08-02-branch-transfer-excludes-services.md](./adr/2026-08-02-branch-transfer-excludes-services.md) | Branch stock transfer excludes service items (no branch stock for non-inventory services) |
 | [2026-08-04-storefront-progressive-loading-and-mobile-tabs.md](./adr/2026-08-04-storefront-progressive-loading-and-mobile-tabs.md) | Progressive/paginated loading for shop & discover, mobile tab dedup + "Show more…", server-backed product search |
-| [2026-08-04-storefront-favorite-businesses.md](./adr/2026-08-04-storefront-favorite-businesses.md) | Favorite businesses (shops) — star toggle, Favorites primary tab, FavoritesPage |
-| [2026-08-05-storefront-product-sharing.md](./adr/2026-08-05-storefront-product-sharing.md) | Public per-product share deep links — product slug, shop-scoped, copy link, public |
-| [2026-08-05-order-sound-notifications.md](./adr/2026-08-05-order-sound-notifications.md) | Sound notifications for order updates — Web Audio chime, generic sound service, business + buyer toggles |
+| [2026-08-04-storefront-favorite-businesses.md](./adr/2026-08-04-storefront-favorite-businesses.md) | Favorite businesses (shops) - star toggle, Favorites primary tab, FavoritesPage |
+| [2026-08-05-storefront-product-sharing.md](./adr/2026-08-05-storefront-product-sharing.md) | Public per-product share deep links - product slug, shop-scoped, copy link, public |
+| [2026-08-05-order-sound-notifications.md](./adr/2026-08-05-order-sound-notifications.md) | Sound notifications for order updates - Web Audio chime, generic sound service, business + buyer toggles |
 | [2026-08-05-platform-user-privileges-and-server-pagination.md](./adr/2026-08-05-platform-user-privileges-and-server-pagination.md) | Platform-admin user privileges modal + row-actions dropdown, server-side Users/Businesses pagination |
-| [2026-08-05-account-type-plan-guard-on-privileges.md](./adr/2026-08-05-account-type-plan-guard-on-privileges.md) | Account type ↔ plan guard on privileges — storefront no subscription, business/personal plans match type |
-| [2026-08-06-checkout-wizard.md](./adr/2026-08-06-checkout-wizard.md) | POS as a 2-step checkout wizard (Items → Customer & Payment); UX polish pass — standard stepper, dynamic step numbering, back/complete rows, cart summary bar, mobile sticky summary |
+| [2026-08-05-account-type-plan-guard-on-privileges.md](./adr/2026-08-05-account-type-plan-guard-on-privileges.md) | Account type ↔ plan guard on privileges - storefront no subscription, business/personal plans match type |
+| [2026-08-06-checkout-wizard.md](./adr/2026-08-06-checkout-wizard.md) | POS as a 2-step checkout wizard (Items → Customer & Payment); UX polish pass - standard stepper, dynamic step numbering, back/complete rows, cart summary bar, mobile sticky summary |
 
 ## Modules
 
 | Document | Contents |
 |----------|----------|
-| [modules/pipeline-progress.md](./modules/pipeline-progress.md) | Board Progress v2 — columns, decomposition, My progress, export |
-| [modules/hr.md](./modules/hr.md) | HR & Payroll — routes, API layer, payroll flow, failure states |
-| [modules/forecasting.md](./modules/forecasting.md) | Forecasting — cash runway, budgets, KPIs, scenarios |
+| [modules/pipeline-progress.md](./modules/pipeline-progress.md) | Board Progress v2 - columns, decomposition, My progress, export |
+| [modules/hr.md](./modules/hr.md) | HR & Payroll - routes, API layer, payroll flow, failure states |
+| [modules/forecasting.md](./modules/forecasting.md) | Forecasting - cash runway, budgets, KPIs, scenarios |
 | [modules/inventory-supply-chain.md](./modules/inventory-supply-chain.md) | B2B marketplace, purchase/incoming orders, receive mapping |
 | [modules/storefront.md](./modules/storefront.md) | Public shops, Discover, multi-cart, submit-time auth → Orders |
 | [modules/data-export.md](./modules/data-export.md) | Data & Export page, export API, business account self-deletion |

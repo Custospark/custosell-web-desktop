@@ -11,12 +11,12 @@ Operators and buyers leave order list pages open while counterparts create or up
 ## Decisions
 
 1. **Poll only while the list page is open**  
-   List hooks take `options?: { poll?: boolean }`. Pages pass `{ poll: true }`. Shared consumers (Marketplace open-PO badge, Discover strip count, POS open orders) stay on-demand — no background poll.
+   List hooks take `options?: { poll?: boolean }`. Pages pass `{ poll: true }`. Shared consumers (Marketplace open-PO badge, Discover strip count, POS open orders) stay on-demand - no background poll.
 
 2. **Interval = 30_000 ms** (same as board kanban)  
-   - `PURCHASE_ORDER_LIST_POLL_MS` — buyer PO + seller Incoming Orders  
-   - `ORDER_LIST_POLL_MS` — Sales → Orders  
-   - `STOREFRONT_ORDERS_POLL_MS` — Discover → My Orders  
+   - `PURCHASE_ORDER_LIST_POLL_MS` - buyer PO + seller Incoming Orders  
+   - `ORDER_LIST_POLL_MS` - Sales → Orders  
+   - `STOREFRONT_ORDERS_POLL_MS` - Discover → My Orders  
    Uses React Query `refetchInterval` + `refetchIntervalInBackground: true` while the query is enabled/mounted.
 
 3. **Backend unchanged**  
@@ -33,5 +33,5 @@ Operators and buyers leave order list pages open while counterparts create or up
 
 ## Alternatives considered
 
-- Always poll whenever any consumer mounts the hook — rejected (would hammer network from Marketplace / Discover chrome)
-- Websockets — deferred (consistent with boards)
+- Always poll whenever any consumer mounts the hook - rejected (would hammer network from Marketplace / Discover chrome)
+- Websockets - deferred (consistent with boards)

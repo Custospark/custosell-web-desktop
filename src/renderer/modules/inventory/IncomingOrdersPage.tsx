@@ -227,14 +227,14 @@ export default function IncomingOrdersPage() {
                         {po.invoice.invoice_number}
                       </button>
                     ) : (
-                      <span className="text-sm text-gray-400">—</span>
+                      <span className="text-sm text-gray-400">-</span>
                     ),
                 },
                 {
                   key: 'payments',
                   header: 'Payments',
                   render: (po) => {
-                    if (!po.invoice) return <span className="text-sm text-gray-400">—</span>;
+                    if (!po.invoice) return <span className="text-sm text-gray-400">-</span>;
                     const count = po.invoice.payments_count ?? 0;
                     const status = po.invoice.payment_status
                       ?? (Number(po.invoice.amount_paid) <= 0

@@ -1,5 +1,5 @@
 /**
- * Vera Extended — Fast checks + typecheck when type-surface files changed.
+ * Vera Extended - Fast checks + typecheck when type-surface files changed.
  * Usage: node scripts/vera-extended.mjs
  */
 import { execSync } from 'child_process';
@@ -35,7 +35,7 @@ const hasTypeSurface = files.some(f =>
 );
 
 if (hasTypeSurface) {
-  console.log('🧪 Vera extended: type-surface changes detected — running tsc --noEmit');
+  console.log('🧪 Vera extended: type-surface changes detected - running tsc --noEmit');
   try {
     execSync('npx tsc --noEmit', { stdio: 'inherit', encoding: 'utf8' });
     console.log('✅ Vera extended: typecheck passed');
@@ -44,7 +44,7 @@ if (hasTypeSurface) {
     process.exit(1);
   }
 } else {
-  console.log('🧪 Vera extended: no type-surface changes — skipped tsc');
+  console.log('🧪 Vera extended: no type-surface changes - skipped tsc');
 }
 
 console.log('🧪 Vera extended: done');

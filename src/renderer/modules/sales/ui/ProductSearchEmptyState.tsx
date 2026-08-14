@@ -57,7 +57,7 @@ export function ProductSearchEmptyState({
           disabled
         >
           <CheckCircle2 className="w-4 h-4 shrink-0" aria-hidden />
-          Stock updated — search again
+          Stock updated - search again
         </Button>
       ) : reloadFeedback === 'upToDate' ? (
         <Button
@@ -67,7 +67,7 @@ export function ProductSearchEmptyState({
           disabled
         >
           <CircleCheck className="w-4 h-4 shrink-0" aria-hidden />
-          Products up to date — adjust your search
+          Products up to date - adjust your search
         </Button>
       ) : (
         <Button

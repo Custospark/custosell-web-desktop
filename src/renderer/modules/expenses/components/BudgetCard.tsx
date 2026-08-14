@@ -22,7 +22,7 @@ function PacingChart({ pacing }: { pacing: { label: string; budget: number; actu
   if (!pacing.length) return null;
   return (
     <div className="mt-3">
-      <p className="text-xs font-semibold text-gray-600 mb-1">Your pace — planned vs spent</p>
+      <p className="text-xs font-semibold text-gray-600 mb-1">Your pace - planned vs spent</p>
       <ChartContainer className="h-40" minHeight={160}>
         {(size) => (
           <ResponsiveContainer width={size.width} height={size.height} debounce={50}>

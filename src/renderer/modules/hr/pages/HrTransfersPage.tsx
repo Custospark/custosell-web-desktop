@@ -13,7 +13,7 @@ import { HrEmptyState, HrPageHeader } from '../ui/HrSurface';
 import { HR_SURFACE } from '../ui/hrSurfaceStyles';
 
 function formatDate(value: string | null): string {
-  if (!value) return '—';
+  if (!value) return '-';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
@@ -129,7 +129,7 @@ export default function HrTransfersPage() {
                   <td className="px-4 py-3">
                     <span className="inline-flex items-center gap-1.5 text-gray-600">
                       <GitBranch className="h-3.5 w-3.5 text-gray-400" />
-                      {t.from_location?.name ?? '—'}
+                      {t.from_location?.name ?? '-'}
                     </span>
                   </td>
                   <td className="px-4 py-3">

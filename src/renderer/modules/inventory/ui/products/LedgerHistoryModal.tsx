@@ -32,7 +32,7 @@ export default function LedgerHistoryModal({ open, onClose, productId, productNa
   const { data: movements, isLoading } = useProductStockMovements(productId);
 
   return (
-    <Modal isOpen={open} onClose={onClose} title={`Stock History — ${productName}`} size="lg">
+    <Modal isOpen={open} onClose={onClose} title={`Stock History - ${productName}`} size="lg">
       {isLoading ? (
         <LoadingSkeleton variant="list" />
       ) : !movements || movements.length === 0 ? (

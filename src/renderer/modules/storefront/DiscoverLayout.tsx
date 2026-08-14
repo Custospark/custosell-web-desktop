@@ -51,7 +51,7 @@ function activeTabFromPath(
 function defaultHeader(pathname: string, search: string): { title: string; subtitle: string } {
   const path = normalizeDiscoverPath(pathname);
   if (path === ROUTES.DISCOVER_MY_ORDERS || path.endsWith('/my-orders')) {
-    return { title: 'My Orders', subtitle: 'Orders you placed — each business fulfills its own' };
+    return { title: 'My Orders', subtitle: 'Orders you placed - each business fulfills its own' };
   }
   if (path === ROUTES.DISCOVER_WISHLIST || path.endsWith('/wishlist')) {
     return { title: 'Wishlist', subtitle: 'Items you saved to buy later' };
@@ -214,7 +214,7 @@ function DiscoverShellChrome() {
           </div>
         </header>
 
-        {/* Never key Outlet — remounting Outlet breaks child route rendering in RR7. */}
+        {/* Never key Outlet - remounting Outlet breaks child route rendering in RR7. */}
         <main
           className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain p-2.5 sm:p-4"
           data-scroll-container
@@ -260,7 +260,7 @@ function DiscoverShellChrome() {
         subtitle={
           loginIntent === 'orders'
             ? 'Orders you place across businesses appear here. No business setup needed.'
-            : 'Shop as a customer — no business setup. Carts stay in this browser.'
+            : 'Shop as a customer - no business setup. Carts stay in this browser.'
         }
         onClose={() => {
           pendingLoginSuccess.current = null;

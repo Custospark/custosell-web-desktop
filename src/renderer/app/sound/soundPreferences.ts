@@ -1,5 +1,5 @@
 /**
- * Client-only sound preferences — persisted in localStorage.
+ * Client-only sound preferences - persisted in localStorage.
  *
  * Following the existing per-feature storage pattern (storefrontBuyerContactStorage,
  * offlinePreferences), stored as JSON under a versioned key with safe defaults
@@ -11,7 +11,7 @@ export const SOUND_PREFS_KEY = 'custosell.sound.prefs.v1';
 export interface SoundPreferences {
   /** Play a chime when a new online/storefront order arrives (business + buyer). */
   orderSound: boolean;
-  /** Business "big-order" alert bar — any new open order with total_amount >=
+  /** Business "big-order" alert bar - any new open order with total_amount >=
    *  this plays the urgent chime instead of the normal one. null = disabled. */
   bigOrderThreshold: number | null;
 }
@@ -46,7 +46,7 @@ export function saveSoundPreferences(patch: Partial<SoundPreferences>): SoundPre
     try {
       window.localStorage.setItem(SOUND_PREFS_KEY, JSON.stringify(next));
     } catch {
-      // storage unavailable (privacy mode) — sound defaults still apply in-memory
+      // storage unavailable (privacy mode) - sound defaults still apply in-memory
     }
   }
   return next;

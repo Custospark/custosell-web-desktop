@@ -6,17 +6,17 @@
 
 ## Context
 
-Custosell initially hardcoded UGX everywhere — prices, payment initiation, display formatting. Businesses outside Uganda (or wanting USD/KES/TZS) had no way to see prices in their own currency. PesaPal supports 4 currencies (UGX, KES, TZS, USD) but the system always defaulted to UGX.
+Custosell initially hardcoded UGX everywhere - prices, payment initiation, display formatting. Businesses outside Uganda (or wanting USD/KES/TZS) had no way to see prices in their own currency. PesaPal supports 4 currencies (UGX, KES, TZS, USD) but the system always defaulted to UGX.
 
 Two distinct problems needed solving:
-1. **Display** — users should see plan prices in their business currency, with USD as the primary reference
-2. **Payment** — PesaPal should be called with the correct currency (business local if supported, else USD)
+1. **Display** - users should see plan prices in their business currency, with USD as the primary reference
+2. **Payment** - PesaPal should be called with the correct currency (business local if supported, else USD)
 
 ## Decisions
 
 ### 1. Dual-column pricing (backend)
 
-Backend stores prices in dual columns — `price_monthly` (UGX) and `price_monthly_usd` (USD). All internal billing math runs in USD. Subscriptions snapshot these prices at creation time via migration `2026_07_26_000003_add_usd_snapshot_to_subscriptions.php`.
+Backend stores prices in dual columns - `price_monthly` (UGX) and `price_monthly_usd` (USD). All internal billing math runs in USD. Subscriptions snapshot these prices at creation time via migration `2026_07_26_000003_add_usd_snapshot_to_subscriptions.php`.
 
 ### 2. Live exchange rates (backend → frontend)
 
@@ -28,11 +28,11 @@ Plan cards show **USD as the primary** price (e.g. `$20.00/mo`) with the busines
 
 ### 4. Payment currency routing (frontend + backend)
 
-**Frontend** — `getPaymentCurrency()` in `SubscriptionQueries.ts` selects:
+**Frontend** - `getPaymentCurrency()` in `SubscriptionQueries.ts` selects:
 - Business currency (UGX/KES/TZS) if PesaPal supports it → payment in local currency via mobile money
 - `'USD'` otherwise → PesaPal in USD
 
-**Backend** — `GatewayService::validatePaymentAmount()` checks the submitted amount against subscription USD snapshots with ±2% tolerance. For non-native currencies (KES, TZS), it converts from the USD snapshot × live rate and validates against that.
+**Backend** - `GatewayService::validatePaymentAmount()` checks the submitted amount against subscription USD snapshots with ±2% tolerance. For non-native currencies (KES, TZS), it converts from the USD snapshot × live rate and validates against that.
 
 ### 5. Subscription snapshot validation (backend)
 
@@ -40,11 +40,11 @@ Payment amounts are validated against the subscription's **snapshotted** prices 
 
 ## Consequences
 
-- **Display** — users always see USD as the primary price with local equivalent. No more hardcoded `'UGX'` in format utilities.
-- **Payment** — Ugandan businesses pay in UGX via mobile money; other African businesses use their local currency if supported, else USD.
-- **Validation** — backend catches mismatches: if the frontend sends $135 but the subscription snapshot says $54, it's rejected.
-- **Exchange rate failure** — gracefully falls back to USD raw price for display; payment validation uses a ±2% tolerance so minor rate fluctuations don't block transactions.
-- **No schema changes needed** — `businesses.currency` already exists (default: `UGX`).
+- **Display** - users always see USD as the primary price with local equivalent. No more hardcoded `'UGX'` in format utilities.
+- **Payment** - Ugandan businesses pay in UGX via mobile money; other African businesses use their local currency if supported, else USD.
+- **Validation** - backend catches mismatches: if the frontend sends $135 but the subscription snapshot says $54, it's rejected.
+- **Exchange rate failure** - gracefully falls back to USD raw price for display; payment validation uses a ±2% tolerance so minor rate fluctuations don't block transactions.
+- **No schema changes needed** - `businesses.currency` already exists (default: `UGX`).
 
 ## New/Changed components
 

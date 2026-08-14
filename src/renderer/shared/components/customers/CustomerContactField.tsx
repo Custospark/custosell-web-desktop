@@ -18,7 +18,7 @@ interface CustomerContactFieldProps {
   disabled?: boolean;
   className?: string;
   context?: 'checkout' | 'email';
-  /** Where the field is shown — adjusts modal helper copy */
+  /** Where the field is shown - adjusts modal helper copy */
   surface?: 'sale' | 'invoice';
 }
 
@@ -128,7 +128,7 @@ export default function CustomerContactField({
               </span>
             ) : (
               <span className="text-[11px] text-gray-400 mt-0.5 block">
-                {meta.isWalkIn ? 'Optional — add for receipts & invoices' : meta.statusLabel}
+                {meta.isWalkIn ? 'Optional - add for receipts & invoices' : meta.statusLabel}
               </span>
             )}
           </span>

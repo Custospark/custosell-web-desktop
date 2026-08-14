@@ -103,7 +103,7 @@ export default function BoardCardImportModal({
     } catch (err: unknown) {
       const axiosErr = err as { code?: string; response?: { data?: { message?: string } } };
       const message = axiosErr.code === 'ECONNABORTED'
-        ? 'Import timed out — try a smaller file or split into multiple uploads'
+        ? 'Import timed out - try a smaller file or split into multiple uploads'
         : axiosErr.response?.data?.message || 'Import failed';
       showToast('error', message);
     } finally {
@@ -190,7 +190,7 @@ export default function BoardCardImportModal({
               </div>
               {uploadProgress >= 100 && (
                 <p className="text-xs text-gray-500">
-                  Importing {labelPlural} — this can take a few minutes for large files. Keep this window open.
+                  Importing {labelPlural} - this can take a few minutes for large files. Keep this window open.
                 </p>
               )}
             </div>

@@ -14,7 +14,7 @@ import type { DashboardSummary, BranchPerformanceResponse } from './DashboardTyp
 
 export const dashboardKeys = {
   all: ['dashboard'] as const,
-  /** Server-only baseline — never merged with offline overlay. */
+  /** Server-only baseline - never merged with offline overlay. */
   server: () => [...dashboardKeys.all, 'server'] as const,
   summary: () => [...dashboardKeys.all, 'summary'] as const,
   branchPerformance: () => [...dashboardKeys.all, 'branch-performance'] as const,

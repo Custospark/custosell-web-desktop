@@ -19,7 +19,7 @@ function sumCardAndOther(payments: Payment[]): number {
     .reduce((sum, p) => sum + toAmount(p.amount), 0);
 }
 
-/** Mirror rows on linked sales duplicate invoice collections — skip them. */
+/** Mirror rows on linked sales duplicate invoice collections - skip them. */
 export function isMirrorSalePayment(payment: Payment): boolean {
   return payment.payable_type === 'sale' && (payment.notes?.startsWith('From invoice') ?? false);
 }

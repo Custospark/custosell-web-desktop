@@ -16,7 +16,7 @@ import {
 type Visual = { Icon: LucideIcon; wrap: string; icon: string };
 
 /**
- * Pick a lively icon + color from product name / type — avoids generic cube everywhere.
+ * Pick a lively icon + color from product name / type - avoids generic cube everywhere.
  */
 export function productVisual(name: string, type?: string | null): Visual {
   const hay = `${name} ${type ?? ''}`.toLowerCase();

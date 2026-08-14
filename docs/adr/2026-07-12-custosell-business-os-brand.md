@@ -12,7 +12,7 @@ Custosell began as a POS product. The lockup **“Sell More. Track All. Grow Fas
 
 1. **Primary tagline:** `Your Business Operating System`
 2. **Short lockup:** `Business OS`
-3. **Supporting line (module list):** mirrors Frontend `SUPPORTING_LINE` and Backend `config/brand.php` `supporting_line` — includes **E-commerce Storefront** after POS (Discover public shop).
+3. **Supporting line (module list):** mirrors Frontend `SUPPORTING_LINE` and Backend `config/brand.php` `supporting_line` - includes **E-commerce Storefront** after POS (Discover public shop).
 4. **Single FE source of truth:** [`src/renderer/shared/brand/custosellBrand.ts`](../../src/renderer/shared/brand/custosellBrand.ts) (`SUPPORTING_LINE` for auth; landing hero uses the same wording with emphasis markup).
 5. **Retire** “Sell More. Track All. Grow Fast.” from auth, app footer, document title, and related shell surfaces in Phase 1.
 6. **Phased rewrite:** Phase 1 auth/shell → Phase 2 landing → Phase 3 Backend Blade emails/reports (`config/brand.php` supporting line already aligned).

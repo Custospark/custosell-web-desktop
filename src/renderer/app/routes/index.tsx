@@ -162,7 +162,7 @@ function SuspenseWrapper({ children }: { children: React.ReactNode }) {
 export function AppRoutes() {
   return (
     <Routes>
-      {/* Immersive storefront — outside PublicRoute so logged-in sidebar links are not bounced to dashboard */}
+      {/* Immersive storefront - outside PublicRoute so logged-in sidebar links are not bounced to dashboard */}
       <Route path={ROUTES.DISCOVER} element={<SuspenseWrapper><DiscoverLayout /></SuspenseWrapper>}>
         <Route index element={<SuspenseWrapper><DiscoverPage /></SuspenseWrapper>} />
         <Route path="my-orders" element={<SuspenseWrapper><MyOrdersPage /></SuspenseWrapper>} />
@@ -171,7 +171,7 @@ export function AppRoutes() {
         <Route path="shop/:slug" element={<SuspenseWrapper><ShopPage /></SuspenseWrapper>} />
       </Route>
 
-      {/* Public booking — outside PublicRoute so logged-in sidebar users can preview */}
+      {/* Public booking - outside PublicRoute so logged-in sidebar users can preview */}
       <Route element={<SuspenseWrapper><BookingLayout /></SuspenseWrapper>}>
         <Route path={ROUTES.BOOKING.BOOK(':token')} element={<SuspenseWrapper><PublicBookingPage /></SuspenseWrapper>} />
         <Route path={ROUTES.BOOKING.CHECK(':token', ':reference')} element={<SuspenseWrapper><PublicBookingCheckPage /></SuspenseWrapper>} />
@@ -199,7 +199,7 @@ export function AppRoutes() {
         <Route element={<Layout />}>
           <Route path="/app" element={<ModuleLandingRedirect />} />
 
-          {/* Always-accessible routes — no subscription check */}
+          {/* Always-accessible routes - no subscription check */}
           <Route path={ROUTES.YOUR_TOOLS} element={<SuspenseWrapper><YourToolsPage /></SuspenseWrapper>} />
           <Route element={<ModuleAccessMiddleware module="account" />}>
             <Route path={ROUTES.ACCOUNT.INDEX} element={<SuspenseWrapper><AccountPage /></SuspenseWrapper>}>
@@ -221,7 +221,7 @@ export function AppRoutes() {
             <Route path={ROUTES.GUIDE.CONTACT} element={<SuspenseWrapper><GuideContactPage /></SuspenseWrapper>} />
           </Route>
 
-          {/* Subscription-guarded routes — require active subscription */}
+          {/* Subscription-guarded routes - require active subscription */}
           <Route element={<SubscriptionGuard />}>
             <Route element={<ModuleAccessMiddleware module="dashboard" />}>
               <Route path={ROUTES.DASHBOARD} element={<SuspenseWrapper><DashboardPage /></SuspenseWrapper>} />
@@ -350,11 +350,11 @@ export function AppRoutes() {
               <Route path="modules" element={<SuspenseWrapper><ModuleAccessSettingsPage /></SuspenseWrapper>} />
             </Route>
           </Route>
-          {/* Settings pages personal accounts need — always reachable regardless of the
+          {/* Settings pages personal accounts need - always reachable regardless of the
               settings module gate (same as Billing & Subscription below). */}
           <Route path={ROUTES.SETTINGS.BUSINESS} element={<SuspenseWrapper><BusinessSettingsPage /></SuspenseWrapper>} />
           <Route path={ROUTES.SETTINGS.DATA_EXPORT} element={<SuspenseWrapper><DataExportPage /></SuspenseWrapper>} />
-          {/* Plans & billing — always reachable regardless of the settings module gate
+          {/* Plans & billing - always reachable regardless of the settings module gate
               (e.g. suspended/expired personal accounts must reach the plans page). */}
           <Route path={ROUTES.SETTINGS.SUBSCRIPTION} element={<SuspenseWrapper><SubscriptionSettingsPage /></SuspenseWrapper>} />
           <Route element={<PlatformAdminRoute />}>

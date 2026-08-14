@@ -47,7 +47,7 @@ type MultiCartValue = StorefrontActions & {
 };
 
 /**
- * Stable dispatchers only — no state subscription. Use this in high-volume
+ * Stable dispatchers only - no state subscription. Use this in high-volume
  * screens (product grids) that only need to add/remove so they never re-render
  * just because the cart changed.
  */

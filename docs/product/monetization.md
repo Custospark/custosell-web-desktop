@@ -1,4 +1,4 @@
-# Custosell — Monetization Strategy
+# Custosell - Monetization Strategy
 
 ## Current Phase: Pre-PMF (Product-Market Fit)
 
@@ -8,7 +8,7 @@
 
 ---
 
-## Phase 1: Launch & Learn (Now — 3 Months)
+## Phase 1: Launch & Learn (Now - 3 Months)
 
 | Action | Why |
 |--------|-----|
@@ -22,9 +22,9 @@
 
 ---
 
-## Phase 2: Introduce Monetization (3 — 6 Months)
+## Phase 2: Introduce Monetization (3 - 6 Months)
 
-**Approach:** Simple, low-friction model — no complex subscription management.
+**Approach:** Simple, low-friction model - no complex subscription management.
 
 ### Option A: Feature-Gated (Recommended)
 ```
@@ -49,7 +49,7 @@ Free:
 ```
 
 ### Payment Methods (for Uganda/Africa)
-- **Mobile Money** (MTN MoMo, Airtel Money) — dominant in Uganda
+- **Mobile Money** (MTN MoMo, Airtel Money) - dominant in Uganda
 - **Card payments** (via Flutterwave or Paystack)
 - **Bank transfers** (manual approval for enterprise)
 
@@ -59,11 +59,11 @@ Free:
 3. Manual approval for bank transfers (admin dashboard)
 4. Subscription activated, feature gates lifted
 
-**Engineering effort:** 2–3 weeks for a basic Paystack/Flutterwave integration with webhook handling.
+**Engineering effort:** 2-3 weeks for a basic Paystack/Flutterwave integration with webhook handling.
 
 ---
 
-## Phase 3: Full Subscription Management (6 — 12 Months)
+## Phase 3: Full Subscription Management (6 - 12 Months)
 
 | Feature | Description |
 |---------|-------------|
@@ -74,15 +74,15 @@ Free:
 | Multi-currency pricing | UGX, USD, KES, TZS per business region |
 | Team/Enterprise plans | Custom pricing for 10+ staff |
 
-**Engineering effort:** 4–6 weeks for full subscription infrastructure.
+**Engineering effort:** 4-6 weeks for full subscription infrastructure.
 
 ---
 
 ## Principles
 
 1. **Never break offline-first.** Payment verification should never block the core POS flow.
-2. **Grandfather early users.** First 100 users get lifetime free access — they're your best marketers.
-3. **Price for Uganda, then expand.** UGX 30,000–50,000/month (~$8–$12) is the sweet spot for Ugandan SMEs.
+2. **Grandfather early users.** First 100 users get lifetime free access - they're your best marketers.
+3. **Price for Uganda, then expand.** UGX 30,000-50,000/month (~$8-$12) is the sweet spot for Ugandan SMEs.
 4. **Let users pay how they want.** Mobile money first, card second, bank transfer third.
 5. **Make it easy to leave.** No lock-in. Export data anytime. Trust is the currency before money.
 

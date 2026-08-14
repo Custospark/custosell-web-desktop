@@ -187,7 +187,7 @@ export default function InvoicesPage({ mode = 'sales' }: InvoicesPageProps) {
   const poFilter = searchParams.get('po');
   const pageTitle = isSupplierMode ? 'Supplier invoices' : 'Sales invoices';
   const pageSubtitle = isSupplierMode
-    ? 'Invoices from suppliers. View PDFs and payment receipts — only the seller records payments.'
+    ? 'Invoices from suppliers. View PDFs and payment receipts - only the seller records payments.'
     : effectiveView === 'list'
       ? 'Invoices you issue to customers. Record payments and send receipts here.'
       : effectiveView === 'edit'
@@ -277,7 +277,7 @@ export default function InvoicesPage({ mode = 'sales' }: InvoicesPageProps) {
             <div className="flex items-start gap-2 border-b border-blue-100 bg-blue-50/80 px-4 py-2.5 text-sm text-blue-800">
               <Info className="w-4 h-4 shrink-0 mt-0.5" />
               <span>
-                <strong>{stats.drafts}</strong> draft{stats.drafts !== 1 ? 's' : ''} — edit then send to post to accounting.
+                <strong>{stats.drafts}</strong> draft{stats.drafts !== 1 ? 's' : ''} - edit then send to post to accounting.
               </span>
             </div>
           )}
@@ -287,7 +287,7 @@ export default function InvoicesPage({ mode = 'sales' }: InvoicesPageProps) {
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <span>
                 <strong>{stats.overdueCount}</strong> overdue invoice{stats.overdueCount !== 1 ? 's' : ''}
-                {isSupplierMode ? ' — awaiting seller payment recording.' : ' — follow up or record payment.'}
+                {isSupplierMode ? ' - awaiting seller payment recording.' : ' - follow up or record payment.'}
               </span>
             </div>
           )}

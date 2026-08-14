@@ -4,11 +4,11 @@ Custosell is an **offline-capable** retail POS. Writes go to IndexedDB immediate
 
 ## Design principles
 
-1. **Write-local, read-merged** — Sales, inventory, expenses, and settings mutations persist locally first, then queue for the server.
-2. **Durable catalog snapshots** — Server list responses are backed up to IndexedDB so data survives **logout** and **offline re-login**.
-3. **Ordered sync** — Auth and dependency-sensitive entities (shifts, roles, categories) sync before dependents.
-4. **Single connectivity truth** — Redux `networkSlice.systemStatus` drives offline vs server-first reads (`offline/core/offlineQueryUtils.ts`).
-5. **No logout on flaky reconnect** — Device local sessions upgrade silently to server sessions when online (`offline/auth/sessionUpgrade.ts`).
+1. **Write-local, read-merged** - Sales, inventory, expenses, and settings mutations persist locally first, then queue for the server.
+2. **Durable catalog snapshots** - Server list responses are backed up to IndexedDB so data survives **logout** and **offline re-login**.
+3. **Ordered sync** - Auth and dependency-sensitive entities (shifts, roles, categories) sync before dependents.
+4. **Single connectivity truth** - Redux `networkSlice.systemStatus` drives offline vs server-first reads (`offline/core/offlineQueryUtils.ts`).
+5. **No logout on flaky reconnect** - Device local sessions upgrade silently to server sessions when online (`offline/auth/sessionUpgrade.ts`).
 
 ## Connectivity states
 
@@ -18,7 +18,7 @@ Custosell is an **offline-capable** retail POS. Writes go to IndexedDB immediate
 | `slow` | API reachable, latency > 1s | **Server-first** | Try server (4s timeout) → local fallback on network failure |
 | `online` | Normal | Server-first | Server-first |
 
-Only **`offline`** (or browser offline) triggers instant local completion for sales. **`slow` is not offline** — staff may wait on API timeouts before local fallback.
+Only **`offline`** (or browser offline) triggers instant local completion for sales. **`slow` is not offline** - staff may wait on API timeouts before local fallback.
 
 Probe: `connectivityCheck.ts` → `GET /sales` with 8s timeout; 401/403 still counts as reachable.
 
@@ -64,7 +64,7 @@ Implemented via `readWithOfflineStrategy()` in `offline/core/offlineReadStrategy
 
 Triggered when `systemStatus` leaves `offline` or on online bootstrap with a device local session.
 
-**Phase 1 — silent auth (must finish first)**
+**Phase 1 - silent auth (must finish first)**
 
 All of these coordinate on the same `upgradeLocalSessionIfOnline()` promise:
 
@@ -75,16 +75,16 @@ All of these coordinate on the same `upgradeLocalSessionIfOnline()` promise:
 
 ```
 upgradeLocalSessionIfOnline()
-  → applyServerAuth() — server token + auth slice + storage
-  → postSessionUpgradeRefresh() — profile, catalogs, shifts
+  → applyServerAuth() - server token + auth slice + storage
+  → postSessionUpgradeRefresh() - profile, catalogs, shifts
 ```
 
-**Phase 2 — data sync (after Phase 1)**
+**Phase 2 - data sync (after Phase 1)**
 
 ```
 syncPendingDataIfOnline() → syncCoordinator
-  a. syncAuthMutations()        — pending registration only if still queued
-  b. runSyncPipeline()          — tiered entity sync (shifts, sales, …)
+  a. syncAuthMutations()        - pending registration only if still queued
+  b. runSyncPipeline()          - tiered entity sync (shifts, sales, …)
 invalidateAfterFullSync()
 purgeSyncedOptimisticFromCache()
 ```
@@ -144,11 +144,11 @@ Global status banners render **above** the layout shell so navbar/sidebar geomet
 
 ## Residual platform limitations
 
-- **Multi-till offline** — Each device is locally authoritative; no real-time stock coordination across devices.
-- **Slow / flaky internet** — Treated as online; sales may wait ~4s before local fallback.
-- **Shift list** — Not catalog-snapshotted; active shift refreshed from server after session upgrade.
-- **Low-stock / stock-movement APIs** — Not snapshotted.
-- **Profile, password, avatar, PDF reports** — Online-only.
-- **Platform admin** — Never persisted to IDB or RQ persister.
+- **Multi-till offline** - Each device is locally authoritative; no real-time stock coordination across devices.
+- **Slow / flaky internet** - Treated as online; sales may wait ~4s before local fallback.
+- **Shift list** - Not catalog-snapshotted; active shift refreshed from server after session upgrade.
+- **Low-stock / stock-movement APIs** - Not snapshotted.
+- **Profile, password, avatar, PDF reports** - Online-only.
+- **Platform admin** - Never persisted to IDB or RQ persister.
 
 See [readiness.md](./readiness.md) for boutique operational guidance.

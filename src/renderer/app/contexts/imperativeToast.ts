@@ -12,7 +12,7 @@ export const imperativeToast = {
     if (_handler) {
       _handler(variant, message, duration, position);
     } else {
-      console.warn(`[imperativeToast] No handler registered — toast dropped: [${variant}] ${message}`);
+      console.warn(`[imperativeToast] No handler registered - toast dropped: [${variant}] ${message}`);
     }
   },
 };

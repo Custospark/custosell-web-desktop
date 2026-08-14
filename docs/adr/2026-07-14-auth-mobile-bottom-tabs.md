@@ -9,10 +9,10 @@ Logged-in Custosell on small screens used a top hamburger plus an off-canvas sid
 
 ## Decision
 
-1. **Mobile only (`lg` / 1024 breakpoint):** Auth shell shows an **in-flow** bottom tab bar (not a fixed overlay) — **Menu | first two accessible leaf routes | More**. Desktop layout (persistent sidebar + top hamburger collapse) is unchanged. Main content is never covered by the tab bar.
+1. **Mobile only (`lg` / 1024 breakpoint):** Auth shell shows an **in-flow** bottom tab bar (not a fixed overlay) - **Menu | first two accessible leaf routes | More**. Desktop layout (persistent sidebar + top hamburger collapse) is unchanged. Main content is never covered by the tab bar.
 2. **Menu** replaces the top hamburger below `lg`. Business logo is `lg+` only in the navbar. Hamburger is `lg+` only.
-3. **Pinned leaves** come from `resolveAccessibleNavLeaves` — the same module-access filter as `Sidebar` (catalog order, limited HR/estimates, owner-only settings).
-4. **More** opens a bottom sheet: **Browse the app** (launcher with friendly copy — “any part of the app”, not “modules”) plus searchable quick links for remaining destinations.
+3. **Pinned leaves** come from `resolveAccessibleNavLeaves` - the same module-access filter as `Sidebar` (catalog order, limited HR/estimates, owner-only settings).
+4. **More** opens a bottom sheet: **Browse the app** (launcher with friendly copy - “any part of the app”, not “modules”) plus searchable quick links for remaining destinations.
 5. **Tour:** Steps stay sidebar-targeted. `ProductTour.ensureSidebarForTarget` closes `mobileMoreOpen` before opening/measuring sidebar targets. Module steps still force-open the drawer.
 6. **Chrome:** Footer is desktop-only (`lg+`). Top navbar tap targets stay enlarged on small screens.
 

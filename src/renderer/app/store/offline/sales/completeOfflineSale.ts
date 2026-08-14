@@ -14,7 +14,7 @@ import type { CreateSalePayload, Sale } from '../../../../modules/sales/api/sale
 import type { Product } from '../../../../modules/inventory/api/products/ProductTypes';
 import { tracksStock } from '../../../../modules/inventory/api/products/ProductTypes';
 
-/** True when completely offline — complete sale locally. */
+/** True when completely offline - complete sale locally. */
 export function shouldCompleteSaleLocally(): boolean {
   return shouldCompleteMutationLocally();
 }

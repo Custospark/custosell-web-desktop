@@ -161,7 +161,7 @@ const salesSlice = createSlice({
       state.activeOrderId = action.payload.orderId;
       state.activeOrderMode = 'sale';
     },
-    /** Explicit Update from Orders / Take — cart edits save via Update Order only. */
+    /** Explicit Update from Orders / Take - cart edits save via Update Order only. */
     loadOrderForUpdate(state, action: PayloadAction<Omit<LoadOrderPayload, 'mode'>>) {
       state.cartItems = action.payload.items;
       state.customerId = action.payload.customerId;

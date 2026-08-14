@@ -16,7 +16,7 @@ const sections = [
     title: 'Access Control & Authentication',
     icon: Lock,
     items: [
-      'Role-based access control — each staff member gets the right permissions',
+      'Role-based access control - each staff member gets the right permissions',
       'Secure authentication for all accounts',
       'Session management with automatic timeout on inactivity',
       'Each user has a unique identity with full audit trail',
@@ -27,7 +27,7 @@ const sections = [
     icon: Eye,
     items: [
       'Every sale, modification, and deletion is logged with timestamp and user identity',
-      'Immutable audit logs — no user can alter or delete their activity trail',
+      'Immutable audit logs - no user can alter or delete their activity trail',
       'Shift-level tracking showing exactly which staff processed each transaction',
       'Exportable audit reports for internal review',
     ],
@@ -56,7 +56,7 @@ const sections = [
     title: 'Data Export & Portability',
     icon: Download,
     items: [
-      'Full data export at any time — no lock-in, no data hostage',
+      'Full data export at any time - no lock-in, no data hostage',
       'Export all business data on demand',
       'No hidden fees or barriers to leaving the platform',
       'Transition assistance available for business accounts',
@@ -70,7 +70,7 @@ const sections = [
       'Accounts inactive for 120+ days are flagged and the owner is notified',
       'Dormant accounts are periodically reviewed by the platform team',
       'Extended dormant accounts may be subject to deletion after notice',
-      'Export your data at any time — accounts are never deleted without warning',
+      'Export your data at any time - accounts are never deleted without warning',
     ],
   },
   {
@@ -98,7 +98,7 @@ const sections = [
 const faqItems = [
   {
     q: 'Who owns the data entered into Custosell?',
-    a: 'You do. Your business data belongs to you. Custosell is a data processor — we store and process data on your behalf. We never access, use, or share your data except as necessary to provide the service.',
+    a: 'You do. Your business data belongs to you. Custosell is a data processor - we store and process data on your behalf. We never access, use, or share your data except as necessary to provide the service.',
   },
   {
     q: 'Do you share my business data with third parties?',
@@ -142,7 +142,7 @@ export default function PrivacyPage() {
           </span>
         </h1>
         <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-          We built Custosell on the principle that your business data belongs to you — never to us.
+          We built Custosell on the principle that your business data belongs to you - never to us.
           Every decision, every policy, and every line of code reflects that commitment.
         </p>
       </motion.div>

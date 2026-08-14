@@ -5,7 +5,7 @@ import { BILLING } from '../../api/endpoints/endpoints';
 import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 
 interface ManualPaymentVerifyProps {
-  /** Payment id returned by initiation — required to confirm. */
+  /** Payment id returned by initiation - required to confirm. */
   paymentId: number | null;
   /** Called after a successful confirm so the caller refetches payment status. */
   onVerified: () => void;
@@ -13,7 +13,7 @@ interface ManualPaymentVerifyProps {
 }
 
 /**
- * Manual "I've Completed Payment — Verify" control shown on every payment
+ * Manual "I've Completed Payment - Verify" control shown on every payment
  * waiting screen (web, mobile, and Electron). Lets the user ask the backend to
  * confirm a payment that polling hasn't picked up yet, so every workflow has
  * the same verify path regardless of device.
@@ -31,7 +31,7 @@ export default function ManualPaymentVerify({ paymentId, onVerified, className }
       const { data } = await axiosInstance.post(BILLING.CONFIRM(paymentId));
       if (data?.success) {
         onVerified();
-        // Payment reconciled and subscription applied — refresh profile +
+        // Payment reconciled and subscription applied - refresh profile +
         // access so the UI updates immediately (no re-login needed).
         queryClient.invalidateQueries({ queryKey: ['account', 'profile'] });
         queryClient.invalidateQueries({ queryKey: ['subscription', 'access'] });
@@ -60,7 +60,7 @@ export default function ManualPaymentVerify({ paymentId, onVerified, className }
         ) : (
           <CheckCircle className="w-4 h-4" />
         )}
-        {verifying ? 'Verifying...' : "I've Completed Payment — Verify"}
+        {verifying ? 'Verifying...' : "I've Completed Payment - Verify"}
       </button>
       {message && (
         <div className="mt-2 flex items-start gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 text-left">

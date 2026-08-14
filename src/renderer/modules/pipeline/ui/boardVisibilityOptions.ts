@@ -45,16 +45,16 @@ export function visibilityChangeSummary(
   const toLabel = visibilityOptionLabel(to, workspace);
 
   if (from === 'shared' && to === 'team') {
-    return `Switching from ${fromLabel} to ${toLabel} removes the invite list — everyone with module access can open the board.`;
+    return `Switching from ${fromLabel} to ${toLabel} removes the invite list - everyone with module access can open the board.`;
   }
   if (from === 'shared' && to === 'private') {
-    return `Switching from ${fromLabel} to ${toLabel} removes invited members — only the board owner keeps access.`;
+    return `Switching from ${fromLabel} to ${toLabel} removes invited members - only the board owner keeps access.`;
   }
   if (from === 'team' && to === 'shared') {
     return `Switching from ${fromLabel} to ${toLabel} limits access to people you invite (viewers, contributors, or managers).`;
   }
   if (from === 'team' && to === 'private') {
-    return `Switching from ${fromLabel} to ${toLabel} hides the board from your team — only the board owner keeps access.`;
+    return `Switching from ${fromLabel} to ${toLabel} hides the board from your team - only the board owner keeps access.`;
   }
   if (from === 'private' && to === 'team') {
     return `Switching from ${fromLabel} to ${toLabel} opens the board to everyone with module access.`;

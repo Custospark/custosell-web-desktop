@@ -332,7 +332,7 @@ export function useShiftSales(shiftId: number | null) {
   });
 }
 
-/** Shift-scoped expenses — local-first; tolerates missing expenses.view permission. */
+/** Shift-scoped expenses - local-first; tolerates missing expenses.view permission. */
 export function useShiftExpenses(shiftId: number | null) {
   return useQuery<ExpenseWithSyncMeta[]>({
     queryKey: shiftId ? shiftKeys.expenses(shiftId) : [...shiftKeys.all, 'expenses', 'none'] as const,

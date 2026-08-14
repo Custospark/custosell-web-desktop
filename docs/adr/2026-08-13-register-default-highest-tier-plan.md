@@ -6,10 +6,10 @@
 
 ## Context
 
-Businesses registering on the platform were defaulted to `businessPlans[0]` — the
+Businesses registering on the platform were defaulted to `businessPlans[0]` - the
 plan with the lowest `sort_order` (currently Essential). This meant new users only
 experienced a subset of the product during their 30-day trial. Registration also
-depended on the frontend successfully loading active plans — if the plans request
+depended on the frontend successfully loading active plans - if the plans request
 failed, the user was blocked with *"Plans could not be loaded."*
 
 Meanwhile, all legacy subscriptions were upgraded to Enterprise via backend
@@ -21,7 +21,7 @@ and then pick their tier.
 1. **Backend assigns the default plan.** `BusinessService::register()` now resolves
    the plan itself: it uses the client-sent `plan_id` when present, otherwise it
    defaults to the **highest-tier active business plan** (highest `sort_order`, then
-   highest price — currently Enterprise). A subscription is always created.
+   highest price - currently Enterprise). A subscription is always created.
 2. **Plan fields are optional on the request.** `BusinessRegisterRequest` already
    marked `plan_id`/`billing_cycle` as `sometimes`; the controller and service no
    longer require them, and the response always loads the subscription.
@@ -40,7 +40,7 @@ scheduled downgrades and proration upgrades are only valid once a subscription i
 **active** (paid). Trial users now pick any plan by subscribing directly.
 
 Similarly, on **past_due** ("Payment Due") the matrix no longer offers
-`Schedule Downgrade` or `Upgrade` for non-current plans — those require an active
+`Schedule Downgrade` or `Upgrade` for non-current plans - those require an active
 subscription. Every plan card (current, higher, lower) shows **Reactivate**
 (routed through the payment flow with `{ action: 'reactivate', to_plan_id }`).
 Reactivating a plan clears the outstanding balance and restores the subscription.

@@ -135,7 +135,7 @@ export function useSearchCache() {
         .sort((a, b) => b.count - a.count || b.lastVisited - a.lastVisited)
         .slice(0, count)
         .map((h) => h.itemId),
-    [], // intentionally empty — we read from the singleton directly
+    [], // intentionally empty - we read from the singleton directly
   );
 
   return {

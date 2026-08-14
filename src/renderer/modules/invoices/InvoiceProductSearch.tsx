@@ -23,7 +23,7 @@ interface InvoiceProductSearchProps {
   onAdd: (product: InvoiceProductPick) => void;
 }
 
-/** Animated gradient product search with instant results — New Sale style. */
+/** Animated gradient product search with instant results - New Sale style. */
 export function InvoiceProductSearch({ products, autoFocus, onAdd }: InvoiceProductSearchProps) {
   const [search, setSearch] = useState('');
   const [showResults, setShowResults] = useState(false);
@@ -50,7 +50,7 @@ export function InvoiceProductSearch({ products, autoFocus, onAdd }: InvoiceProd
     searchRef.current?.focus();
   }, [onAdd]);
 
-  /** Scanner / typed barcode — add as soon as the code fully matches a product. */
+  /** Scanner / typed barcode - add as soon as the code fully matches a product. */
   useEffect(() => {
     if (!products || !search.trim()) return;
     const match = findProductByBarcode(products, search);

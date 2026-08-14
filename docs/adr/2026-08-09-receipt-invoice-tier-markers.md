@@ -1,4 +1,4 @@
-# ADR — Receipt & Invoice Tier Markers (RP/WSP) and Line Discount Display
+# ADR - Receipt & Invoice Tier Markers (RP/WSP) and Line Discount Display
 
 - **Date:** 2026-08-09
 - **Status:** Accepted

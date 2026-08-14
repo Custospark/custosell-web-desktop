@@ -58,27 +58,27 @@ Adopt a **single three-role model** for shared pipeline board members, aligned w
 - Viewer banner when `!canContributeToBoard`
 - All form fields read-only for viewers (title, contact, labels, checklists, attachments, dates, priority)
 - Archive, convert, and proposal actions hidden or blocked unless role allows
-- Contributors cannot delete other people's comments — only the comment author or a board manager/owner.
+- Contributors cannot delete other people's comments - only the comment author or a board manager/owner.
 
 **Board conversation (`BoardConversationModal`):**
 
 - Composer (post, reply, attach) gated with `canContribute`
-- Viewers: read-only chat — no post, reply, react, edit, or delete on messages
+- Viewers: read-only chat - no post, reply, react, edit, or delete on messages
 - Pin/edit/delete still driven by per-message API flags (`can_pin`, `can_edit`, `can_delete`) for contributors/managers
-- Board settings link from automations tab — managers only
+- Board settings link from automations tab - managers only
 
 **Comments (`LeadCommentsPanel`):**
 
-- Viewers: read-only — no post, reply, react, edit, or delete on card comments
+- Viewers: read-only - no post, reply, react, edit, or delete on card comments
 
 **Board collaboration (`BoardCollaborationDrawer`):**
 
-- Viewers: notices and polls read-only — no post, dismiss, vote, or remove own vote
+- Viewers: notices and polls read-only - no post, dismiss, vote, or remove own vote
 - Viewers may mark notices read/unread (read tracking is not a write action on board content)
 - Contributors and managers may vote and remove their own vote at any time
 - Poll creators set an optional **voting deadline** (`closes_at`); voting is blocked after that time for everyone
 - Only the **poll creator** may edit a published poll (question, options, deadline, results visibility)
-- No one may remove another member's vote — Team participation is read-only
+- No one may remove another member's vote - Team participation is read-only
 
 **Live updates (all roles):**
 
@@ -101,24 +101,24 @@ Adopt a **single three-role model** for shared pipeline board members, aligned w
 | React on conversation messages or card comments | `ensureCanContributeToBoard` (viewers blocked) |
 | Vote on polls, remove own poll vote | `ensureCanContributeToBoard` and poll not closed (`closes_at` in future or unset) |
 | Edit published poll | Poll creator only (`PATCH /pipeline/polls/{id}`) |
-| Remove another user's poll vote | Not allowed — own vote only |
+| Remove another user's poll vote | Not allowed - own vote only |
 | Mark notices read | Any board member with view access |
 | Mark notices read, dismiss collaboration items (delete/dismiss) | `ensureCanContributeToBoard` (viewers blocked for dismiss) |
 | Board settings, archive board/lead, add/edit/delete stages, automations, upload background, create polls | `userCanManageBoard` / `ensureCanManageBoard` → manager on shared boards |
 
 **Collaboration service fixes (viewers were incorrectly allowed):**
 
-- `POST /pipeline/boards/{id}/background` — now `ensureCanManageBoard`
-- `POST /pipeline/boards/{boardId}/polls` — now `assertCanManageBoard`
-- `POST /pipeline/leads/{leadId}/reminders` — now `ensureCanEditBoard`
+- `POST /pipeline/boards/{id}/background` - now `ensureCanManageBoard`
+- `POST /pipeline/boards/{boardId}/polls` - now `assertCanManageBoard`
+- `POST /pipeline/leads/{leadId}/reminders` - now `ensureCanEditBoard`
 
-Legacy API value `editor` is normalized on the backend (`normalizeBoardMemberRole`: `editor` → `contributor` for stored rows). **Do not write `editor` to the DB** — `ProjectService::syncProjectBoardMember` maps project roles to `contributor` or `viewer` only.
+Legacy API value `editor` is normalized on the backend (`normalizeBoardMemberRole`: `editor` → `contributor` for stored rows). **Do not write `editor` to the DB** - `ProjectService::syncProjectBoardMember` maps project roles to `contributor` or `viewer` only.
 
 `PipelineBoardResource` exposes server-authoritative flags for the current user:
 
-- `can_contribute` — mirrors `userCanContributeToBoard`
-- `can_manage_settings` — mirrors `userCanManageBoard`
-- `current_member_role` — normalized shared-board invite role (or `manager` for owner/BO)
+- `can_contribute` - mirrors `userCanContributeToBoard`
+- `can_manage_settings` - mirrors `userCanManageBoard`
+- `current_member_role` - normalized shared-board invite role (or `manager` for owner/BO)
 
 The frontend prefers these flags over client-side inference when present.
 
@@ -128,8 +128,8 @@ The frontend prefers these flags over client-side inference when present.
 GET /api/v1/pipeline/team-members?workspace=pipeline|estimates&scope=workspace|business
 ```
 
-- `scope=workspace` (default) — staff with Pipeline/Estimates module access (team board member list)
-- `scope=business` — all active business staff (shared-board invite picker)
+- `scope=workspace` (default) - staff with Pipeline/Estimates module access (team board member list)
+- `scope=business` - all active business staff (shared-board invite picker)
 
 ### Database migration
 
@@ -158,7 +158,7 @@ members[].role: viewer | contributor | manager
 ### Negative
 
 - Existing shared-board `editor` members lose settings access after migration (they become contributors). Boards that relied on `editor` as a pseudo-manager must re-invite those users as **Manager**.
-- Two member tables remain (`pipeline_board_members` vs `project_members`) with identical role names but separate storage — project boards still resolve permissions through `ProjectAccessService`.
+- Two member tables remain (`pipeline_board_members` vs `project_members`) with identical role names but separate storage - project boards still resolve permissions through `ProjectAccessService`.
 
 ## Alternatives Considered
 

@@ -1,4 +1,4 @@
-# ADR: Storefront polish — categories, stock, cancel, QR, delivery
+# ADR: Storefront polish - categories, stock, cancel, QR, delivery
 
 **Date:** 2026-07-12  
 **Status:** Accepted  

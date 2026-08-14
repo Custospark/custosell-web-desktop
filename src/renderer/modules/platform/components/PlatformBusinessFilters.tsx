@@ -61,10 +61,10 @@ export function PlatformBusinessFilters({
           className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 h-fit"
         >
           <option value="">All activity</option>
-          <option value="active">Active — sale or login ≤30d</option>
-          <option value="dormant">Dormant — 31–90d since last activity</option>
-          <option value="churned">Churned — 90d+ since last activity</option>
-          <option value="never_used">Never used — no sales or logins</option>
+          <option value="active">Active - sale or login ≤30d</option>
+          <option value="dormant">Dormant - 31-90d since last activity</option>
+          <option value="churned">Churned - 90d+ since last activity</option>
+          <option value="never_used">Never used - no sales or logins</option>
           <option value="suspended">Suspended account</option>
         </select>
         <select

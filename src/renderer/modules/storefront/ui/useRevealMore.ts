@@ -58,7 +58,7 @@ export function useRevealMore({
     return () => io.disconnect();
   }, [chunk]);
 
-  // Keep scrolling once fresh pages land — but only while the sentinel is on screen.
+  // Keep scrolling once fresh pages land - but only while the sentinel is on screen.
   useEffect(() => {
     if (sentinelVisible && visible >= count && hasNextPage) {
       onLoadMore?.();

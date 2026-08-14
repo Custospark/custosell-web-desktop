@@ -64,7 +64,7 @@ export function PlatformBusinessDeleteModal({
           icon={Trash2}
           tone="red"
           title={isBulk ? `Delete ${businesses.length} businesses` : businesses[0]?.name ?? 'Delete business'}
-          description="Permanently deletes the business and all associated data — sales, products, customers, staff, and settings."
+          description="Permanently deletes the business and all associated data - sales, products, customers, staff, and settings."
         />
 
         {isBulk && (

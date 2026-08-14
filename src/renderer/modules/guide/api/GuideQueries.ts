@@ -113,7 +113,7 @@ async function fetchMyGuideFeedbackMerged(): Promise<GuideFeedbackWithSyncMeta[]
       },
     });
   } catch (err) {
-    console.warn('[GuideFeedback] Read failed — falling back to cached submissions:', err);
+    console.warn('[GuideFeedback] Read failed - falling back to cached submissions:', err);
     return readMyFeedbackFromClient();
   }
 }

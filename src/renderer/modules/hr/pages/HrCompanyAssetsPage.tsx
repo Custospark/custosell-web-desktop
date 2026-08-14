@@ -43,7 +43,7 @@ export default function HrCompanyAssetsPage() {
       <HrPageHeader
         icon={Package}
         title="Company Assets"
-        description="Track laptops, phones, and other equipment — who holds them, and their condition."
+        description="Track laptops, phones, and other equipment - who holds them, and their condition."
         actions={
           <Button onClick={() => setAddOpen(true)} className="inline-flex items-center gap-2">
             <Plus className="h-4 w-4" />
@@ -116,9 +116,9 @@ export default function HrCompanyAssetsPage() {
                         {asset.name}
                       </Link>
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{asset.asset_tag ?? '—'}</td>
-                    <td className="px-4 py-3 capitalize text-gray-600">{asset.category ?? '—'}</td>
-                    <td className="px-4 py-3 capitalize text-gray-600">{asset.condition ?? '—'}</td>
+                    <td className="px-4 py-3 text-gray-600">{asset.asset_tag ?? '-'}</td>
+                    <td className="px-4 py-3 capitalize text-gray-600">{asset.category ?? '-'}</td>
+                    <td className="px-4 py-3 capitalize text-gray-600">{asset.condition ?? '-'}</td>
                     <td className="px-4 py-3">
                       {asset.assigned_employee_id && name ? (
                         <Link to={ROUTES.HR.EMPLOYEE(asset.assigned_employee_id)} className="text-indigo-600 hover:underline">
@@ -133,7 +133,7 @@ export default function HrCompanyAssetsPage() {
                         'inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize',
                         asset.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600',
                       )}>
-                        {asset.status ? asset.status.replace('_', ' ') : '—'}
+                        {asset.status ? asset.status.replace('_', ' ') : '-'}
                       </span>
                     </td>
                     <td className="px-4 py-3">

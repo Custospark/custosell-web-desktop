@@ -135,7 +135,7 @@ export function SalesRepFormModal({ show, editing, onClose }: {
 
   const handleSave = async () => {
     if (!editing && !searchedUser && !form.password) {
-      showToast('error', 'Set a password — a personal account will be created for this rep');
+      showToast('error', 'Set a password - a personal account will be created for this rep');
       return;
     }
     setSaving(true);
@@ -226,7 +226,7 @@ export function SalesRepFormModal({ show, editing, onClose }: {
                 <div>
                   <p className="text-sm font-medium text-green-800">{searchedUser.name}</p>
                   <p className="text-xs text-green-600">{searchedUser.email}</p>
-                  <p className="text-xs text-green-500">Existing user — will be added as a sales rep</p>
+                  <p className="text-xs text-green-500">Existing user - will be added as a sales rep</p>
                 </div>
               </div>
             )}

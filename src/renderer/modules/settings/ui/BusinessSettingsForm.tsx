@@ -323,7 +323,7 @@ export default function BusinessSettingsForm() {
             <BusinessSectionCard
               icon={Image}
               title="Business logo"
-              description="Upload your logo — it appears in the app header next to your business name."
+              description="Upload your logo - it appears in the app header next to your business name."
             >
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                 <div className="relative mx-auto flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border-2 border-gray-200 bg-gray-100 sm:mx-0">
@@ -420,7 +420,7 @@ export default function BusinessSettingsForm() {
                 </div>
               ) : (
                 <BusinessViewField label="Receipt footer" icon={<FileText className="h-4 w-4 text-blue-600" />}>
-                  {baseline.form.receipt_footer || '—'}
+                  {baseline.form.receipt_footer || '-'}
                 </BusinessViewField>
               )}
             </BusinessSectionCard>

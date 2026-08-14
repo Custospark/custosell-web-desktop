@@ -27,7 +27,7 @@ interface ProgressChartProps {
   receiptCount: number;
 }
 
-/** Live shift momentum — cumulative net sales after each receipt. */
+/** Live shift momentum - cumulative net sales after each receipt. */
 export function CurrentShiftProgressChart({ data, currentTotal, receiptCount }: ProgressChartProps) {
   if (data.length === 0) {
     return (
@@ -121,7 +121,7 @@ export function CurrentShiftProgressChart({ data, currentTotal, receiptCount }: 
   );
 }
 
-/** Past completed shifts — net sales saved when each shift was closed. */
+/** Past completed shifts - net sales saved when each shift was closed. */
 export function ShiftHistoryTrendChart({ data }: { data: ShiftHistoryPoint[] }) {
   if (data.length === 0) return null;
 

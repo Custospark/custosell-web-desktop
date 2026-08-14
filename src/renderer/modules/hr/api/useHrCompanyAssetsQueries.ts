@@ -113,7 +113,7 @@ function patchAssetLists(qc: ReturnType<typeof useQueryClient>, asset: FixedAsse
     if (!exists) return [asset, ...old];
     return old.map((a) => (a.id === asset.id ? { ...a, ...asset } : a));
   };
-  // Only patch list caches — detail/assignments/expenses share the same key prefix.
+  // Only patch list caches - detail/assignments/expenses share the same key prefix.
   qc.setQueriesData<FixedAsset[]>(
     {
       queryKey: hrCompanyAssetsKeys.all,

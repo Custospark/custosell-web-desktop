@@ -106,7 +106,7 @@ export {
 } from './documentFileViewUtils';
 
 export function formatDocumentBytes(size?: number | null): string {
-  if (!size || size <= 0) return '—';
+  if (!size || size <= 0) return '-';
   if (size < 1024) return `${size} B`;
   if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;

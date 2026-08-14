@@ -64,7 +64,7 @@ export function useProjects(filters?: Record<string, string>) {
   });
 }
 
-/** Client/billable projects only — excludes personal internal projects from expense allocation. */
+/** Client/billable projects only - excludes personal internal projects from expense allocation. */
 export function useBillableProjects() {
   return useProjects({ billable_only: '1' });
 }

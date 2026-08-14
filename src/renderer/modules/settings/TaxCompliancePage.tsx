@@ -139,16 +139,16 @@ export default function TaxCompliancePage() {
           ) : (
             <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <TaxProfileField label="Jurisdiction" icon={<Globe className="h-4 w-4 text-blue-600" />}>
-                {jurisdictionLabel === 'Not set' ? '—' : jurisdictionLabel}
+                {jurisdictionLabel === 'Not set' ? '-' : jurisdictionLabel}
               </TaxProfileField>
               <TaxProfileField label="TIN / Tax ID" icon={<Tag className="h-4 w-4 text-blue-600" />}>
-                {business?.tax_id || '—'}
+                {business?.tax_id || '-'}
               </TaxProfileField>
               <TaxProfileField label="Tax regime" icon={<Receipt className="h-4 w-4 text-blue-600" />}>
                 {TAX_REGIME_LABELS[taxRegime]}
               </TaxProfileField>
               <TaxProfileField label="Filing authority" icon={<Landmark className="h-4 w-4 text-blue-600" />}>
-                {hasNamedFilingAuthority ? filingAuthority : '—'}
+                {hasNamedFilingAuthority ? filingAuthority : '-'}
               </TaxProfileField>
               <TaxProfileField label="Default VAT rate" icon={<Hash className="h-4 w-4 text-blue-600" />}>
                 {vatRate.toFixed(2)}%
@@ -169,7 +169,7 @@ export default function TaxCompliancePage() {
           <div className="min-w-0">
             <h2 className="text-base font-semibold text-gray-900">EFRIS</h2>
             <p className="text-sm text-gray-500 mt-0.5">
-              Uganda fiscal receipts — status only (credentials stay on the server).
+              Uganda fiscal receipts - status only (credentials stay on the server).
             </p>
           </div>
         </div>
@@ -188,13 +188,13 @@ export default function TaxCompliancePage() {
                 {efrisStatus.enabled ? 'Enabled' : 'Disabled'}
               </TaxProfileField>
               <TaxProfileField label="Country" icon={<Globe className="h-4 w-4 text-blue-600" />}>
-                {efrisStatus.country || '—'}
+                {efrisStatus.country || '-'}
               </TaxProfileField>
               <TaxProfileField label="Environment" icon={<Landmark className="h-4 w-4 text-blue-600" />}>
-                {efrisStatus.environment || '—'}
+                {efrisStatus.environment || '-'}
               </TaxProfileField>
               <TaxProfileField label="Mode" icon={<Tag className="h-4 w-4 text-blue-600" />}>
-                {efrisStatus.mode || '—'}
+                {efrisStatus.mode || '-'}
               </TaxProfileField>
               <TaxProfileField label="Offline behaviour" icon={<WifiOff className="h-4 w-4 text-blue-600" />}>
                 {efrisStatus.offline_mode === 'sync_later' ? 'Sync later (checkout never blocked)' : efrisStatus.offline_mode}
@@ -311,7 +311,7 @@ export default function TaxCompliancePage() {
                           <tr key={i}>
                             <td className="px-3 py-2 whitespace-nowrap">{row.date}</td>
                             <td className="px-3 py-2">{row.description}</td>
-                            <td className="px-3 py-2">{row.supplier_tin || '—'}</td>
+                            <td className="px-3 py-2">{row.supplier_tin || '-'}</td>
                             <td className="px-3 py-2 text-right tabular-nums">{formatCurrency(row.vat_amount, currency)}</td>
                           </tr>
                         ))}
@@ -323,8 +323,8 @@ export default function TaxCompliancePage() {
 
               <p className="text-xs text-gray-400 border-t border-gray-100 pt-3">
                 {hasNamedFilingAuthority
-                  ? `This is a filing workbook only — submit your return through the ${filingAuthority} web portal.`
-                  : 'This is a filing workbook only — submit your return through your tax authority\'s web portal.'}
+                  ? `This is a filing workbook only - submit your return through the ${filingAuthority} web portal.`
+                  : 'This is a filing workbook only - submit your return through your tax authority\'s web portal.'}
               </p>
             </>
           )}

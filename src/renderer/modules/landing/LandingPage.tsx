@@ -60,7 +60,7 @@ const BENEFITS = [
   {
     icon: Layers,
     title: 'Everything in one place',
-    description: 'Point of sale, E-commerce Storefront, Inventory & Supply Chain, Accounting, HR &amp; Payroll, Projects, Sales Pipeline (CRM), Expenses, Financial Forecasting — all connected, no more juggling separate apps.',
+    description: 'Point of sale, E-commerce Storefront, Inventory & Supply Chain, Accounting, HR &amp; Payroll, Projects, Sales Pipeline (CRM), Expenses, Financial Forecasting - all connected, no more juggling separate apps.',
     color: 'from-blue-500 to-blue-600',
   },
   {
@@ -72,7 +72,7 @@ const BENEFITS = [
   {
     icon: TrendingUp,
     title: 'Buy & sell between businesses',
-    description: 'Source stock from other businesses through the built-in marketplace. Create purchase orders, track fulfillment, and get invoiced — all inside Custosell.',
+    description: 'Source stock from other businesses through the built-in marketplace. Create purchase orders, track fulfillment, and get invoiced - all inside Custosell.',
     color: 'from-amber-500 to-amber-600',
   },
   {
@@ -110,7 +110,7 @@ export default function LandingPage() {
               <span className="text-xs font-semibold text-white sm:text-sm">Work smarter, grow faster</span>
             </motion.div>
 
-            {/* Brand + tagline stack — tight so Custosell and Business OS read as one unit */}
+            {/* Brand + tagline stack - tight so Custosell and Business OS read as one unit */}
             <div className="space-y-1.5 sm:space-y-2">
               <motion.p
                 initial={{ opacity: 0, y: 12 }}
@@ -160,7 +160,7 @@ export default function LandingPage() {
                 ))}
               </ul>
               <p className="mt-3 text-sm font-bold leading-relaxed text-blue-700 sm:text-base">
-                All in one connected system — works with or without the internet.
+                All in one connected system - works with or without the internet.
               </p>
             </motion.div>
 
@@ -204,7 +204,7 @@ export default function LandingPage() {
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-10">
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Why business owners choose {PRODUCT_NAME}</h2>
           <p className="text-gray-500 max-w-2xl mx-auto text-lg">
-            One system that replaces six — from the sales counter to the boardroom.
+            One system that replaces six - from the sales counter to the boardroom.
           </p>
         </motion.div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -236,7 +236,7 @@ export default function LandingPage() {
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-10">
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">What You Get in {PRODUCT_NAME}</h2>
           <p className="text-gray-500 max-w-2xl mx-auto text-lg">
-            From the shop floor to the back office — every tool you need, built into one system.
+            From the shop floor to the back office - every tool you need, built into one system.
           </p>
         </motion.div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -270,7 +270,7 @@ export default function LandingPage() {
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-10">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Trusted by businesses like yours</h2>
             <p className="text-gray-500 max-w-2xl mx-auto text-lg">
-              From retail shops in Kampala to growing enterprises across Africa — {PRODUCT_NAME} runs the businesses you know.
+              From retail shops in Kampala to growing enterprises across Africa - {PRODUCT_NAME} runs the businesses you know.
             </p>
           </motion.div>
 

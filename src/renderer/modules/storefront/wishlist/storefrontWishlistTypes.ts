@@ -1,6 +1,6 @@
 import type { StorefrontProduct } from '../api/storefrontTypes';
 
-/** Snapshot saved for later — survives catalog refresh / delisting for display. */
+/** Snapshot saved for later - survives catalog refresh / delisting for display. */
 export type StorefrontWishlistItem = {
   key: string;
   productId: number;

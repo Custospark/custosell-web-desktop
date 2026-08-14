@@ -30,7 +30,7 @@ interface StorefrontFilterBarProps {
 
 const SHOP_SORTS: { value: StorefrontSort | ''; label: string }[] = [
   { value: '', label: 'Default' },
-  { value: 'name', label: 'Name (A–Z)' },
+  { value: 'name', label: 'Name (A-Z)' },
   { value: 'newest', label: 'Newest' },
   { value: 'rating', label: 'Top rated' },
 ];
@@ -41,7 +41,7 @@ const PRODUCT_SORTS: { value: StorefrontSort | ''; label: string }[] = [
   { value: 'price_asc', label: 'Price: low → high' },
   { value: 'price_desc', label: 'Price: high → low' },
   { value: 'rating', label: 'Top rated' },
-  { value: 'name', label: 'Name (A–Z)' },
+  { value: 'name', label: 'Name (A-Z)' },
 ];
 
 const RATING_OPTIONS: { value: string; label: string }[] = [
@@ -109,9 +109,9 @@ export function StorefrontFilterBar({
     const withCount = currencies.length
       ? STOREFRONT_CURRENCIES.map((c) => {
           const facet = currencies.find((f) => f.code === c.code);
-          return facet?.count ? { value: c.code, label: `${c.code} — ${c.name} (${facet.count})` } : { value: c.code, label: `${c.code} — ${c.name}` };
+          return facet?.count ? { value: c.code, label: `${c.code} - ${c.name} (${facet.count})` } : { value: c.code, label: `${c.code} - ${c.name}` };
         })
-      : STOREFRONT_CURRENCIES.map((c) => ({ value: c.code, label: `${c.code} — ${c.name}` }));
+      : STOREFRONT_CURRENCIES.map((c) => ({ value: c.code, label: `${c.code} - ${c.name}` }));
     return withCount;
   }, [currencies]);
 

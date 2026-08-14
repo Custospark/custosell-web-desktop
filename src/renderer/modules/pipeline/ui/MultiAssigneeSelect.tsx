@@ -12,7 +12,7 @@ interface MultiAssigneeSelectProps {
   onChange: (ids: number[]) => void;
   disabled?: boolean;
   className?: string;
-  /** Board id — invited board members are merged into the assignee options. */
+  /** Board id - invited board members are merged into the assignee options. */
   boardId?: number;
 }
 

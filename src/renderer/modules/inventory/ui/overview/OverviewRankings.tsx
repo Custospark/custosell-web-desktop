@@ -51,7 +51,7 @@ export function OverviewRankings({ tier, topProfit, topMargin, lowMargin }: Over
       </OverviewCard>
       <OverviewCard
         title="Lowest Margin"
-        subtitle="Thinnest retail markup — review pricing"
+        subtitle="Thinnest retail markup - review pricing"
       >
         <OverviewRankingList rows={marginRows(lowMargin, tier)} emptyMessage="No tradeable products yet" />
       </OverviewCard>

@@ -25,7 +25,7 @@ export function OnboardingGate() {
   const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
   const userId = useAppSelector((s) => s.auth.user?.id);
   const { isCompletelyOffline } = useNetworkStatus();
-  // Always read onboarding when authed — embedded user.onboarding covers offline
+  // Always read onboarding when authed - embedded user.onboarding covers offline
   const { data } = useOnboardingState(isAuthenticated);
   const [celebrate, setCelebrate] = useState(false);
   const [celebrateReason, setCelebrateReason] = useState<'completed' | 'skipped'>('completed');
@@ -64,7 +64,7 @@ export function OnboardingGate() {
         )
         : null}
       <ProductTour
-        // Stable while the tour is open — keying on tour_step remounted and killed Auto Play
+        // Stable while the tour is open - keying on tour_step remounted and killed Auto Play
         key={showTour ? `tour-active-${userId ?? 'anon'}` : 'tour-off'}
         open={showTour}
         startStep={data.tour_step ?? 0}

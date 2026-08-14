@@ -103,7 +103,7 @@ export default function RenewTopUpModal({
             ))}
           </div>
           <div className="mt-3">
-            <label htmlFor="topup-custom" className="text-xs text-gray-500">Or enter a custom number (1–60 months)</label>
+            <label htmlFor="topup-custom" className="text-xs text-gray-500">Or enter a custom number (1-60 months)</label>
             <input
               id="topup-custom"
               type="number"

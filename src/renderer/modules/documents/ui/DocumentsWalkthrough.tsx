@@ -14,7 +14,7 @@ import { cn } from '../../../shared/utils/cn';
 const STEPS = [
   {
     title: 'Organize with cabinets',
-    body: 'Cabinets group folders and files by team or function — like HR, Finance, or Operations. Starter cabinets are ready to rename.',
+    body: 'Cabinets group folders and files by team or function - like HR, Finance, or Operations. Starter cabinets are ready to rename.',
     icon: LayoutGrid,
     tone: 'indigo',
   },

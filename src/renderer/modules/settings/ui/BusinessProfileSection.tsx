@@ -152,12 +152,12 @@ export function BusinessProfileSection({
       ) : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <BusinessViewField label={isPersonal ? 'Full name' : 'Business Name'} icon={<Store className="h-4 w-4 text-blue-600" />}>
-            {baseline.name || '—'}
+            {baseline.name || '-'}
           </BusinessViewField>
           {isPersonal && (
             <>
               <BusinessViewField label="Email" icon={<Mail className="h-4 w-4 text-blue-600" />}>
-                {baseline.email || '—'}
+                {baseline.email || '-'}
               </BusinessViewField>
               <BusinessViewField label="Phone" icon={<Phone className="h-4 w-4 text-blue-600" />}>
                 {formatPhoneDisplay(baseline.phone)}
@@ -167,13 +167,13 @@ export function BusinessProfileSection({
           {!isPersonal && (
             <>
               <BusinessViewField label="Website" icon={<Globe2 className="h-4 w-4 text-blue-600" />}>
-                {baseline.website || '—'}
+                {baseline.website || '-'}
               </BusinessViewField>
               <BusinessViewField label="Business Description" icon={<FileText className="h-4 w-4 text-blue-600" />}>
-                {baseline.description || '—'}
+                {baseline.description || '-'}
               </BusinessViewField>
               <BusinessViewField label="Business Email" icon={<Mail className="h-4 w-4 text-blue-600" />}>
-                {baseline.business_email || '—'}
+                {baseline.business_email || '-'}
               </BusinessViewField>
               <BusinessViewField label="Business Phone / WhatsApp Number" icon={<Phone className="h-4 w-4 text-blue-600" />}>
                 {formatPhoneDisplay(baseline.business_phone)}

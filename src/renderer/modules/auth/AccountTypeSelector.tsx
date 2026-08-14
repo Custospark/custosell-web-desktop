@@ -22,7 +22,7 @@ const OPTIONS: {
   {
     id: 'business',
     title: 'For my business',
-    description: 'Point of Sale, E-commerce Storefront, Inventory, Accounting, HR & Payroll, Invoicing, Expenses, CRM, Forecasting & more — all in one system that works with or without the internet.',
+    description: 'Point of Sale, E-commerce Storefront, Inventory, Accounting, HR & Payroll, Invoicing, Expenses, CRM, Forecasting & more - all in one system that works with or without the internet.',
     icon: Store,
     iconClass: 'bg-blue-100 group-hover:bg-blue-200',
     iconColor: 'text-blue-700',
@@ -32,7 +32,7 @@ const OPTIONS: {
   {
     id: 'shopping',
     title: 'Online shopping',
-    description: 'Browse products and services from every business on Custosell, add them to your cart, save to your wishlist, place orders, and track everything in your orders — free, with no setup.',
+    description: 'Browse products and services from every business on Custosell, add them to your cart, save to your wishlist, place orders, and track everything in your orders - free, with no setup.',
     icon: ShoppingBag,
     iconClass: 'bg-emerald-100 group-hover:bg-emerald-200',
     iconColor: 'text-emerald-700',
@@ -42,7 +42,7 @@ const OPTIONS: {
   {
     id: 'personal',
     title: 'For personal use',
-    description: 'Project Management, Productivity, Expense Tracking, Bookkeeping, Document Management & more — stay organized and productive, even offline. Refer businesses and track your referral earnings.',
+    description: 'Project Management, Productivity, Expense Tracking, Bookkeeping, Document Management & more - stay organized and productive, even offline. Refer businesses and track your referral earnings.',
     icon: CircleUser,
     iconClass: 'bg-indigo-100 group-hover:bg-indigo-200',
     iconColor: 'text-indigo-700',

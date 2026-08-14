@@ -123,7 +123,7 @@ function NavbarNetworkStatus({
         type="button"
         onClick={onRetry}
         data-tour="navbar-network"
-        title="Slow connection — tap to retry"
+        title="Slow connection - tap to retry"
         aria-label="Slow internet connection"
         className={cn(networkStatusBtn, theme.button, 'gap-1 px-2 sm:px-2 h-11 w-11 sm:h-9 sm:w-auto')}
       >
@@ -140,7 +140,7 @@ function NavbarNetworkStatus({
       type="button"
       onClick={onRetry}
       data-tour="navbar-network"
-      title="No internet connection — tap to retry"
+      title="No internet connection - tap to retry"
       aria-label="No internet connection"
       className={cn(networkStatusBtn, theme.button, 'gap-1 px-2 sm:px-2 h-11 w-11 sm:h-9 sm:w-auto')}
     >
@@ -164,7 +164,7 @@ export function Navbar() {
   const [menuPos, setMenuPos] = useState({ top: 0, left: 0, width: ACCOUNT_MENU_WIDTH_PX });
   /** Workspace accounts (personal/business) get connectivity/orders/notifications in the search top bar. */
   const isWorkspace = canUseGlobalSearch(user);
-  /** Match Layout / ProductTour `lg` (1024) — hamburger + logo stay out of the DOM on mobile. */
+  /** Match Layout / ProductTour `lg` (1024) - hamburger + logo stay out of the DOM on mobile. */
   const isDesktopChrome = useSyncExternalStore(
     subscribeLgBreakpoint,
     getLgBreakpointSnapshot,

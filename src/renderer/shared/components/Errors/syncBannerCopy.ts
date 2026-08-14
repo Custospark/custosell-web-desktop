@@ -11,7 +11,7 @@ const PHASE_COPY: Record<string, string> = {
 };
 
 export function getSyncHeadline(phaseLabel: string, isPaused: boolean, isOffline: boolean): string {
-  if (isPaused && isOffline) return 'Offline — sync will continue when connected';
+  if (isPaused && isOffline) return 'Offline - sync will continue when connected';
   if (isPaused) return 'Sync paused';
   if (phaseLabel && PHASE_COPY[phaseLabel]) return `${PHASE_COPY[phaseLabel]}…`;
   return 'Sync in progress';

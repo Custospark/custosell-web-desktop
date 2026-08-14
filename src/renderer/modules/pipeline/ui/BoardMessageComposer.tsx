@@ -46,7 +46,7 @@ export default function BoardMessageComposer({
     return (
       <div className="shrink-0 rounded-xl border border-blue-100 bg-blue-50/40 p-3">
         <p className="text-xs text-blue-900">
-          You have viewer access — you can read board discussion but cannot post messages.
+          You have viewer access - you can read board discussion but cannot post messages.
         </p>
       </div>
     );

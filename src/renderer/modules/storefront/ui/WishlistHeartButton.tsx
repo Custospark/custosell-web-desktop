@@ -43,7 +43,7 @@ export function WishlistHeartButton({ product, className, size = 'sm' }: Wishlis
     e.stopPropagation();
 
     if (!token) {
-      // Guests have no server wishlist yet — sign in then save.
+      // Guests have no server wishlist yet - sign in then save.
       requestSignIn({
         intent: 'general',
         onSuccess: () => add.mutate({ productId, product }),

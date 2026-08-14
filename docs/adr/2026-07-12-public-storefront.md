@@ -6,13 +6,13 @@
 
 ## Context
 
-Businesses need shareable links for TikTok / WhatsApp / Facebook so customers can browse products and request orders without logging into Custosell. This is a **consumer** channel — separate from B2B Marketplace (`listed_for_supply`).
+Businesses need shareable links for TikTok / WhatsApp / Facebook so customers can browse products and request orders without logging into Custosell. This is a **consumer** channel - separate from B2B Marketplace (`listed_for_supply`).
 
 ## Decisions
 
 1. Reuse business **`slug`** as public username (`/@slug`).
 2. Opt-in: `storefront_enabled` on business; `listed_for_storefront` + optional `image_path` on products.
-3. Checkout = **order request** (name, phone, items, notes) — no online payment in v1. **Sign-in required** at submit (see [storefront-multi-cart-submit-auth](./2026-07-12-storefront-multi-cart-submit-auth.md)).
+3. Checkout = **order request** (name, phone, items, notes) - no online payment in v1. **Sign-in required** at submit (see [storefront-multi-cart-submit-auth](./2026-07-12-storefront-multi-cart-submit-auth.md)).
 4. Orders land in existing **Orders** queue with `source=storefront`, attributed to business owner; buyer linked via `storefront_buyer_user_id`.
 5. Landing **Discover** (`/discover`) searches across listed shops by category/query.
 6. **Public visibility** matches operating businesses: `storefront_enabled` + slug match + status **not** in `config('platform.blocked_business_statuses')` (`restricted` / `suspended`). `warning` / `notified` shops stay public. Scope: `Business::scopePublicStorefront`.
@@ -32,7 +32,7 @@ Businesses need shareable links for TikTok / WhatsApp / Facebook so customers ca
 | Case | Behaviour |
 |------|-----------|
 | Shop disabled / bad slug / blocked status | Public 404 (“Shop not found”) |
-| Enabled shop, zero listed products | Shop page loads with empty catalog (“No products listed yet”) — not 404 |
+| Enabled shop, zero listed products | Shop page loads with empty catalog (“No products listed yet”) - not 404 |
 | Enable without username | 422 `slug`; Save blocked in UI |
 | Username taken / reserved / invalid | Check shows reason; Save blocked until available |
 | Unsaved draft username | Preview labeled unsaved; live link/QR unchanged until Save |

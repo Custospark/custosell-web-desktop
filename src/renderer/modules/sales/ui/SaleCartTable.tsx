@@ -94,7 +94,7 @@ function QtyStepper(
   );
 }
 
-/** In-stock hint under a cart line name — hidden for services. */
+/** In-stock hint under a cart line name - hidden for services. */
 function StockHint({ product }: { product: Product | undefined }) {
   if (!product || !tracksStock(product)) return null;
   const qty = product.stock_quantity;
@@ -105,7 +105,7 @@ function StockHint({ product }: { product: Product | undefined }) {
   );
 }
 
-/** Desktop/tablet cart table — hidden on small screens (mobile cards take over). */
+/** Desktop/tablet cart table - hidden on small screens (mobile cards take over). */
 export function SaleCartDesktopTable({
   items, products, onEditQty, onTierChange, onDiscountChange, onRemove, onDecreaseQty, onIncreaseQty,
 }: SaleCartTableProps) {
@@ -171,7 +171,7 @@ export function SaleCartDesktopTable({
   );
 }
 
-/** Mobile-only cart cards — every control (incl. per-line discount) stays reachable on phones. */
+/** Mobile-only cart cards - every control (incl. per-line discount) stays reachable on phones. */
 function SaleCartMobileCards({
   items, products, onEditQty, onTierChange, onDiscountChange, onRemove, onDecreaseQty, onIncreaseQty,
 }: SaleCartTableProps) {

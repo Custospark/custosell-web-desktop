@@ -1,5 +1,5 @@
 /**
- * Vera Logic — repo rules & contracts (not ESLint).
+ * Vera Logic - repo rules & contracts (not ESLint).
  * Runs on every Vera Fast handoff after lint.
  *
  * Usage: node scripts/vera-logic.mjs
@@ -115,7 +115,7 @@ function checkRelativeImports(changedFiles) {
     ok: true,
     detail: changedFiles.length
       ? `Relative imports resolve for ${changedFiles.length} changed file(s)`
-      : 'No changed TS/TSX under src/ — import check skipped',
+      : 'No changed TS/TSX under src/ - import check skipped',
   };
 }
 
@@ -143,7 +143,7 @@ function checkFileSizeLimit(changedFiles) {
       ok: true,
       detail: targets.length
         ? `Changed source files ≤ ${MAX_LINES} lines (${targets.length} checked)`
-        : 'No changed TS/TSX under src/ — size check skipped',
+        : 'No changed TS/TSX under src/ - size check skipped',
     });
   }
 

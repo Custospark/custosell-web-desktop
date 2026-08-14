@@ -22,7 +22,7 @@ export const RATIO_INFO: Record<string, { fullName: string; meaning: string; for
     fullName: 'Current Ratio',
     meaning: 'Measures your ability to pay short-term obligations with short-term assets.',
     formula: 'Current Assets ÷ Current Liabilities',
-    importance: 'A ratio below 1.0 means liabilities exceed assets — risk of insolvency. Above 2.0 is healthy.',
+    importance: 'A ratio below 1.0 means liabilities exceed assets - risk of insolvency. Above 2.0 is healthy.',
   },
   quick_ratio: {
     fullName: 'Quick Ratio (Acid Test)',
@@ -32,7 +32,7 @@ export const RATIO_INFO: Record<string, { fullName: string; meaning: string; for
   },
   cash_ratio: {
     fullName: 'Cash Ratio',
-    meaning: 'The most conservative liquidity measure — only cash and equivalents.',
+    meaning: 'The most conservative liquidity measure - only cash and equivalents.',
     formula: '(Cash + Bank) ÷ Current Liabilities',
     importance: 'Above 0.5 means you have emergency cash reserves.',
   },
@@ -64,7 +64,7 @@ export const RATIO_INFO: Record<string, { fullName: string; meaning: string; for
     fullName: 'Debt-to-Equity Ratio (D/E)',
     meaning: 'How much debt vs equity the business uses to finance operations.',
     formula: 'Total Liabilities ÷ Shareholders\' Equity',
-    importance: 'Above 2.0 means heavy debt reliance — higher risk in downturns. Below 1.0 is conservative.',
+    importance: 'Above 2.0 means heavy debt reliance - higher risk in downturns. Below 1.0 is conservative.',
   },
   debt_ratio: {
     fullName: 'Debt Ratio (D/A)',

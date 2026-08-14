@@ -24,7 +24,7 @@ export type AnchorRange = { anchor_start: string; anchor_end: string };
  * Planning-horizon anchors for goal / KPI / OKR decomposition.
  * Independent of the Progress view chip (Today / This month / …).
  *
- * Decade / 5-year start at Jan 1 of the current year and roll forward —
+ * Decade / 5-year start at Jan 1 of the current year and roll forward -
  * so a Decade goal created in 2026 covers 2026…2035 with yearly shares.
  */
 export function anchorsForPlanningLevel(
@@ -75,13 +75,13 @@ export function anchorsForPlanningLevel(
     return { anchor_start: localIsoDate(start), anchor_end: localIsoDate(end) };
   }
 
-  // decade — rolling 10 calendar years from Jan 1 this year
+  // decade - rolling 10 calendar years from Jan 1 this year
   const start = startOfYear();
   const end = new Date(y + 10, 0, 0);
   return { anchor_start: localIsoDate(start), anchor_end: localIsoDate(end) };
 }
 
-/** Progress canvas view window only — never use for target decomposition. */
+/** Progress canvas view window only - never use for target decomposition. */
 export function anchorsForViewPeriod(
   period: ProgressPeriod,
   customFrom?: string,

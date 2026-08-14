@@ -11,7 +11,7 @@ interface DiscoverShopRowProps {
   onSelect?: (shop: StorefrontShop) => void;
 }
 
-/** Dense shop card — lively hover lift like Marketplace catalog cards. */
+/** Dense shop card - lively hover lift like Marketplace catalog cards. */
 export const DiscoverShopRow = memo(function DiscoverShopRow({ shop, active = false, onSelect }: DiscoverShopRowProps) {
   const className = cn(
     marketplaceGlassPanel,

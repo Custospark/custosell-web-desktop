@@ -5,7 +5,7 @@ import { TopBarQuickActions } from './TopBarQuickActions';
 import { TopBarStatus } from './TopBarStatus';
 
 /**
- * Global search top bar — rendered above the header (Navbar), mirroring
+ * Global search top bar - rendered above the header (Navbar), mirroring
  * Custocare's status bar: connectivity + app version on the left, search in the
  * center, and orders / notifications / profile shortcuts on the right. Personal
  * and business accounts only; storefront buyers get no workspace and no strip.

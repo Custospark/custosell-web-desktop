@@ -130,7 +130,7 @@ export function useUpdateOnboarding() {
     mutationFn: async (payload: OnboardingAction) => {
       const local = applyOnboardingLocally(dispatch, qc, user, localStateForAction(payload));
 
-      // Sync in the background — never block tour start / offline replay
+      // Sync in the background - never block tour start / offline replay
       void axiosInstance.patch('/auth/onboarding', payload).then(({ data }) => {
         const state = data.data as OnboardingState;
         qc.setQueryData(onboardingKeys.state(), state);

@@ -277,7 +277,7 @@ export default function PlanCard({
                   return (
                     <div key={key} className="flex items-start gap-1.5">
                       <X className="w-3.5 h-3.5 text-red-500 mt-0.5 shrink-0" />
-                      <span><strong>{info?.label ?? key}</strong> — {info?.description ?? 'Feature removed'}</span>
+                      <span><strong>{info?.label ?? key}</strong> - {info?.description ?? 'Feature removed'}</span>
                     </div>
                   );
                 }

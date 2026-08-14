@@ -53,9 +53,9 @@ export function PlatformUserFilters({
           className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 h-fit"
         >
           <option value="">All login activity</option>
-          <option value="active">Active — logged in ≤30d</option>
-          <option value="dormant">Dormant — 31–90d since login</option>
-          <option value="churned">Churned — 90d+ since login</option>
+          <option value="active">Active - logged in ≤30d</option>
+          <option value="dormant">Dormant - 31-90d since login</option>
+          <option value="churned">Churned - 90d+ since login</option>
           <option value="never_logged_in">Never logged in</option>
         </select>
         <select

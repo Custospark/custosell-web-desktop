@@ -75,7 +75,7 @@ export default function SaleCompletedModal({ sale, lastPayment, onNewSale, onClo
   });
 
   // Download the server-generated receipt PDF (Documents-module blob standard).
-  // Pending/local sales have no server PDF yet — fall back to a print-based file.
+  // Pending/local sales have no server PDF yet - fall back to a print-based file.
   const handleDownloadPdf = async () => {
     if (!sale) return;
     if (sale.id > 0 && !sale._pendingSync) {
@@ -144,7 +144,7 @@ export default function SaleCompletedModal({ sale, lastPayment, onNewSale, onClo
 
         {sale._pendingSync && (
           <p className="text-xs text-amber-600 font-medium text-center mb-3 sm:mb-4">
-            Saved locally — will sync when you&apos;re back online
+            Saved locally - will sync when you&apos;re back online
           </p>
         )}
         {(sale.fiscal_status === 'pending' || sale.fiscal_status === 'fiscalized' || sale.fiscal_status === 'failed') && (

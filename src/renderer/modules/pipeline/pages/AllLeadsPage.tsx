@@ -226,7 +226,7 @@ export default function AllLeadsPage() {
                     <Link to={ROUTES.PIPELINE.BOARD(lead.board.code ?? lead.board.id)} className="text-gray-700 hover:text-blue-700">
                       {lead.board.name}
                     </Link>
-                  ) : '—',
+                  ) : '-',
                 },
                 {
                   key: 'stage',
@@ -239,7 +239,7 @@ export default function AllLeadsPage() {
                           style={{ backgroundColor: lead.stage.color ?? '#94a3b8' }}
                         />
                       )}
-                      {lead.stage?.name ?? '—'}
+                      {lead.stage?.name ?? '-'}
                     </span>
                   ),
                 },
@@ -251,7 +251,7 @@ export default function AllLeadsPage() {
                 {
                   key: 'source',
                   header: 'Source',
-                  render: (lead) => lead.source?.name ?? <span className="text-gray-400">—</span>,
+                  render: (lead) => lead.source?.name ?? <span className="text-gray-400">-</span>,
                 },
                 {
                   key: 'assignee',
@@ -269,7 +269,7 @@ export default function AllLeadsPage() {
                   render: (lead) => (
                     lead.estimated_value != null
                       ? formatCurrency(lead.estimated_value, lead.currency)
-                      : <span className="text-gray-400">—</span>
+                      : <span className="text-gray-400">-</span>
                   ),
                 },
                 {
@@ -277,7 +277,7 @@ export default function AllLeadsPage() {
                   header: 'Updated',
                   render: (lead) => (
                     <span className="text-gray-500">
-                      {lead.updated_at ? formatShiftDate(lead.updated_at) : '—'}
+                      {lead.updated_at ? formatShiftDate(lead.updated_at) : '-'}
                     </span>
                   ),
                 },

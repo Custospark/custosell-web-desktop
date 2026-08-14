@@ -17,7 +17,7 @@ interface ReceiptPreviewModalProps {
   onClose: () => void;
 }
 
-/** Receipt preview — Sale completed action layout (Download / Print / More → Share). */
+/** Receipt preview - Sale completed action layout (Download / Print / More → Share). */
 export default function ReceiptPreviewModal({ sale, open, onClose }: ReceiptPreviewModalProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
   const authUser = useAppSelector((s) => s.auth.user);

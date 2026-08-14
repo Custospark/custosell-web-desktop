@@ -44,7 +44,7 @@ export function BoardTargetCoreFields({
       <PipelineFormSection
         title="Planning horizon"
         icon={CalendarDays}
-        description="How far this target spans. A Decade plan covers this year plus the next nine — expectations split across 2026, 2027, … and down to months/weeks."
+        description="How far this target spans. A Decade plan covers this year plus the next nine - expectations split across 2026, 2027, … and down to months/weeks."
       >
         <PipelineIconField label="Planning level" icon={Layers} required>
           <select
@@ -55,7 +55,7 @@ export function BoardTargetCoreFields({
           >
             {PLANNING_LEVEL_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
-                {option.label} — {option.description}
+                {option.label} - {option.description}
               </option>
             ))}
           </select>
@@ -119,7 +119,7 @@ export function BoardTargetCoreFields({
           />
         </PipelineIconField>
 
-        <PipelineIconField label="Description" icon={FileText} hint="Optional — helps everyone understand why this target matters.">
+        <PipelineIconField label="Description" icon={FileText} hint="Optional - helps everyone understand why this target matters.">
           <textarea
             value={form.description}
             onChange={(e) => onChange({ description: e.target.value })}

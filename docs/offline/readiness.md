@@ -1,4 +1,4 @@
-# Offline readiness — boutique operations
+# Offline readiness - boutique operations
 
 Assessment for shops in **unreliable internet** environments using Custosell as a single-till POS.
 
@@ -43,15 +43,15 @@ Assessment for shops in **unreliable internet** environments using Custosell as 
 |-----------|----------------|
 | **Fully offline** | Sales complete immediately; red banner; data safe in IndexedDB |
 | **Internet returns** | Silent login upgrade; background sync; badges clear when done |
-| **Slow / flickering** | App tries server first — may feel slower than fully offline |
-| **Sync failed badge** | Server rejected item — edit and correct (products/staff documented) |
+| **Slow / flickering** | App tries server first - may feel slower than fully offline |
+| **Sync failed badge** | Server rejected item - edit and correct (products/staff documented) |
 
 ## Recommended daily playbook
 
-1. **Morning (brief online window)** — Open app, let catalogs load, clock in if using shifts.
-2. **Trading hours** — Sell normally; ignore connection if checkout works.
-3. **Reconnect** — Stay in app; let sync finish before logging out elsewhere.
-4. **End of day** — End shift (online preferred); review pending sync badges.
+1. **Morning (brief online window)** - Open app, let catalogs load, clock in if using shifts.
+2. **Trading hours** - Sell normally; ignore connection if checkout works.
+3. **Reconnect** - Stay in app; let sync finish before logging out elsewhere.
+4. **End of day** - End shift (online preferred); review pending sync badges.
 
 ## Competitive positioning (offline usability)
 
@@ -68,4 +68,4 @@ Architecture is strong; gaps vs market leaders: slow-network UX, multi-device st
 1. Treat flaky/slow connections like offline for **sales** (shorter server wait).
 2. Shift list catalog snapshots.
 3. Multi-device stock conflict warnings.
-4. Field pilots (3–5 real shops) before broad marketing.
+4. Field pilots (3-5 real shops) before broad marketing.

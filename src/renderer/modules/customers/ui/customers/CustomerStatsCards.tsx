@@ -23,7 +23,7 @@ export function CustomerStatsCards({ customers }: Props) {
   const cards = [
     { label: 'Total Customers', value: total.toLocaleString(), sub: 'All registered customers', icon: Users, color: 'blue', badge: 'Total' },
     { label: 'Active Customers', value: active.toLocaleString(), sub: `${total > 0 ? Math.round((active / total) * 100) : 0}% have made purchases`, icon: UserCheck, color: 'green', badge: 'Active', progress: total > 0 ? (active / total) * 100 : 0 },
-    { label: 'Top Spender', value: topSpender ? topSpender.name : '—', sub: topSpender ? formatCurrency(topSpender.total_purchases) : 'No purchases yet', icon: Award, color: 'amber', badge: 'Top' },
+    { label: 'Top Spender', value: topSpender ? topSpender.name : '-', sub: topSpender ? formatCurrency(topSpender.total_purchases) : 'No purchases yet', icon: Award, color: 'amber', badge: 'Top' },
     { label: 'Total Revenue', value: formatCurrency(totalRevenue), sub: 'Revenue from customer purchases', icon: DollarSign, color: 'purple', badge: 'Revenue' },
   ];
 

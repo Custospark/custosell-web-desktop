@@ -30,12 +30,12 @@ New and legacy businesses need predictable pipeline/project board presentation a
 ### One-time additive grant for legacy owners
 
 - Migration `2026_07_13_121000_backfill_owner_missing_business_modules.php` calls `ModuleAccessService::grantMissingCatalogModulesToOwner`.
-- **Post-core modules only** (accounting, pipeline, estimates, documents, hr, forecasting) are appended when missing — so intentional opt-outs of core POS modules (e.g. inventory) are not re-forced.
+- **Post-core modules only** (accounting, pipeline, estimates, documents, hr, forecasting) are appended when missing - so intentional opt-outs of core POS modules (e.g. inventory) are not re-forced.
 - Owners with empty/null `modules` persist the full current catalog + `estimates_full` + `hr_full` (same as new signup).
 - Full workspace flags are granted for signup parity when the owner already has a non-empty catalog.
-- After that backfill, intentional opt-outs stick — the grant does not re-run on login.
+- After that backfill, intentional opt-outs stick - the grant does not re-run on login.
 - Settings remains required for the owner account (`normalizeOwnerModules`).
-- **Future modules:** when `BUSINESS_MODULES` grows, add the new slug to `POST_CORE_CATALOG_MODULES` (if post-core) and ship a backfill migration — do not auto-union on every `/auth/me`.
+- **Future modules:** when `BUSINESS_MODULES` grows, add the new slug to `POST_CORE_CATALOG_MODULES` (if post-core) and ship a backfill migration - do not auto-union on every `/auth/me`.
 
 ## Consequences
 

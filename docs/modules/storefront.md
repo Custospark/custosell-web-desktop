@@ -1,6 +1,6 @@
 # Public storefront module
 
-Consumer-facing shops and **Order Online** (the Discover storefront) — not B2B Marketplace.
+Consumer-facing shops and **Order Online** (the Discover storefront) - not B2B Marketplace.
 
 ## Buyer journey
 
@@ -10,12 +10,12 @@ Same path for public visitors and logged-in users (Discover shell):
 2. **Products** strip / tab → progressive cross-shop products (`DiscoverProductsBrowse`); compact tiles; client-side search.
 3. Catalogs stay **warm in React Query** (prefetch + layout warmup, 10 min stale / 1 h gc) so Shops ↔ Products and return-from-shop feel instant.
 4. Open a shop → compact product grid + Add to that shop’s bag.
-5. **Cart** hub → one bag per business; submit one bag at a time. When signed in, the account **name/phone win** for the delivery identity on submit (account → bag → saved contact), unless the shopper explicitly edited the contact this session — then their typed values win. Pre-fill also writes the account identity to the bag and the shared `buyerContact` so reorders prefill.
-6. **Orders** → My Orders list (same React Query cache as the strip badge total). Placing an order refetches that cache so the list and count stay aligned. **Eye** opens line items (PO/IO-style). After a shop completes/invoices the sale, buyers open **Receipt** / **Invoice** via sparse icon actions (Sales History style). Receipt preview uses the same primary **Download PDF** / **Print** footer as Sale completed, with Share under More. Receipt and invoice letterheads show the **shop business name** (not Custosell); invoice **View/Download PDF** uses `GET /storefront/my-orders/{id}/invoice/pdf` — see ADR [storefront-buyer-doc-letterhead](../adr/2026-07-12-storefront-buyer-doc-letterhead.md). Payment receipts remain on the invoice modal’s Receipts tab.
+5. **Cart** hub → one bag per business; submit one bag at a time. When signed in, the account **name/phone win** for the delivery identity on submit (account → bag → saved contact), unless the shopper explicitly edited the contact this session - then their typed values win. Pre-fill also writes the account identity to the bag and the shared `buyerContact` so reorders prefill.
+6. **Orders** → My Orders list (same React Query cache as the strip badge total). Placing an order refetches that cache so the list and count stay aligned. **Eye** opens line items (PO/IO-style). After a shop completes/invoices the sale, buyers open **Receipt** / **Invoice** via sparse icon actions (Sales History style). Receipt preview uses the same primary **Download PDF** / **Print** footer as Sale completed, with Share under More. Receipt and invoice letterheads show the **shop business name** (not Custosell); invoice **View/Download PDF** uses `GET /storefront/my-orders/{id}/invoice/pdf` - see ADR [storefront-buyer-doc-letterhead](../adr/2026-07-12-storefront-buyer-doc-letterhead.md). Payment receipts remain on the invoice modal’s Receipts tab.
 7. **Delivery contact** → Name/phone saved to `custosell.storefront.buyerContact.v1` and to the buyer `User.phone` on place-order so reorders prefill; still editable in the delivery modal.
-7. Guests **create an account** (default) or sign in via header **Account**, Orders, or the cart bag when placing an order — no business setup. They become that shop’s customer on order.
+7. Guests **create an account** (default) or sign in via header **Account**, Orders, or the cart bag when placing an order - no business setup. They become that shop’s customer on order.
 7b. **Your carts** line qty uses Sales-style circular red (−) / green (+) and tap-to-edit quantity.
-8. **Wishlist** → Heart on product tiles/detail (signed-in). Bottom strip **Wishlist** (left of Orders) — no header heart. **Add** puts the item in that shop’s cart; items leave the wishlist only after place-order succeeds on the server. See ADR [storefront-wishlist](../adr/2026-07-12-storefront-wishlist.md).
+8. **Wishlist** → Heart on product tiles/detail (signed-in). Bottom strip **Wishlist** (left of Orders) - no header heart. **Add** puts the item in that shop’s cart; items leave the wishlist only after place-order succeeds on the server. See ADR [storefront-wishlist](../adr/2026-07-12-storefront-wishlist.md).
 
 Product tiles use meaningful icons by name/type (flour, software, services, etc.) instead of a generic cube.
 Shops show **description, location, phone, email, and star ratings** on browse tiles and on the shop page.
@@ -24,12 +24,12 @@ Catalog loads keep the first successful page visible if a later page fails; **Re
 Shop pages show a compact **QR code** for the public `/@slug` share URL with **Download PNG** (512px print-ready). Shop list cards show a proportional QR on the **right** (display only). Settings → **Sales channels** also shows QR + download for stickers/posters. See ADR [storefront-qr-download](../adr/2026-07-12-storefront-qr-download.md).
 Strip label stays **Shops** (never the open shop’s name). While on `/discover/shop/:slug`, Shops/Products are not highlighted; clicking them leaves the shop. The matched route always renders through **Outlet** (`DiscoverPage` / `ShopPage` / `MyOrdersPage`) so the URL and visible page stay in sync. See ADR [discover-shop-under-discover-path](../adr/2026-07-12-discover-shop-under-discover-path.md) for the blank-main / Outlet-key / shell-header bugs that were fixed.
 Shops ↔ Products tabs keep **both browse panels mounted** and only toggle visibility so switches stay paint-instant.
-Place-order contact: compact **Delivery** tap row (“Tap to add delivery information”) opens a modal (same idea as Sales **Add customer**) — name* / phone* / notes — so the cart list stays for line items.
+Place-order contact: compact **Delivery** tap row (“Tap to add delivery information”) opens a modal (same idea as Sales **Add customer**) - name* / phone* / notes - so the cart list stays for line items.
 Bags persist in `localStorage` (`custosell.storefront.carts.v1`). Last delivery name/phone persists separately (`custosell.storefront.buyerContact.v1`) so clearing a bag after place-order does not force re-entry. See ADR [storefront-multi-cart-submit-auth](../adr/2026-07-12-storefront-multi-cart-submit-auth.md) and [storefront-buyer-phone-and-order-eye](../adr/2026-07-12-storefront-buyer-phone-and-order-eye.md).
 
 Add-to-cart and cart-hub toasts render **top-center** so the right-side cart sheet/dock never hides them. Product/service tiles were compacted (~30%) and the Products / shop grids densified for more items per row. Header **Open Orders** / **Products** quick-nav tabs show a flat blue→indigo→violet gradient when active (no shadow/glow); the open-orders count badge pulses.
 
-Browse product cards now offer **Add to cart** (per-shop bag) next to **View details** — `DiscoverProductsBrowse` wires `useStorefrontMultiCart` so guests can add from the cross-shop grid without opening a shop. The New Sale product-search dropdown layers **below** the app header (stacking-context fix) so header dropdowns always render on top.
+Browse product cards now offer **Add to cart** (per-shop bag) next to **View details** - `DiscoverProductsBrowse` wires `useStorefrontMultiCart` so guests can add from the cross-shop grid without opening a shop. The New Sale product-search dropdown layers **below** the app header (stacking-context fix) so header dropdowns always render on top.
 
 ## App module (logged-in)
 
@@ -38,7 +38,7 @@ Sidebar **Online Shopping** (landing tab: **Order Online**):
 | Path | Purpose |
 |------|---------|
 | `/discover` | Shops or Products (`?focus=shops|products`); product rows open `/discover/shop/:slug` |
-| `/discover/my-orders` | Orders you placed as a buyer — each shop fulfills its own |
+| `/discover/my-orders` | Orders you placed as a buyer - each shop fulfills its own |
 | `/discover/wishlist` | Saved-for-later items (server; sign-in required) |
 | `/discover/shop/:slug` | In-app shop catalog (under DiscoverLayout) |
 
@@ -57,7 +57,7 @@ Share helpers: `src/renderer/modules/storefront/storefrontShare.ts`
 Bottom strip sits inside the Marketplace-style hero chrome (not a separate slate page). **Mobile only:** header and strip use inset cards (`rounded-lg` + border) and equal-width strip chips so nav doesn’t overlap. **sm+ unchanged** from the original full-bleed glass header / strip.
 Cart uses the same dock (desktop lg+) / sheet (tablet & phone) arrangement as Marketplace.
 Glass panels (`marketplaceGlassPanel`) for lists and orders.
-Strip: **Home · Products · Businesses · Cart · Wishlist · Orders** — Wishlist sits left of Orders; labels always visible. Logged-in **Home** / header **Dashboard** open the user’s default app route (usually dashboard). Guests **Home** opens marketing `/`. After full-page login, return to `location.state.from` when safe; otherwise dashboard. In-shell Discover sign-in stays on the current Discover route.
+Strip: **Home · Products · Businesses · Cart · Wishlist · Orders** - Wishlist sits left of Orders; labels always visible. Logged-in **Home** / header **Dashboard** open the user’s default app route (usually dashboard). Guests **Home** opens marketing `/`. After full-page login, return to `location.state.from` when safe; otherwise dashboard. In-shell Discover sign-in stays on the current Discover route.
 Cart opens hub; signed-in header shows **name** (menu with email, My orders, Dashboard/home, **Log out**). Guests see **Account**. Delivery tap-row opens a **sectioned** modal (contact / phone with Uganda dial code / notes). Cart chip **X** uses the shared confirm dialog before clearing a bag. Modals/confirm sit at `z-[20000]` / `z-[21000]` above the cart sheet.
 
 Header lockup: logo + **Custosell** wordmark. On very narrow phones the wordmark may hide; sm+ always shows it. Extra page actions wrap under the title on mobile only. Catalog/shop/orders first paint uses centered `LoadingSkeleton` `page` variant with clear status copy.
@@ -79,7 +79,7 @@ API: `PATCH /businesses/storefront-profile`, `GET /businesses/slug-available?slu
 
 Product edit modal → **Pricing & tax**:
 
-- Optional **Sale discount %** (0–100). Public shop shows struck regular + sale price; place-order charges the effective sale unit price. POS till still uses regular `unit_price` in v1. See ADR [product-percent-discounts](../adr/2026-07-12-product-percent-discounts.md).
+- Optional **Sale discount %** (0-100). Public shop shows struck regular + sale price; place-order charges the effective sale unit price. POS till still uses regular `unit_price` in v1. See ADR [product-percent-discounts](../adr/2026-07-12-product-percent-discounts.md).
 
 Product edit modal → **Public shop**:
 
@@ -95,8 +95,8 @@ Product edit modal → **Public shop**:
 | GET | `/storefront/categories` | No |
 | GET | `/storefront/{slug}` | No |
 | GET | `/storefront/{slug}/products` | Optional Sanctum (includes `my_rating`) |
-| POST | `/storefront/{slug}/ratings` | Sanctum (shop 1–5 stars, upsert) |
-| POST | `/storefront/{slug}/products/{id}/ratings` | Sanctum (1–5 stars, upsert per user) |
+| POST | `/storefront/{slug}/ratings` | Sanctum (shop 1-5 stars, upsert) |
+| POST | `/storefront/{slug}/products/{id}/ratings` | Sanctum (1-5 stars, upsert per user) |
 | POST | `/storefront/{slug}/orders` | Sanctum (sets `storefront_buyer_user_id`) |
 | GET | `/storefront/my-orders` | Sanctum |
 

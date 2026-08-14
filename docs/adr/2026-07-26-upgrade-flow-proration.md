@@ -1,4 +1,4 @@
-# Upgrade Flow Proration — Cross-Stack Redesign
+# Upgrade Flow Proration - Cross-Stack Redesign
 
 **Date:** 2026-07-26
 
@@ -18,12 +18,12 @@ Users upgrading to a higher plan faced two bugs:
 
 Redesign the upgrade flow to match the pattern already working in `OnboardingPage`:
 
-1. **Before payment** — fetch a proration quote (new read-only `GET` endpoint)
-2. **Show breakdown** — days remaining, credit, charge, amount due today
-3. **User confirms** — call `POST /subscriptions/{id}/upgrade` (changes plan immediately)
-4. **If amount due > 0** — initiate payment with the prorated amount
-5. **If amount due = 0** — skip payment, refresh
-6. **Payment success** — refresh profile
+1. **Before payment** - fetch a proration quote (new read-only `GET` endpoint)
+2. **Show breakdown** - days remaining, credit, charge, amount due today
+3. **User confirms** - call `POST /subscriptions/{id}/upgrade` (changes plan immediately)
+4. **If amount due > 0** - initiate payment with the prorated amount
+5. **If amount due = 0** - skip payment, refresh
+6. **Payment success** - refresh profile
 
 ## Changes
 
@@ -43,7 +43,7 @@ Redesign the upgrade flow to match the pattern already working in `OnboardingPag
 | `endpoints.ts` | Added `PRORATION_QUOTE` endpoint constant |
 | `SubscriptionQueries.ts` | Added `useUpgradeQuote()` hook + exported `UpgradeQuote` / `ProrationDetails` types |
 | `UpgradeFlowModal.tsx` | **New** self-contained modal: quote → confirm → upgrade API → pay → done |
-| `PlanCard.tsx` | **New** — extracted from PlansTab (file-size compliance) |
+| `PlanCard.tsx` | **New** - extracted from PlansTab (file-size compliance) |
 | `PlansTab.tsx` | Wired upgrade button to `UpgradeFlowModal` instead of `SubscriptionPaymentModal` |
 
 ## Consequences

@@ -40,12 +40,12 @@ export function progressColumnsTitle(ctx: BoardProgressContext): string {
 
 export function progressColumnsHint(ctx: BoardProgressContext): string {
   if (ctx.is_project_board) {
-    return 'Select at least one column — task metrics and charts use these stages.';
+    return 'Select at least one column - task metrics and charts use these stages.';
   }
   if (ctx.is_pipeline_board) {
-    return 'Select at least one column — lead metrics and charts use these stages.';
+    return 'Select at least one column - lead metrics and charts use these stages.';
   }
-  return 'Select at least one column — metrics and charts use these stages.';
+  return 'Select at least one column - metrics and charts use these stages.';
 }
 
 export function progressAddTargetLabel(ctx: BoardProgressContext): string {

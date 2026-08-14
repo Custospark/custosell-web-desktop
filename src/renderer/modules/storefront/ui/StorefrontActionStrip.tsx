@@ -22,7 +22,7 @@ interface StorefrontActionStripProps {
   wishlistCount?: number;
   ordersCount?: number;
   favoritesCount?: number;
-  /** Shopping accounts have no Home/Dashboard — Cart becomes a primary tab instead. */
+  /** Shopping accounts have no Home/Dashboard - Cart becomes a primary tab instead. */
   cartPrimary?: boolean;
   className?: string;
 }
@@ -211,7 +211,7 @@ export function StorefrontActionStrip({
         </div>
       ) : null}
 
-      {/* Desktop strip — hidden on mobile, original full-bleed */}
+      {/* Desktop strip - hidden on mobile, original full-bleed */}
       <div className="hidden lg:flex lg:items-center lg:justify-center lg:gap-3 lg:overflow-x-auto lg:overscroll-x-contain lg:border-t lg:border-slate-200/80 lg:bg-white/95 lg:px-3 lg:py-2.5 lg:backdrop-blur-sm">
         {onHome ? (
           <DesktopTab

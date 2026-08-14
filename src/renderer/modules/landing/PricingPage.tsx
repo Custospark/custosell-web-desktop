@@ -27,7 +27,7 @@ const FAQS = [
   { q: 'What payment methods are accepted?', a: 'We accept mobile money (MTN MoMo, Airtel Money) and bank transfers. Card payments coming soon.' },
   { q: 'How does the onboarding fee work?', a: 'The one-time setup fee is paid during registration to activate your account. After payment, your trial period begins.' },
   { q: 'What happens after I pay the setup fee?', a: 'Your subscription activates immediately. If your plan includes trial days, you get trial access for that period before the first billing cycle.' },
-  { q: 'Do you offer annual discounts?', a: 'Yes. Annual billing reduces the monthly rate — you get better value by paying yearly.' },
+  { q: 'Do you offer annual discounts?', a: 'Yes. Annual billing reduces the monthly rate - you get better value by paying yearly.' },
 ];
 
 export default function PricingPage() {
@@ -47,7 +47,7 @@ export default function PricingPage() {
           </span>
         </h1>
         <p className="text-lg sm:text-xl text-gray-500 max-w-2xl mx-auto">
-          Point of sale, e-commerce, inventory, accounting, HR, CRM, projects &amp; more — one platform, one subscription. Pay a one-time setup fee, then choose your plan.
+          Point of sale, e-commerce, inventory, accounting, HR, CRM, projects &amp; more - one platform, one subscription. Pay a one-time setup fee, then choose your plan.
         </p>
 
         <div className="flex items-center justify-center gap-3 mt-8">
@@ -115,7 +115,7 @@ export default function PricingPage() {
                     <td className="py-2.5 px-2 font-medium text-gray-700">{feature}</td>
                     {tiers.map((has, i) => (
                       <td key={i} className={`text-center py-2.5 px-2 ${has ? 'text-blue-500 font-bold' : 'text-gray-300'}`}>
-                        {has ? '✓' : '—'}
+                        {has ? '✓' : '-'}
                       </td>
                     ))}
                   </tr>
@@ -135,7 +135,7 @@ export default function PricingPage() {
                         const val = p?.limits?.[key];
                         return (
                           <td key={slug} className="text-center py-2.5 px-2 font-semibold text-gray-900">
-                            {val === null || val === undefined ? '—' : val === -1 ? '∞' : Intl.NumberFormat('en-US').format(val)}
+                            {val === null || val === undefined ? '-' : val === -1 ? '∞' : Intl.NumberFormat('en-US').format(val)}
                           </td>
                         );
                       })}

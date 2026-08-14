@@ -3,7 +3,7 @@
 **Date:** 2026-07-11  
 **Status:** Accepted (implemented)  
 **Scope:** Frontend + Backend (auth/onboarding, shell tour)  
-**Market:** International — compete as a full business OS, not a Uganda-only POS
+**Market:** International - compete as a full business OS, not a Uganda-only POS
 
 ## Context
 
@@ -21,7 +21,7 @@ Custosell grew from offline POS into sales, inventory, supply, pipeline, project
 
 2. **App-wide product tour**  
    - Shared `ProductTour` with `data-tour` anchors on shell controls.  
-   - Covers **shell**: navbar, Apps launcher, Guide, sidebar — then hubs the user can already open.  
+   - Covers **shell**: navbar, Apps launcher, Guide, sidebar - then hubs the user can already open.  
    - Tour **only spotlights accessible nav** (respects module access); card icons match Apps launcher.  
    - Steps without a live DOM target are filtered out; spotlight re-measures with retry.  
    - Resume if incomplete; **Skip** and **Replay tour** (navbar Tour button) required.  

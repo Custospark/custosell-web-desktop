@@ -70,7 +70,7 @@ export default function ImportModal({ open, onClose, onImported }: ImportModalPr
     } catch (err: unknown) {
       const axiosErr = err as { code?: string; response?: { data?: { message?: string } } };
       const message = axiosErr.code === 'ECONNABORTED'
-        ? 'Import timed out — try a smaller file or split into multiple uploads'
+        ? 'Import timed out - try a smaller file or split into multiple uploads'
         : axiosErr.response?.data?.message || 'Import failed';
       showToast('error', message);
     } finally {
@@ -111,7 +111,7 @@ export default function ImportModal({ open, onClose, onImported }: ImportModalPr
         <div className="space-y-5">
           <p className="text-sm text-gray-500">
             Upload an Excel file (.xlsx, .xls, or .csv) with your product data.
-            <br />Max 20MB. Large imports (1,000+ rows) may take a few minutes — keep this window open.
+            <br />Max 20MB. Large imports (1,000+ rows) may take a few minutes - keep this window open.
           </p>
           <p className="text-xs text-gray-400">
             Optional tax columns: <strong>Tax %</strong> (blank uses your business default rate) and{' '}
@@ -178,7 +178,7 @@ export default function ImportModal({ open, onClose, onImported }: ImportModalPr
                 />
               </div>
               {uploadProgress >= 100 && (
-                <p className="text-xs text-gray-500">Importing products — this can take a few minutes for large files.</p>
+                <p className="text-xs text-gray-500">Importing products - this can take a few minutes for large files.</p>
               )}
             </div>
           )}

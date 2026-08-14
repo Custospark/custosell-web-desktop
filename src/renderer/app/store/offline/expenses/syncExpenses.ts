@@ -67,7 +67,7 @@ async function reconcileDuplicateExpenseCreate(m: QueuedMutation, message: strin
   return committed;
 }
 
-/** After timeout, server may have saved the expense — match before retrying POST. */
+/** After timeout, server may have saved the expense - match before retrying POST. */
 async function reconcileExpenseAlreadyOnServer(m: QueuedMutation): Promise<boolean> {
   if (!isExpenseCreateMutation(m) || !isExpenseFormPayload(m.data)) return false;
 

@@ -52,9 +52,9 @@ Body: { "password": "..." }
 **Password check:** Returns 422 if password doesn't match
 
 **On success:**
-1. `PlatformBusinessService::resetBusinessData()` — hard-deletes all transactional data
-2. `$business->delete()` — soft-deletes business record
-3. `$user->currentAccessToken()->delete()` — revokes session token
+1. `PlatformBusinessService::resetBusinessData()` - hard-deletes all transactional data
+2. `$business->delete()` - soft-deletes business record
+3. `$user->currentAccessToken()->delete()` - revokes session token
 
 **Response:**
 ```json

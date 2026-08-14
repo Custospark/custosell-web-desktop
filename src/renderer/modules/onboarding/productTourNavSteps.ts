@@ -20,7 +20,7 @@ import {
 import type { ProductTourStep } from './productTourTypes';
 
 const GROUP_INTRO: Record<string, string> = {
-  dashboard: 'Your business overview — a quick pulse on performance.',
+  dashboard: 'Your business overview - a quick pulse on performance.',
   sales: 'Ring sales, manage orders, history, refunds, and sales invoices.',
   inventory: 'Products, stock, marketplace, and purchase orders live here.',
   customers: 'Track customer analytics on Overview and manage your customer list.',
@@ -32,13 +32,13 @@ const GROUP_INTRO: Record<string, string> = {
   documents: 'Files organized in cabinets and folders.',
   hr: 'People, attendance, leave, and payroll.',
   settings: 'Business profile, branches, sales channels, staff, roles, and module access.',
-  guide: 'Tutorials, FAQs, feedback, and help — learn Custosell at your pace.',
-  account: 'Notifications, your profile, and Security — password, email verification, and two-factor authentication.',
+  guide: 'Tutorials, FAQs, feedback, and help - learn Custosell at your pace.',
+  account: 'Notifications, your profile, and Security - password, email verification, and two-factor authentication.',
   discover:
-    'Order Online — browse businesses, products, and services — and track orders you placed as a buyer. Open it anytime from here — the tour stays in your workspace.',
+    'Order Online - browse businesses, products, and services - and track orders you placed as a buyer. Open it anytime from here - the tour stays in your workspace.',
 };
 
-/** Immersive shells leave App chrome (sidebar + tour overlay). Spotlight only — never navigate. */
+/** Immersive shells leave App chrome (sidebar + tour overlay). Spotlight only - never navigate. */
 const TOUR_SIDEBAR_ONLY_SLUGS = new Set(['discover']);
 
 function launcherMeta(slug: string): { icon: ElementType; tone: string } | null {
@@ -47,7 +47,7 @@ function launcherMeta(slug: string): { icon: ElementType; tone: string } | null 
   return { icon: item.icon, tone: item.tone };
 }
 
-/** Same visibility rules as Sidebar — tour only covers what the user can open.
+/** Same visibility rules as Sidebar - tour only covers what the user can open.
  *  Accepts planAccessibleModules (permission + plan) or falls back to permission-only check.
  *  Mirrors resolveAccessibleNavGroups() used by the sidebar. */
 export function tourNavGroupsForUser(
@@ -101,7 +101,7 @@ function groupTitle(group: SidebarNavGroup, slug: string): string {
 }
 
 function groupBody(slug: string, group: SidebarNavGroup): string {
-  const intro = GROUP_INTRO[slug] ?? `${group.label} — part of your Custosell workspace.`;
+  const intro = GROUP_INTRO[slug] ?? `${group.label} - part of your Custosell workspace.`;
   if (group.subItems.length <= 1) return intro;
   const names = group.subItems.map((s) => s.label).join(', ');
   return `${intro} Includes ${names}.`;
@@ -129,7 +129,7 @@ export function navTourStepsForUser(
       target: `sidebar-module-${slug}`,
       title: groupTitle(group, slug),
       body: groupBody(slug, group),
-      // Online Shopping leaves the app shell — navigating would drop sidebar targets and break Next.
+      // Online Shopping leaves the app shell - navigating would drop sidebar targets and break Next.
       route: TOUR_SIDEBAR_ONLY_SLUGS.has(slug) ? undefined : group.subItems[0]?.to,
       // Expand so sub-items are visible inside the group spotlight
       expandGroup: isSingle ? undefined : group.label,

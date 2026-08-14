@@ -97,8 +97,8 @@ export default function ExpenseList({ filters }: ExpenseListProps) {
           rowKey={(e) => e.id}
           columns={[
             { key: 'date', header: 'Date', render: (e) => new Date(e.expense_date).toLocaleDateString() },
-            { key: 'category', header: 'Category', render: (e) => e.expense_category?.name || <span className="text-gray-400">—</span> },
-            ...(!isPersonal ? [{ key: 'branch', header: 'Branch', render: (e: ExpenseWithSyncMeta) => e.location?.name || locationNameById.get(e.location_id ?? -1) || <span className="text-gray-400">—</span> }] : []),
+            { key: 'category', header: 'Category', render: (e) => e.expense_category?.name || <span className="text-gray-400">-</span> },
+            ...(!isPersonal ? [{ key: 'branch', header: 'Branch', render: (e: ExpenseWithSyncMeta) => e.location?.name || locationNameById.get(e.location_id ?? -1) || <span className="text-gray-400">-</span> }] : []),
             { key: 'description', header: 'Description', render: (e) => (
               <div className="flex items-center gap-2">
                 <span>{e.description}</span>
@@ -106,13 +106,13 @@ export default function ExpenseList({ filters }: ExpenseListProps) {
               </div>
             ) },
             { key: 'amount', header: 'Amount', render: (e) => formatCurrency(e.amount) },
-            { key: 'reference', header: 'Reference', render: (e) => e.reference || <span className="text-gray-400">—</span> },
+            { key: 'reference', header: 'Reference', render: (e) => e.reference || <span className="text-gray-400">-</span> },
             { key: 'receipt', header: 'Receipt', render: (e) => {
               if (e.receipt_url) return <a href={e.receipt_url} target="_blank" rel="noreferrer" title="View receipt" aria-label="View receipt"><Eye className="w-4 h-4 text-blue-600" /></a>;
               if (e._pendingReceipt) return <Badge variant="warning">Pending receipt</Badge>;
-              return <span className="text-gray-400">—</span>;
+              return <span className="text-gray-400">-</span>;
             } },
-            { key: 'recurring', header: 'Recurring', render: (e) => e.is_recurring ? <Badge variant="primary">{e.recurrence_interval}</Badge> : <span className="text-gray-400">—</span> },
+            { key: 'recurring', header: 'Recurring', render: (e) => e.is_recurring ? <Badge variant="primary">{e.recurrence_interval}</Badge> : <span className="text-gray-400">-</span> },
             { key: 'actions', header: 'Actions', render: (e) => (
               <div className="flex gap-1">
                 <button title={e._pendingSync ? 'Sync before editing' : 'Edit'} disabled={e._pendingSync} onClick={() => setEditExpense(e)} className="p-1.5 rounded-lg hover:bg-blue-100 text-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">

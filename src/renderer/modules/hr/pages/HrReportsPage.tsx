@@ -10,7 +10,7 @@ import { HrPayrollAffordabilityPanel } from '../ui/HrPayrollAffordabilityPanel';
 import { formatShiftDateRange } from '../../../shared/utils/formatDateTime';
 
 function formatMoney(n: number | undefined | null) {
-  if (n == null) return '—';
+  if (n == null) return '-';
   return new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n);
 }
 
@@ -51,7 +51,7 @@ export default function HrReportsPage() {
           <div className="grid gap-4 sm:grid-cols-3">
             <HrIconField label="Pay run" icon={FileSpreadsheet}>
               <select value={payRunId} onChange={(e) => setPayRunId(e.target.value)} className={hrSelectClass}>
-                <option value="">Any — use dates below</option>
+                <option value="">Any - use dates below</option>
                 {payRuns.map((run) => (
                   <option key={run.id} value={run.id}>
                     {formatShiftDateRange(run.period_start, run.period_end)} ({run.status})
@@ -69,7 +69,7 @@ export default function HrReportsPage() {
         </HrFormSection>
         {!hasFilter ? (
           <p className="mt-3 text-sm text-amber-700">
-            Select a pay run or both period dates — we&apos;ll load PAYE and NSSF schedules when you do.
+            Select a pay run or both period dates - we&apos;ll load PAYE and NSSF schedules when you do.
           </p>
         ) : null}
       </HrSectionCard>
@@ -86,7 +86,7 @@ export default function HrReportsPage() {
             {loadingPaye || fetchingPaye ? (
               <div className="flex justify-center py-10"><CustosellLoader /></div>
             ) : payeRows.length === 0 ? (
-              <p className="text-sm text-gray-500">No PAYE rows for this filter — try a calculated or posted pay run.</p>
+              <p className="text-sm text-gray-500">No PAYE rows for this filter - try a calculated or posted pay run.</p>
             ) : (
               <div className={HR_SURFACE.tableWrap}>
                 <table className="min-w-full text-sm">
@@ -120,7 +120,7 @@ export default function HrReportsPage() {
             {loadingNssf || fetchingNssf ? (
               <div className="flex justify-center py-10"><CustosellLoader /></div>
             ) : nssfRows.length === 0 ? (
-              <p className="text-sm text-gray-500">No NSSF rows for this filter — try a calculated or posted pay run.</p>
+              <p className="text-sm text-gray-500">No NSSF rows for this filter - try a calculated or posted pay run.</p>
             ) : (
               <div className={HR_SURFACE.tableWrap}>
                 <table className="min-w-full text-sm">

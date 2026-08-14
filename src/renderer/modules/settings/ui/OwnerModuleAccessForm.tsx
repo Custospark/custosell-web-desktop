@@ -182,7 +182,7 @@ export default function OwnerModuleAccessForm() {
           <div className="min-w-0">
             <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Module access</h1>
 <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-500">
-  Pick which workspaces you see. Changes here only affect your own account — not your team. Staff access is managed in Staff.
+  Pick which workspaces you see. Changes here only affect your own account - not your team. Staff access is managed in Staff.
 </p>
           </div>
         </div>
@@ -245,7 +245,7 @@ export default function OwnerModuleAccessForm() {
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-semibold text-slate-900">Full Projects &amp; Estimates</span>
                 <span className="mt-0.5 block text-xs leading-relaxed text-slate-500">
-                  Estimates, projects, insights, templates, boards, and costing — not just project boards.
+                  Estimates, projects, insights, templates, boards, and costing - not just project boards.
                 </span>
               </span>
               <input
@@ -272,7 +272,7 @@ export default function OwnerModuleAccessForm() {
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-semibold text-slate-900">Full HR &amp; Payroll</span>
                 <span className="mt-0.5 block text-xs leading-relaxed text-slate-500">
-                  People admin, departments, payroll, reports, and leave approval — not just attendance and talent tasks.
+                  People admin, departments, payroll, reports, and leave approval - not just attendance and talent tasks.
                 </span>
               </span>
               <input

@@ -51,14 +51,14 @@ import { syncPendingDataIfOnline } from '../../../app/store/offline/sync/syncPen
 
 ## Cross-module rules
 
-- **sync/** imports from all domain folders — it is the only “orchestrator” module.
+- **sync/** imports from all domain folders - it is the only “orchestrator” module.
 - **catalogs/** imports **inventory** `stockLedger` for seeding; **auth** `resolveAuthBusinessId` lives in catalogs utils.
-- **auth/sessionRefresh** imports catalogs refresh + sales/shift query keys — post-upgrade refresh.
+- **auth/sessionRefresh** imports catalogs refresh + sales/shift query keys - post-upgrade refresh.
 - Domain folders should **not** import from each other except via **core** or **sync** where unavoidable.
 
 ## Docs
 
-- [docs/offline/README.md](../../../../../docs/offline/README.md) — offline doc index
+- [docs/offline/README.md](../../../../../docs/offline/README.md) - offline doc index
 - [docs/offline/architecture.md](../../../../../docs/offline/architecture.md)
 - [docs/offline/auth.md](../../../../../docs/offline/auth.md)
-- [docs/README.md](../../../../../docs/README.md) — full project doc map
+- [docs/README.md](../../../../../docs/README.md) - full project doc map

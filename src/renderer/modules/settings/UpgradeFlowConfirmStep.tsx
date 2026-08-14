@@ -172,7 +172,7 @@ export default function UpgradeFlowConfirmStep({
           </div>
           {availableCredit > 0 && (
             <p className="text-[10px] text-green-700 text-center pt-1">
-              {price(availableCredit)} credit available — {price(creditAfterProration)} applied
+              {price(availableCredit)} credit available - {price(creditAfterProration)} applied
             </p>
           )}
         </div>

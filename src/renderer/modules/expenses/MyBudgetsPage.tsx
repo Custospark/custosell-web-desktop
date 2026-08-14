@@ -76,7 +76,7 @@ export default function MyBudgetsPage() {
   const handleDelete = async (budget: PersonalBudgetSummaryRow) => {
     const ok = await confirm({
       title: 'Delete this budget?',
-      message: `Delete "${budget.name}"? Your linked income and expenses will be kept — they just won't count toward a budget anymore.`,
+      message: `Delete "${budget.name}"? Your linked income and expenses will be kept - they just won't count toward a budget anymore.`,
       confirmText: 'Delete',
       variant: 'danger',
     });
@@ -241,7 +241,7 @@ export default function MyBudgetsPage() {
         <div className="text-center py-14">
           <Target className="w-10 h-10 text-gray-300 mx-auto mb-3" />
           <p className="text-gray-500 text-sm mb-4">
-            You haven't created any budgets yet. Create one — like "Groceries", "June holiday", or "House savings" — and link your spending to it.
+            You haven't created any budgets yet. Create one - like "Groceries", "June holiday", or "House savings" - and link your spending to it.
           </p>
           <Button onClick={handleNew}>
             <Plus className="w-4 h-4 mr-1.5" /> Create your first budget

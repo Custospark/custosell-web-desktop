@@ -62,7 +62,7 @@ function extractAuthUser(data: AuthResponse): AuthUser {
 function extractActivePlans(userData: AuthUser | null | undefined): Plan[] {
   return userData?.active_plans ?? [];
 }
-/** Best-effort offline backup after server auth — must not block or replace online login. */
+/** Best-effort offline backup after server auth - must not block or replace online login. */
 function backupOnlineAuthToOffline(data: AuthResponse, password: string): void {
   const user = extractAuthUser(data);
   void persistLoginCredentials({

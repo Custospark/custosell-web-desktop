@@ -292,7 +292,7 @@ export default function PlatformPayoutsPage() {
                 },
                 { key: 'last_payout_at', header: 'Last Payout', render: (r: PayableEntity) => (
                   <span className="text-xs text-gray-500">
-                    {r.last_payout_at ? new Date(r.last_payout_at).toLocaleDateString('en-UG') : '—'}
+                    {r.last_payout_at ? new Date(r.last_payout_at).toLocaleDateString('en-UG') : '-'}
                   </span>
                 )},
                 {

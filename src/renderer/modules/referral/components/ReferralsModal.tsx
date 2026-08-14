@@ -6,7 +6,7 @@ interface ReferralsModalProps {
   onClose: () => void;
 }
 
-/** Referral dashboard as a standard modal — used on Discover for shopping accounts. */
+/** Referral dashboard as a standard modal - used on Discover for shopping accounts. */
 export function ReferralsModal({ isOpen, onClose }: ReferralsModalProps) {
   return (
     <Modal

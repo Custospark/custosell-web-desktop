@@ -77,7 +77,7 @@ export function saveStorefrontCart(carts: StorefrontCartsBySlug): void {
   try {
     localStorage.setItem(STOREFRONT_CART_KEY, JSON.stringify(carts));
   } catch {
-    // Quota / private mode — cart stays in-memory only.
+    // Quota / private mode - cart stays in-memory only.
   }
 }
 

@@ -165,7 +165,7 @@ export function getSelectableStatuses(current: BusinessAccountStatus): BusinessA
   return BUSINESS_ACCOUNT_STATUSES.filter((s) => s !== current);
 }
 
-/** @deprecated Use getSelectableStatuses — kept for hot-reload compatibility */
+/** @deprecated Use getSelectableStatuses - kept for hot-reload compatibility */
 export function getBusinessNextStatus(business: PlatformBusiness): BusinessAccountStatus | null {
   return getSelectableStatuses(business.status)[0] ?? null;
 }

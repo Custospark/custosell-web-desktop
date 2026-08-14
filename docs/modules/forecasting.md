@@ -7,7 +7,7 @@ Financial forecasting frontend for cash runway, budget vs actual, zero-based bud
 | Path | Page |
 |------|------|
 | `/forecasting` | Redirect → overview |
-| `/forecasting/overview` | HR-style dashboard — KPI strip, cash ladder, burn, BvA, quick links |
+| `/forecasting/overview` | HR-style dashboard - KPI strip, cash ladder, burn, BvA, quick links |
 | `/forecasting/budgets` | Budget list + create year budget |
 | `/forecasting/budgets/:budgetId` | Lines, justify/approve, roll, snapshots |
 | `/forecasting/kpis` | Retail / SaaS KPI pulse |
@@ -19,10 +19,10 @@ Guarded by `ModuleAccessMiddleware module="forecasting"`. Sidebar group **Foreca
 
 `src/renderer/modules/forecasting/api/`
 
-- `forecastingEndpoints.ts` — path constants
-- `forecastingTypes.ts` — response / payload types matching backend services
-- `forecastingQueryKeys.ts` — React Query keys
-- `useForecastingQueries.ts` — overview, cash, BvA, budgets CRUD, justify/approve/roll, snapshots, KPIs, scenarios CRUD+run
+- `forecastingEndpoints.ts` - path constants
+- `forecastingTypes.ts` - response / payload types matching backend services
+- `forecastingQueryKeys.ts` - React Query keys
+- `useForecastingQueries.ts` - overview, cash, BvA, budgets CRUD, justify/approve/roll, snapshots, KPIs, scenarios CRUD+run
 
 ## UI
 
@@ -36,7 +36,7 @@ Overview **Cash ladder** table: `min-w-0` on the grid column + `overflow-x-auto`
 
 ## Accounting integration
 
-Cash and unpaid payroll liabilities come from **GL closing balances** (1101/1102 and 2110–2112) for the selected accounting period — the same source as payroll affordability. Payroll burn is reused from `HrPayrollAffordabilityService` (no duplicate PAYE math). Month ladder and BvA variance are covered by `ForecastingAccountingCorrectnessTest` (exact numeric assertions, not structure-only).
+Cash and unpaid payroll liabilities come from **GL closing balances** (1101/1102 and 2110-2112) for the selected accounting period - the same source as payroll affordability. Payroll burn is reused from `HrPayrollAffordabilityService` (no duplicate PAYE math). Month ladder and BvA variance are covered by `ForecastingAccountingCorrectnessTest` (exact numeric assertions, not structure-only).
 
 | Case | Behavior |
 |------|----------|

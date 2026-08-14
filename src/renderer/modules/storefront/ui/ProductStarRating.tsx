@@ -11,7 +11,7 @@ interface ProductStarRatingProps {
   className?: string;
 }
 
-/** Interactive 1–5 stars — tap to rate; shows average + count. */
+/** Interactive 1-5 stars - tap to rate; shows average + count. */
 export function ProductStarRating({
   avg,
   count,
@@ -36,7 +36,7 @@ export function ProductStarRating({
       aria-label={
         count > 0
           ? `Rated ${avg.toFixed(1)} out of 5 from ${count} reviews`
-          : 'No ratings yet — tap a star to rate'
+          : 'No ratings yet - tap a star to rate'
       }
     >
       <div className="flex items-center gap-0.5">
@@ -47,7 +47,7 @@ export function ProductStarRating({
               key={n}
               type="button"
               disabled={locked}
-              title={myRating ? `Your rating: ${myRating} — change to ${n}` : `Rate ${n} stars`}
+              title={myRating ? `Your rating: ${myRating} - change to ${n}` : `Rate ${n} stars`}
               aria-label={`Rate ${n} stars`}
               aria-pressed={myRating === n}
               className={cn(

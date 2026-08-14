@@ -89,8 +89,8 @@ Commission flow (sales rep codes only):
 ### Story 1: Business-to-Business Referral (Mary → John)
 
 **Characters:**
-- **Mary** — owns "Kampala Kitchen Supplies", has referral code `A3X9K2`
-- **John** — starting "Jinja Farm Equipment", signs up for Custosell
+- **Mary** - owns "Kampala Kitchen Supplies", has referral code `A3X9K2`
+- **John** - starting "Jinja Farm Equipment", signs up for Custosell
 
 **Scenario:**
 1. Mary shares her code `A3X9K2` with John
@@ -108,9 +108,9 @@ Commission flow (sales rep codes only):
 ### Story 2: Sales Representative Commission (Peter)
 
 **Characters:**
-- **Peter** — Custosell sales representative
-- **Grace** — signs up using Peter's code
-- **Sarah** — Platform admin at Custosell
+- **Peter** - Custosell sales representative
+- **Grace** - signs up using Peter's code
+- **Sarah** - Platform admin at Custosell
 
 **Scenario:**
 1. Sarah (platform admin) goes to `/platform/sales-reps` → clicks "Add Sales Rep"
@@ -133,17 +133,17 @@ Commission flow (sales rep codes only):
 > **Rates are decoupled & safe-zone guarded:** the referee's discount (`discount_rate`) and the rep's commission
 > (`commission_rate`) are independent dials, enforced so the company ALWAYS keeps the largest share
 > (commission strictly between `d/(1−d)%` and 50%, discount ≤ 30%). Renewals and top-ups never
-> re-trigger commission — the rep is paid once per signup, at activation.
+> re-trigger commission - the rep is paid once per signup, at activation.
 
-### Sales Rep Creation — Email-Based Flow
+### Sales Rep Creation - Email-Based Flow
 
 **Key points:**
-- Sales reps are **users with accounts** — they log into the Pipeline module to see their referral dashboard
+- Sales reps are **users with accounts** - they log into the Pipeline module to see their referral dashboard
 - Creating a sales rep uses **email**, not a raw User ID
 - Two modes:
-  1. **Existing user** — admin enters email, system looks up the user, shows their name, admin selects commission → creates rep
-  2. **New user** — admin enters email, system detects no user found, admin fills in name, system auto-creates the user account (random password — rep uses "Forgot Password") + sales rep + referral code in one step
-- The user is **never duplicated** — if the email already belongs to a sales rep, the backend rejects with an error message
+  1. **Existing user** - admin enters email, system looks up the user, shows their name, admin selects commission → creates rep
+  2. **New user** - admin enters email, system detects no user found, admin fills in name, system auto-creates the user account (random password - rep uses "Forgot Password") + sales rep + referral code in one step
+- The user is **never duplicated** - if the email already belongs to a sales rep, the backend rejects with an error message
 
 **Sales rep fields (all editable on create + update):**
 - Contact: name, email, phone, region
@@ -153,7 +153,7 @@ Commission flow (sales rep codes only):
 **Backend:**
 - `SalesRepRequest` accepts `email` (required on create) and `name` (used when creating new user, ignored for existing)
 - `SalesRepService::create()` finds or creates the User, then creates the SalesRep + ReferralCode in a transaction
-- On update (PUT), all fields except email/name are accepted — the user association is fixed
+- On update (PUT), all fields except email/name are accepted - the user association is fixed
 
 **Frontend:**
 - Create modal has an email input with auto-search (600ms debounce) and a manual "Search" button
@@ -203,8 +203,8 @@ Instead of a boolean `commission_paid` flag, payouts are tracked individually vi
 ### Story 3: Flat Commission Rate (David)
 
 **Characters:**
-- **David** — Custosell partner with a flat commission deal
-- **Platform Admin** — sets up David's agreement
+- **David** - Custosell partner with a flat commission deal
+- **Platform Admin** - sets up David's agreement
 
 **Scenario:**
 1. Admin creates David as a Sales Rep with `commission_type = flat`, `commission_rate = 50,000`
@@ -216,7 +216,7 @@ Instead of a boolean `commission_paid` flag, payouts are tracked individually vi
 ### Story 4: Trying to Use Own Code (Blocked)
 
 **Characters:**
-- **Alice** — owns "Nile Tech Solutions", has referral code `V7R5Q2`
+- **Alice** - owns "Nile Tech Solutions", has referral code `V7R5Q2`
 
 **Scenario:**
 1. Alice tries to enter her own code `V7R5Q2` during her business's subscription
@@ -226,9 +226,9 @@ Instead of a boolean `commission_paid` flag, payouts are tracked individually vi
 ### Story 5: Reusing a Code (Blocked)
 
 **Characters:**
-- **Bob** — referral code owner
-- **Charlie** — owns "Mountain Coffee Exports"
-- **Diana** — also at "Mountain Coffee Exports" (same business)
+- **Bob** - referral code owner
+- **Charlie** - owns "Mountain Coffee Exports"
+- **Diana** - also at "Mountain Coffee Exports" (same business)
 
 **Scenario:**
 1. Charlie enters Bob's code → works, referral created
@@ -239,7 +239,7 @@ Instead of a boolean `commission_paid` flag, payouts are tracked individually vi
 ### Story 6: Expired or Maxed-Out Code
 
 **Characters:**
-- **Frank** — has a campaign code with `max_uses = 5`, already used 5 times
+- **Frank** - has a campaign code with `max_uses = 5`, already used 5 times
 
 **Scenario:**
 1. A new business tries to enter Frank's code
@@ -249,7 +249,7 @@ Instead of a boolean `commission_paid` flag, payouts are tracked individually vi
 ### Story 7: Platform Admin Manages Sales Reps and Payouts
 
 **Characters:**
-- **Sarah** — Platform admin
+- **Sarah** - Platform admin
 
 **Scenario:**
 1. Sarah opens `/platform/sales-reps`
@@ -307,10 +307,10 @@ This runs three new migrations:
 
 ## Key Business Rules
 
-1. **Self-use blocked** — a business cannot use its own owner's referral code
-2. **One-time per business** — a business can only use a specific code once
-3. **Code validity** — code must be active, not expired, under max_uses
-4. **Commission triggers on activation** — only calculated when subscription transitions to ACTIVE (payment succeeds)
-5. **Reward/commission calculated at creation** — uses the subscription's monthly price at the time of referral application
-6. **Sales rep commission is separate from referrer reward** — the referrer gets a reward (e.g. free month), and the sales rep gets commission on top
-7. **Installment payouts** — sales rep commissions can be paid in partial amounts; `pending_commission = total_earned - SUM(all payouts)` 
+1. **Self-use blocked** - a business cannot use its own owner's referral code
+2. **One-time per business** - a business can only use a specific code once
+3. **Code validity** - code must be active, not expired, under max_uses
+4. **Commission triggers on activation** - only calculated when subscription transitions to ACTIVE (payment succeeds)
+5. **Reward/commission calculated at creation** - uses the subscription's monthly price at the time of referral application
+6. **Sales rep commission is separate from referrer reward** - the referrer gets a reward (e.g. free month), and the sales rep gets commission on top
+7. **Installment payouts** - sales rep commissions can be paid in partial amounts; `pending_commission = total_earned - SUM(all payouts)` 

@@ -22,7 +22,7 @@ const RENDER_CHUNK = 36;
 const AUTO_PAGE_CAP = 3;
 const SEARCH_DEBOUNCE_MS = 300;
 
-/** Products from all shops — category chips + progressive server search. */
+/** Products from all shops - category chips + progressive server search. */
 export function DiscoverProductsBrowse() {
   const [q, setQ] = useState('');
   const [debouncedQ, setDebouncedQ] = useState('');
@@ -127,7 +127,7 @@ export function DiscoverProductsBrowse() {
 
   if (!data && isLoading) {
     return (
-      <CustosellLoader message="Loading products — gathering listed products and services across businesses." />
+      <CustosellLoader message="Loading products - gathering listed products and services across businesses." />
     );
   }
 
@@ -222,7 +222,7 @@ export function DiscoverProductsBrowse() {
               ? 'Products and services appear when businesses list items for their public storefront.'
               : hasActiveFilters(filters)
                 ? 'Try adjusting or clearing the filters above.'
-                : 'Try another category or search — filtering is instant on this device.'}
+                : 'Try another category or search - filtering is instant on this device.'}
           </p>
           {hasActiveFilters(filters) ? (
             <button

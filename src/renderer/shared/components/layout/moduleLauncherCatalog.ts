@@ -61,7 +61,7 @@ const TONE = {
   sky: 'bg-sky-50 text-sky-600 ring-sky-100',
 } as const;
 
-/** Full catalog — visibility is filtered per user at runtime. */
+/** Full catalog - visibility is filtered per user at runtime. */
 export const MODULE_LAUNCHER_CATALOG: ModuleLauncherItem[] = [
   {
     slug: 'dashboard',

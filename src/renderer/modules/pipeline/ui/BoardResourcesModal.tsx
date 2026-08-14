@@ -77,7 +77,7 @@ const TYPE_LABEL: Record<PipelineBoardResourceType, string> = {
 };
 
 function formatBytes(size?: number | null): string {
-  if (!size || size <= 0) return '—';
+  if (!size || size <= 0) return '-';
   if (size < 1024) return `${size} B`;
   if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
@@ -293,7 +293,7 @@ function ResourceFormFields({
         type="text"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        placeholder={addMode === 'link' ? 'Link title' : 'Title (optional — uses file name)'}
+        placeholder={addMode === 'link' ? 'Link title' : 'Title (optional - uses file name)'}
         className={pipelineInputClass}
       />
       <textarea

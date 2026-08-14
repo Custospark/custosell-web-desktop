@@ -181,7 +181,7 @@ export function RatioLine({ def, value, selected, onClick, recommendation }: Rat
           <div className="bg-gray-50 rounded-lg px-3 py-2 font-mono text-xs text-gray-700 border border-gray-100">{info.formula}</div>
           <p className="text-xs text-gray-500">{info.importance}</p>
           {value === null && (
-            <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-1.5">Insufficient data — this ratio cannot be calculated until relevant accounts have transactions.</p>
+            <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-1.5">Insufficient data - this ratio cannot be calculated until relevant accounts have transactions.</p>
           )}
           {recommendation && (
             <div className={cn(

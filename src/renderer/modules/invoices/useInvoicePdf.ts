@@ -42,7 +42,7 @@ export async function fetchInvoicePdfBlob(invoiceId: number): Promise<{ blob: Bl
   return fetchPdfBlob(INVOICES.PDF(invoiceId), `invoice-${invoiceId}.pdf`);
 }
 
-/** B2C Discover — shop-letterhead PDF via storefront buyer route. */
+/** B2C Discover - shop-letterhead PDF via storefront buyer route. */
 export async function fetchStorefrontBuyerInvoicePdfBlob(
   orderId: number,
 ): Promise<{ blob: Blob; filename: string }> {

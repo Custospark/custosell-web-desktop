@@ -18,7 +18,7 @@ export interface ConnectivityProbeResult {
 
 /**
  * Probe API reachability via axios (Bearer + business headers attached).
- * 401/403 still means the API is up — only network/5xx counts as down.
+ * 401/403 still means the API is up - only network/5xx counts as down.
  */
 async function probeApiBackend(): Promise<{ ok: boolean; latency: number | null }> {
   const startTime = performance.now();

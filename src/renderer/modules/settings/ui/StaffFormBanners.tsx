@@ -51,7 +51,7 @@ export function StaffFormBanners({
       )}
       {isAttachMode && (
         <div className="mb-5 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-          <p className="font-medium">Existing account — will attach</p>
+          <p className="font-medium">Existing account - will attach</p>
           <p className="mt-1">This email already has a login. They will join this organization without a new password.</p>
         </div>
       )}

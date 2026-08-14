@@ -169,7 +169,7 @@ export default function SalesHistory() {
         title={isOffline ? 'Showing offline sales only' : 'Failed to load sales'}
         description={
           isOffline
-            ? 'Cached sales are unavailable. Complete new sales offline — they will appear here and sync when you reconnect.'
+            ? 'Cached sales are unavailable. Complete new sales offline - they will appear here and sync when you reconnect.'
             : 'Check your connection and try again.'
         }
         actionLabel="Retry"

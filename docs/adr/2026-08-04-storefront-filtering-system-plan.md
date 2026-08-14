@@ -1,24 +1,24 @@
-# Storefront Filtering System — Implementation Plan
+# Storefront Filtering System - Implementation Plan
 
 Date: 2026-08-04
-Status: Approved (decision) — not yet implemented
+Status: Approved (decision) - not yet implemented
 
 ## Goal
 
 Replace "scroll everything" with a robust, server-backed filter system for discovering
 businesses and products: business category, location (country + city), product type,
-effective price, in-stock, minimum rating, and sorting — all with live facet counts and
+effective price, in-stock, minimum rating, and sorting - all with live facet counts and
 URL-addressable state. No endless scrolling through irrelevant results.
 
 ## Decisions (confirmed with Oscar)
 
-1. **Business taxonomy** — new curated `business_categories` table (seeded), optional
+1. **Business taxonomy** - new curated `business_categories` table (seeded), optional
    `businesses.business_category_id`, category picker in Settings → Business profile.
-2. **Location** — country + city facet dropdowns (multi-country capable, derived from
+2. **Location** - country + city facet dropdowns (multi-country capable, derived from
    live data with counts).
-3. **Product filters** — type (product/service), effective-price range, in-stock,
+3. **Product filters** - type (product/service), effective-price range, in-stock,
    minimum rating, plus sort (relevance/newest/price_asc/price_desc/rating/name).
-4. **Filter state** — URL search params (shareable, survives refresh/back).
+4. **Filter state** - URL search params (shareable, survives refresh/back).
 
 ## Backend
 
@@ -45,7 +45,7 @@ URL-addressable state. No endless scrolling through irrelevant results.
   - `sort` → `relevance` | `newest` (`storefront_listed_at` desc) | `price_asc`
     | `price_desc` (effective price) | `rating`.
 - `shopProducts(...)` accepts `type, priceMin, priceMax, inStock, minRating, sort`.
-- **Facets** — new `discoverFacets(viewerUserId?)` returning:
+- **Facets** - new `discoverFacets(viewerUserId?)` returning:
   ```json
   {
     "business_categories": [{ "slug", "name", "count" }],
@@ -60,7 +60,7 @@ URL-addressable state. No endless scrolling through irrelevant results.
   All counts under `publicStorefront()` visibility gates (storefront_enabled + status).
 
 ### Routes (`routes/api/v1/storefront.php`)
-- `GET /storefront/facets` — public, no auth, no throttle (read-only facets).
+- `GET /storefront/facets` - public, no auth, no throttle (read-only facets).
 - Extend existing `GET /discover`, `GET /shops`, `GET /{slug}/products` to accept the
   new query params. Public, unauthenticated.
 
@@ -79,7 +79,7 @@ URL-addressable state. No endless scrolling through irrelevant results.
   inStock, minRating, city, country, sort, q)`
 - `productsPages(slug, productCategory, type, priceMin, priceMax, inStock, minRating, sort, q)`
 - `facets()`
-- Key change resets pagination to page 1 (React Query behavior — preserved).
+- Key change resets pagination to page 1 (React Query behavior - preserved).
 
 ### Filter state = URL search params
 - `DiscoverPage`, browse panels, and `ShopPage` read filters from `useSearchParams`
@@ -97,7 +97,7 @@ URL-addressable state. No endless scrolling through irrelevant results.
   location + type/price/stock/rating + sort.
 - `ShopPage`: product subset filters + sort.
 - Empty state "No businesses/products match these filters." + **Clear all filters** CTA
-  (when a filter is active) — no endless scroll.
+  (when a filter is active) - no endless scroll.
 - Facets fetch failure → filter controls hide gracefully; `q` search + default list
   still work.
 

@@ -162,14 +162,14 @@ export function snapshotsEqual(a: BusinessFormSnapshot, b: BusinessFormSnapshot)
 }
 
 export function formatCurrencyLabel(code: string | null | undefined): string {
-  if (!code) return '—';
+  if (!code) return '-';
   const currency = CURRENCIES.find((c) => c.code === code);
   if (!currency) return code;
-  return `${currency.code} (${currency.symbol}) — ${currency.name}`;
+  return `${currency.code} (${currency.symbol}) - ${currency.name}`;
 }
 
 export function formatBusinessType(value: string | null | undefined): string {
-  if (!value) return '—';
+  if (!value) return '-';
   return BUSINESS_TYPE_LABELS[value] ?? value;
 }
 

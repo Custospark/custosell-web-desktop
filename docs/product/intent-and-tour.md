@@ -7,7 +7,7 @@ ADR: [../adr/2026-07-11-intent-and-app-tour.md](../adr/2026-07-11-intent-and-app
 
 - **Intent ≠ permissions.** Owners pick modules in Module access. Intent never flips staff or owner module checkboxes.
 - **Tour ≠ unlock.** Tour only highlights what the signed-in user can already open.
-- **Global tone.** “Run your business” — competitive with international suites; local compliance lives inside modules.
+- **Global tone.** “Run your business” - competitive with international suites; local compliance lives inside modules.
 
 ## Flow
 
@@ -28,13 +28,13 @@ flowchart TD
 
 **Timing:** Intent modal waits **5 seconds** after login/register when online (once `needs_intent` is known). Offline skips that delay. Celebration runs **once for ~30 seconds**. Tour Replay applies **locally first** so the tour opens immediately; API sync is background. **Tour works offline** using embedded `user.onboarding`.
 
-**Auto Play (product):** Opt-in, **not** on by default. Recommended dwell **4–5s per step** after the spotlight is ready (current: 5s).
+**Auto Play (product):** Opt-in, **not** on by default. Recommended dwell **4-5s per step** after the spotlight is ready (current: 5s).
 
 ## Intent cards (v1 copy)
 
 Pick **one primary**; optional **one secondary**. Cards mirror Custosell modules (icons/tones match Apps launcher): Dashboard, Sales, Inventory, Customers, Pipeline, Projects & Estimates, Expenses, Documents, HR, Accounting, Forecasting, plus “Show me everything”.
 
-**After submit (owner):** soft line — modules stay under Settings → Module access.  
+**After submit (owner):** soft line - modules stay under Settings → Module access.  
 **Skip:** still continues into the guided tour.
 
 ## Shell + module tour (v1)
@@ -44,8 +44,8 @@ Targets need stable anchors (`data-tour`). Guide card sits beside the spotlight 
 | Area | What’s covered |
 |------|----------------|
 | Shell | Apps, network, Guide/Tour, profile, sidebar, Quick Support |
-| Modules | One step per accessible module — **Account, Online Shopping, and Custosell Guide included** |
-| Online Shopping | Sidebar spotlight only — **does not navigate** to `/discover` (immersive shell would leave tour targets) |
+| Modules | One step per accessible module - **Account, Online Shopping, and Custosell Guide included** |
+| Online Shopping | Sidebar spotlight only - **does not navigate** to `/discover` (immersive shell would leave tour targets) |
 | Grouping | Each module expands so **header + sub-nav** share one spotlight (not a step per link) |
 | Owners | Module access in Settings |
 | Finish / Skip | Flower celebration (~30s) + congratulations; skip has its own welcome copy |

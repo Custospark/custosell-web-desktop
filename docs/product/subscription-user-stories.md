@@ -1,4 +1,4 @@
-# Subscription — Frontend User Stories
+# Subscription - Frontend User Stories
 
 Mirrors the backend [billing-scenarios.md](../../../Backend/docs/billing-scenarios.md) from the frontend (Electron + React + TypeScript) perspective. Covers the SubscriptionGuard middleware, route protection, overlay UI, and redirect behavior.
 
@@ -42,7 +42,7 @@ SubscriptionGuard wraps **all business modules** inside the Layout shell:
 
 ---
 
-## Scenario 1: Oscar Signs Up — Free Trial
+## Scenario 1: Oscar Signs Up - Free Trial
 
 Oscar registers Kikuubo Retail Ltd, chooses Essential (UGX 75,000/mo, 30-day trial). He lands on the app.
 
@@ -61,7 +61,7 @@ Oscar registers Kikuubo Retail Ltd, chooses Essential (UGX 75,000/mo, 30-day tri
 
 ### Overlay behavior
 
-No overlay — access granted.
+No overlay - access granted.
 
 ### Failure states
 
@@ -70,7 +70,7 @@ No overlay — access granted.
 | Registration fails | 422 form errors | `RegisterPage` shows field validation |
 | Onboarding payment fails | Toast error | `PaymentPage` shows error, retry allowed |
 | PaymentPage redirects but subscription not yet trial | Guard isLoading | `CustosellLoader` spinner, auto-retry on query refetch |
-| Fetching access endpoint fails | `isError = true` | Guard renders `Outlet` (fail-open — allow access) |
+| Fetching access endpoint fails | `isError = true` | Guard renders `Outlet` (fail-open - allow access) |
 
 ---
 
@@ -101,15 +101,15 @@ No overlay. Oscar continues using the POS uninterrupted.
 
 ---
 
-## Scenario 3: Payment Bounces — Grace Period
+## Scenario 3: Payment Bounces - Grace Period
 
 Oscar's second-month payment fails. Cron marks subscription `past_due` with 7-day grace.
 
 ### Frontend flow
 
 1. SubscriptionGuard calls `GET /subscriptions/access` → `{ "has_access": true }`
-2. Grace period active — user still has full access
-3. Sidebar or SubscriptionSettingsPage shows subtle warning badge: "Payment overdue — 5 days remaining"
+2. Grace period active - user still has full access
+3. Sidebar or SubscriptionSettingsPage shows subtle warning badge: "Payment overdue - 5 days remaining"
 
 ### Overlay behavior
 
@@ -146,7 +146,7 @@ No overlay. Grace period means business as usual.
 |-----------|--------|-------------------|
 | User navigates while suspended | Overlay blocks all guarded routes | Settings subscription page still accessible |
 | User pays while overlay is visible | Refresh or next 30s poll re-checks | Overlay disappears, content appears |
-| Access endpoint fails while suspended | `isError = true` | Guard renders overlay (fail-closed — safe for suspended) |
+| Access endpoint fails while suspended | `isError = true` | Guard renders overlay (fail-closed - safe for suspended) |
 
 ---
 
@@ -241,7 +241,7 @@ Sarah (Mama K's Foods, Jinja) never pays. 30-day trial expires.
 ```
 
 4. "Manage subscription" → `/settings/subscription` → shows plan selection
-5. She can subscribe (but backend blocks duplicate sub — needs support reset)
+5. She can subscribe (but backend blocks duplicate sub - needs support reset)
 
 ---
 
@@ -326,9 +326,9 @@ The SubscriptionGuard polls every 30s. If the subscription is suspended mid-sess
 
 | Scenario | Behavior |
 |----------|----------|
-| User offline when suspension happens | Guard still shows cached `has_access: true` (stale data) — user continues working |
+| User offline when suspension happens | Guard still shows cached `has_access: true` (stale data) - user continues working |
 | User comes back online | Next 30s poll fetches fresh data → `has_access: false` → overlay appears |
-| User in the middle of a sale | Overlay does not interrupt — user can complete the current transaction |
+| User in the middle of a sale | Overlay does not interrupt - user can complete the current transaction |
 | User navigates to a new page | Guard re-renders → overlay blocks navigation |
 
 ---
@@ -378,7 +378,7 @@ The SubscriptionGuard polls every 30s. If the subscription is suspended mid-sess
 
 ## Plan Card Action Matrix
 
-The plan cards on the Plans tab (`PlansTab` → `PlanCard`) decide each card's action from `planActionMatrix.ts` — a `status × relation` table (`relation` = current/higher/lower vs the subscribed plan).
+The plan cards on the Plans tab (`PlansTab` → `PlanCard`) decide each card's action from `planActionMatrix.ts` - a `status × relation` table (`relation` = current/higher/lower vs the subscribed plan).
 
 | Subscription state | Current plan | Higher plan | Lower plan |
 |--------------------|--------------|-------------|------------|
@@ -393,9 +393,9 @@ The plan cards on the Plans tab (`PlansTab` → `PlanCard`) decide each card's a
 
 Rules enforced by `PlanCard`:
 
-- The **current plan** always renders a "Current Plan" badge + pill, regardless of status. If the state also has an action (`Subscribe Now`, `Pay Setup Fee`, `Pay Outstanding`, `Reactivate`), that button still renders below the pill — the current label is never hidden.
+- The **current plan** always renders a "Current Plan" badge + pill, regardless of status. If the state also has an action (`Subscribe Now`, `Pay Setup Fee`, `Pay Outstanding`, `Reactivate`), that button still renders below the pill - the current label is never hidden.
 - **Lower plans** always offer a downgrade action (`Schedule Downgrade`) in every status where the subscription is live (trial paid/unpaid, active, past_due). For suspended/expired/cancelled the recovery action dominates per the matrix.
-- `trial_paid` / `trial_unpaid` previously mapped `lower` → `current`, which rendered "Current Plan" on lower plan cards and left the current plan without any "Current" label — both were fixed.
+- `trial_paid` / `trial_unpaid` previously mapped `lower` → `current`, which rendered "Current Plan" on lower plan cards and left the current plan without any "Current" label - both were fixed.
 
 ---
 
@@ -410,7 +410,7 @@ When a business subscribes using a referral code, the system tracks the referral
    - **Percentage**: `price_monthly × value ÷ 100`
    - **Flat**: `discount_value` directly
    - **Free month**: equals `price_monthly`
-3. The subscription's `price_monthly` is **never modified** — the business pays full price
+3. The subscription's `price_monthly` is **never modified** - the business pays full price
 4. On activation, `activateForSubscription()` calls `markActive()` which:
    - Calculates `reward_amount` for the referrer (based on **full** price_monthly)
    - Calculates `commission_earned` for sales reps (based on **full** price_monthly)
@@ -442,7 +442,7 @@ Grace is granted **once per subscription lifecycle**. The `grace_used` boolean o
 
 ---
 
-## Scenario 9: Multi-Currency Payment — USD Primary, Local Equivalent
+## Scenario 9: Multi-Currency Payment - USD Primary, Local Equivalent
 
 Oscar (Kikuubo Retail Ltd, UGX) sees plan prices in USD with UGX equivalent. David (Pearl Tech Solutions, USD) sees prices in USD only.
 
@@ -497,9 +497,9 @@ All earlier scenarios show UGX prices. With multi-currency, prices display in US
 
 | File | Purpose |
 |------|---------|
-| `src/renderer/app/routes/middleware/SubscriptionGuard.tsx` | Route guard component — fetches access, renders overlay or Outlet |
-| `src/renderer/app/routes/index.tsx` | Route tree — SubscriptionGuard wraps all business modules |
-| `src/renderer/shared/utils/moduleAccess.ts` | `getDefaultRoute()` — redirect logic after login |
+| `src/renderer/app/routes/middleware/SubscriptionGuard.tsx` | Route guard component - fetches access, renders overlay or Outlet |
+| `src/renderer/app/routes/index.tsx` | Route tree - SubscriptionGuard wraps all business modules |
+| `src/renderer/shared/utils/moduleAccess.ts` | `getDefaultRoute()` - redirect logic after login |
 | `src/renderer/modules/settings/SubscriptionSettingsPage.tsx` | Target page for "Manage subscription" button in overlay |
 | `src/renderer/app/routes/constants/shared.paths.ts` | Route path constants including `SETTINGS.SUBSCRIPTION` |
 | `src/renderer/shared/api/endpoints/endpoints.ts` | API endpoint constants including `SUBSCRIPTIONS.ACCESS` |

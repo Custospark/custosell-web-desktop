@@ -5,7 +5,7 @@
 
 **Context:** Branch-to-branch stock transfer treated catalog services as if they held physical stock. The `BranchTransferModal` listed every product (services included, each showing "Available: 0"), and the backend `StockMovementService::transfer()` deducted/incremented `location_product` quantities and wrote a `type = transfer` movement for service lines. This contradicted the earlier purchase-order receipt work (`d484fca`), which already skips stock movements for service lines because services are not quantitative. The result was branch stock being silently attributed to non-inventory services.
 
-**Decision:** Services are never branch-transferable — modeled on the receive-path convention ("services are not quantitative, skip stock movements"):
+**Decision:** Services are never branch-transferable - modeled on the receive-path convention ("services are not quantitative, skip stock movements"):
 - **Backend** `StockMovementService::transfer()`: after loading the product, `continue`s (skips) items where `!$product->tracksStock()` instead of validating/moving their stock, so no `location_product` rows and no transfer movement are created. This is a server-side guard that stays correct regardless of client.
 - **Frontend** `BranchTransferModal.tsx`: filters service items out of the transferable list via the existing `isServiceItem()` helper (`ProductTypes.ts`), so staff can only pick physical products.
 

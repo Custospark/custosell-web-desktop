@@ -101,8 +101,8 @@ export default function ExpenseCategoryManager({ inline }: ExpenseCategoryManage
               {c._pendingSync && <Badge variant="warning">Pending sync</Badge>}
             </div>
           ) },
-          { key: 'description', header: 'Description', render: (c) => c.description || <span className="text-gray-400">—</span> },
-          { key: 'budget', header: 'Budget', render: (c) => c.budget_amount ? <span>{formatCurrency(c.budget_amount)} <span className="text-xs text-gray-400">/{c.budget_period}</span></span> : <span className="text-gray-400">—</span> },
+          { key: 'description', header: 'Description', render: (c) => c.description || <span className="text-gray-400">-</span> },
+          { key: 'budget', header: 'Budget', render: (c) => c.budget_amount ? <span>{formatCurrency(c.budget_amount)} <span className="text-xs text-gray-400">/{c.budget_period}</span></span> : <span className="text-gray-400">-</span> },
           { key: 'sort_order', header: 'Order' },
           { key: 'actions', header: 'Actions', render: (c) => (
             <div className="flex gap-1">

@@ -274,7 +274,7 @@ export default function BoardTargetFormModal({
       subtitle={
         isEditing
           ? 'Update this target for the selected period.'
-          : 'Group your target details below — type, measure, and ownership.'
+          : 'Group your target details below - type, measure, and ownership.'
       }
       size="xl"
       bodyClassName="px-6 py-4"
@@ -306,7 +306,7 @@ export default function BoardTargetFormModal({
           <p className="pl-5 text-violet-800/90">
             Planning horizon for decomposition:{' '}
             <span className="font-semibold tabular-nums">{formatAnchorRange(planningAnchors)}</span>
-            {' '}— future years / months / weeks each get their share of the full target.
+            {' '}- future years / months / weeks each get their share of the full target.
           </p>
         </div>
 

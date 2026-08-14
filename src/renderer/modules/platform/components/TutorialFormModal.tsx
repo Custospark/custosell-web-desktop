@@ -109,7 +109,7 @@ export default function TutorialFormModal({ open, onClose, editing }: TutorialFo
       if (thumb) {
         update('thumbnail_url', thumb);
         update('thumbnail_path', '');
-        setThumbHint('Preview applied — save to store it.');
+        setThumbHint('Preview applied - save to store it.');
       } else {
         setThumbHint(res.message ?? 'No automatic preview. Upload an image instead.');
       }
@@ -253,7 +253,7 @@ export default function TutorialFormModal({ open, onClose, editing }: TutorialFo
               onChange={(e) => update('is_published', e.target.checked)}
               className="rounded border-gray-300 text-blue-600"
             />
-            Published — visible under Guide
+            Published - visible under Guide
           </label>
         </PipelineFormSection>
 

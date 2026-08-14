@@ -10,7 +10,7 @@ Discover shop cards needed description, location, phone, and email. Buyers also 
 ## Decision
 
 1. Extend `publicShopPayload` with `address`, `state`, and `business_email` (existing business columns; no migration).
-2. Add `product_storefront_ratings` (unique product+user, rating 1–5) and expose `rating_avg` / `rating_count` / `my_rating` on storefront product payloads. Rate via `POST /storefront/{slug}/products/{id}/ratings` (Sanctum).
+2. Add `product_storefront_ratings` (unique product+user, rating 1-5) and expose `rating_avg` / `rating_count` / `my_rating` on storefront product payloads. Rate via `POST /storefront/{slug}/products/{id}/ratings` (Sanctum).
 3. Keep Shops and Products browse panels mounted in `DiscoverPage`; toggle with `hidden`/`block` while syncing `?focus=` for deep links and strip nav.
 4. Strip: catalog shows **Shops**; open shop shows truncated shop name. Clicking Shops on the catalog is a no-op (no remount). Shop/product ratings use optimistic React Query updates.
 5. Shop ratings via `business_storefront_ratings` + `POST /storefront/{slug}/ratings`.

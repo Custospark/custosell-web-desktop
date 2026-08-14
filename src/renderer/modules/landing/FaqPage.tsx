@@ -29,7 +29,7 @@ const CATEGORIES: { label: string; range: [number, number]; description: string 
   {
     label: 'Features & Tools',
     range: [16, 27],
-    description: 'What Custosell includes — POS, accounting, inventory, HR, storefront, CRM, projects, expenses, forecasting, and documents.',
+    description: 'What Custosell includes - POS, accounting, inventory, HR, storefront, CRM, projects, expenses, forecasting, and documents.',
   },
 ];
 
@@ -167,7 +167,7 @@ export default function FaqPage() {
           </span>
         </h1>
         <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-          Everything you need to know about Custosell — from getting started to advanced features.
+          Everything you need to know about Custosell - from getting started to advanced features.
         </p>
       </motion.div>
 

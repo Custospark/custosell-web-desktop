@@ -1,4 +1,4 @@
-# ADR — Responsive accounting views: chart of accounts + financial ratio tooltips
+# ADR - Responsive accounting views: chart of accounts + financial ratio tooltips
 
 - **Date:** 2026-08-11
 - **Status:** Accepted
@@ -9,7 +9,7 @@
 The Chart of Accounts page and the Financial Ratios dashboard were desktop-first:
 
 - **Chart of Accounts flat view** rendered a 6-column `Table` (the shared `Table` uses `min-w-full` + `whitespace-nowrap` inside `overflow-x-auto`), forcing horizontal scrolling on phones. The Tree view's fixed `ml-6` indentation per depth had no overflow guard. The header/action cluster and toolbar did not wrap.
-- **RatiosPage (`RatioLine`) tooltip** was mouse-only (`onMouseEnter`/`onMouseLeave`), `position: fixed` with a fixed `w-[360px]`, only right-edge flipped, and never clamped to the viewport. On mobile it never appeared (no tap handler) and on small desktops it could render partially off-screen. The file was also 601 lines — over the 500-line hard limit.
+- **RatiosPage (`RatioLine`) tooltip** was mouse-only (`onMouseEnter`/`onMouseLeave`), `position: fixed` with a fixed `w-[360px]`, only right-edge flipped, and never clamped to the viewport. On mobile it never appeared (no tap handler) and on small desktops it could render partially off-screen. The file was also 601 lines - over the 500-line hard limit.
 
 ## Decision
 
@@ -17,7 +17,7 @@ The Chart of Accounts page and the Financial Ratios dashboard were desktop-first
 1. Flat view uses the existing card-on-mobile pattern: a `<div className="space-y-3 md:hidden">` mobile card list (new `ChartOfAccountMobileCard`) plus the desktop `Table` wrapped in `hidden md:block`. Pagination stays shared between both.
 2. Tree view wrapped in `overflow-x-auto`; child indentation becomes `ml-3 sm:ml-6` and rows use `flex-wrap` so long names wrap instead of clipping.
 3. Header/toolbar made wrap-safe: `flex flex-col gap-3 sm:flex-row`, `flex-wrap` on the action buttons, search/type filter go full-width on phones (`w-full sm:w-40`, `w-full sm:max-w-sm`).
-4. Row actions (`AccountActions`: inline rename + delete confirm) and the status pill (`AccountStatusBadge`) extracted into shared components used by both the desktop table and mobile cards — one implementation, no duplication.
+4. Row actions (`AccountActions`: inline rename + delete confirm) and the status pill (`AccountStatusBadge`) extracted into shared components used by both the desktop table and mobile cards - one implementation, no duplication.
 
 **Financial Ratios tooltip (`RatioLine`, extracted from `RatiosPage`):**
 1. Opens on hover (desktop, unchanged) **and** on tap/click of the Info icon (mobile). Closes on outside tap, scroll, resize, or Escape.

@@ -7,8 +7,8 @@ Authentication supports **online server login**, **offline device login**, and *
 | Flag | Meaning |
 |------|---------|
 | `isAuthenticated` | User has a session (local or server token) |
-| `isLocalSession` | Token is `local_*` — not sent as Bearer to API |
-| `pendingAuthSync` | **Pending registration only** — account not yet on server |
+| `isLocalSession` | Token is `local_*` - not sent as Bearer to API |
+| `pendingAuthSync` | **Pending registration only** - account not yet on server |
 
 **Important:** `pendingAuthSync` is **not** the same as `isLocalSession`. A normal offline device login has `isLocalSession: true` and `pendingAuthSync: false`. Only offline **registration** sets `pendingAuthSync: true` (shows amber `AuthPendingBanner`).
 
@@ -45,9 +45,9 @@ Prerequisite: user must have signed in **online at least once** on this device (
 
 ## Bearer token resolution
 
-`resolveBearerToken()` in `axiosConfig.ts` **strips** `local_*` tokens — API calls send no Authorization until session is upgraded. Local sessions skip 401 forced logout (`skipAuthRedirect`).
+`resolveBearerToken()` in `axiosConfig.ts` **strips** `local_*` tokens - API calls send no Authorization until session is upgraded. Local sessions skip 401 forced logout (`skipAuthRedirect`).
 
-`useProfile` is disabled while `isLocalSession` — profile loads from auth slice snapshot until upgrade.
+`useProfile` is disabled while `isLocalSession` - profile loads from auth slice snapshot until upgrade.
 
 ## Silent session upgrade
 
@@ -60,7 +60,7 @@ If sales/products queries or React Query `refetchOnReconnect` run first, they hi
 ### Execution order (reconnect or online boot with local session)
 
 ```
-Phase 1 — Silent session upgrade (blocks everything below)
+Phase 1 - Silent session upgrade (blocks everything below)
   ├─ upgradeLocalSessionIfOnline()  [single shared promise]
   ├─ Queued POST /auth/login OR direct POST /auth/login (device password)
   └─ applyServerAuth()
@@ -68,10 +68,10 @@ Phase 1 — Silent session upgrade (blocks everything below)
        ├─ Encrypted session + device credentials persisted
        └─ postSessionUpgradeRefresh() (profile cache, catalogs, shifts/sales, /shifts/active)
 
-Phase 2 — Only after Phase 1 completes (or is not needed)
+Phase 2 - Only after Phase 1 completes (or is not needed)
   ├─ Authenticated API requests (products, sales, dashboard, …)
   ├─ React Query refetchOnReconnect
-  └─ syncPendingDataIfOnline() — mutation queue, sales batch, etc.
+  └─ syncPendingDataIfOnline() - mutation queue, sales batch, etc.
 ```
 
 ### Gating mechanisms
@@ -97,7 +97,7 @@ Phase 2 — Only after Phase 1 completes (or is not needed)
 2. If auth mutations queued → `syncAuthMutations()` → `applyServerAuth()`
 3. Else `POST /auth/login` with encrypted device password
 4. `applyServerAuth()` → `isLocalSession=false`, `pendingAuthSync=false`
-5. `postSessionUpgradeRefresh()` — profile, catalog snapshots, query invalidation, active shift
+5. `postSessionUpgradeRefresh()` - profile, catalog snapshots, query invalidation, active shift
 
 No toast for routine device-login upgrade. Registration sync still shows success/error toasts.
 
@@ -125,13 +125,13 @@ Uses `authSessionApply.ts` → `persistLoginCredentials()` + `loginSuccess()` + 
 1. Sign in online once.
 2. Log out → go offline → sign in with same credentials.
 3. Confirm no `AuthPendingBanner`.
-4. Restore internet — user stays in app, session upgrades silently, profile/shift refresh.
+4. Restore internet - user stays in app, session upgrades silently, profile/shift refresh.
 
 ### Pending registration
 
 1. Register offline (new business).
 2. Confirm `AuthPendingBanner` shows.
-3. Reconnect — registration syncs; banner clears after `applyServerAuth`.
+3. Reconnect - registration syncs; banner clears after `applyServerAuth`.
 
 ### Legacy session fix
 

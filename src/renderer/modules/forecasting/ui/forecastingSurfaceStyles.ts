@@ -1,4 +1,4 @@
-/** Clear gray borders — readable panels matching HR surfaces. */
+/** Clear gray borders - readable panels matching HR surfaces. */
 export const FORECAST_SURFACE = {
   panel: 'rounded-2xl border border-gray-200 bg-white shadow-sm',
   tableWrap: 'overflow-hidden rounded-xl border border-gray-200 bg-white',

@@ -46,7 +46,7 @@ import {
 import { HR_SURFACE } from '../ui/hrSurfaceStyles';
 
 function formatMoney(n: number | undefined | null) {
-  if (n == null) return '—';
+  if (n == null) return '-';
   return new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n);
 }
 
@@ -164,7 +164,7 @@ export default function HrPayrollPage() {
       <HrPageHeader
         icon={Wallet}
         title="Payroll"
-        description="Salary structures, compensation, and pay runs — Uganda-first with PAYE and NSSF built in."
+        description="Salary structures, compensation, and pay runs - Uganda-first with PAYE and NSSF built in."
         actions={
           <Button size="sm" onClick={() => setRunOpen(true)} className="inline-flex items-center gap-1.5">
             <Plus className="h-3.5 w-3.5" /> New pay run
@@ -186,7 +186,7 @@ export default function HrPayrollPage() {
             <div className="flex justify-center py-8"><CustosellLoader /></div>
           ) : structures.length === 0 ? (
             <p className="text-sm text-gray-500">
-              No structures yet — create one to organize compensation.
+              No structures yet - create one to organize compensation.
             </p>
           ) : (
             <ul className="divide-y divide-gray-100 text-sm">
@@ -223,7 +223,7 @@ export default function HrPayrollPage() {
 
         <HrSectionCard
           title="Compensations"
-          description="Basic salary per employee — required before calculating a pay run."
+          description="Basic salary per employee - required before calculating a pay run."
           actions={
             <Button size="sm" variant="outline" onClick={() => setCompOpen(true)} className="inline-flex items-center gap-1.5">
               <Plus className="h-3.5 w-3.5" /> Assign salary
@@ -234,7 +234,7 @@ export default function HrPayrollPage() {
             <div className="flex justify-center py-8"><CustosellLoader /></div>
           ) : compensations.length === 0 ? (
             <p className="text-sm text-gray-500">
-              Assign basic salary to active employees — then you can run payroll for a period.
+              Assign basic salary to active employees - then you can run payroll for a period.
             </p>
           ) : (
             <div className={HR_SURFACE.tableWrap}>
@@ -276,14 +276,14 @@ export default function HrPayrollPage() {
         </HrSectionCard>
       </div>
 
-      <HrSectionCard title="Pay runs" description="Calculate → approve → post — each step locks in the numbers.">
+      <HrSectionCard title="Pay runs" description="Calculate → approve → post - each step locks in the numbers.">
         {loadingRuns ? (
           <div className="flex justify-center py-8"><CustosellLoader /></div>
         ) : payRuns.length === 0 ? (
           <HrEmptyState
             icon={<Wallet className="h-6 w-6" />}
             title="No pay runs yet"
-            description="Create a pay period when you're ready — we'll calculate PAYE and NSSF from assigned salaries."
+            description="Create a pay period when you're ready - we'll calculate PAYE and NSSF from assigned salaries."
             action={
               <Button onClick={() => setRunOpen(true)} className="inline-flex items-center gap-2">
                 <Plus className="h-4 w-4" /> Start your first pay run
@@ -350,7 +350,7 @@ export default function HrPayrollPage() {
           <HrModalHero
             icon={Layers}
             title={editingStructure ? 'Edit salary structure' : 'New salary structure'}
-            description="The currency is set per business — you can assign it when setting compensation."
+            description="The currency is set per business - you can assign it when setting compensation."
             tone="blue"
           />
           <HrFormSection title="Structure" icon={Layers}>
@@ -394,7 +394,7 @@ export default function HrPayrollPage() {
           <HrModalHero
             icon={Banknote}
             title="Employee compensation"
-            description="This basic salary drives gross pay — PAYE and NSSF are calculated from it during a pay run."
+            description="This basic salary drives gross pay - PAYE and NSSF are calculated from it during a pay run."
             tone="emerald"
           />
           <HrFormSection title="Assignment" icon={User} description="Pick the employee and their pay details.">
@@ -457,7 +457,7 @@ export default function HrPayrollPage() {
         isOpen={runOpen}
         onClose={() => setRunOpen(false)}
         title="New pay run"
-        subtitle="Define the period — you'll calculate and review before posting."
+        subtitle="Define the period - you'll calculate and review before posting."
       >
         <form onSubmit={handleRun} className="space-y-5">
           <HrModalHero

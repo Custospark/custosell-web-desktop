@@ -1,5 +1,5 @@
 /**
- * Vera Fast — ESLint on changed .ts/.tsx + Vera Logic (repo rules/contracts).
+ * Vera Fast - ESLint on changed .ts/.tsx + Vera Logic (repo rules/contracts).
  * Usage: node scripts/vera-fast.mjs
  */
 import { execSync } from 'child_process';
@@ -33,7 +33,7 @@ let failed = false;
 const files = getChangedFiles();
 
 if (files.length === 0) {
-  console.log('🧪 Vera fast: no changed TS/TSX files — eslint skipped.');
+  console.log('🧪 Vera fast: no changed TS/TSX files - eslint skipped.');
 } else {
   console.log(`🧪 Vera fast: eslint on ${files.length} file(s)`);
   try {

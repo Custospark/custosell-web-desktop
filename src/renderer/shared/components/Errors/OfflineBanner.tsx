@@ -9,7 +9,7 @@ import {
   OFFLINE_BANNER_REASSURANCE,
 } from './offlineBannerCopy';
 
-/** Full-width offline notice — sits above the layout shell, never overlays the header. */
+/** Full-width offline notice - sits above the layout shell, never overlays the header. */
 export function OfflineBanner() {
   const dispatch = useAppDispatch();
   const showBanner = useAppSelector(selectShowOfflineBanner);

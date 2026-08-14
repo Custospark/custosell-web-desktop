@@ -84,7 +84,7 @@ export default function CreateCabinetModal({ open, onClose, onCreated }: CreateC
         <DocumentModalHero
           icon={Archive}
           title="Document cabinet"
-          description="Group files by team or function — like HR, Finance, or client projects."
+          description="Group files by team or function - like HR, Finance, or client projects."
           tone="indigo"
         />
 

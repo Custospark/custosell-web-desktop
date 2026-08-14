@@ -194,8 +194,8 @@ export default function QuickReports() {
         ?? 'Staff';
       const when = new Date(shift.clock_in).toLocaleString();
       const label = userId
-        ? `${when} — ${shift.status}`
-        : `${when} — ${shift.status} (${cashierName})`;
+        ? `${when} - ${shift.status}`
+        : `${when} - ${shift.status} (${cashierName})`;
 
       return { value: String(shift.id), label };
     });
@@ -298,7 +298,7 @@ export default function QuickReports() {
         {selectedReport && (
           <div className="flex flex-col min-h-0 sm:min-h-[24rem]">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 flex-1">
-              {/* Left — scope & filters */}
+              {/* Left - scope & filters */}
               <div className="space-y-4 overflow-visible">
                 <div className="rounded-lg bg-gray-50 border border-gray-100 px-4 py-3">
                   <p className="text-sm font-medium text-gray-800">{selectedReport.label}</p>
@@ -351,7 +351,7 @@ export default function QuickReports() {
                       </div>
                     ) : (
                       <p className="text-sm text-gray-600 bg-blue-50/50 border border-blue-100 rounded-lg px-3 py-2">
-                        {dateFrom === dateTo ? `Reporting for ${dateFrom}` : `${dateFrom} — ${dateTo}`}
+                        {dateFrom === dateTo ? `Reporting for ${dateFrom}` : `${dateFrom} - ${dateTo}`}
                       </p>
                     )}
 
@@ -361,7 +361,7 @@ export default function QuickReports() {
                   </>
                 ) : (
                   <p className="text-sm text-gray-600 bg-purple-50/50 border border-purple-100 rounded-lg px-3 py-2">
-                    Snapshot as of today — no date range required.
+                    Snapshot as of today - no date range required.
                   </p>
                 )}
 
@@ -404,7 +404,7 @@ export default function QuickReports() {
                 <p className="text-xs text-gray-400 pt-1">Net sales = gross - refunds - expenses</p>
               </div>
 
-              {/* Right — format */}
+              {/* Right - format */}
               <div className="flex flex-col rounded-xl border border-gray-200 bg-gray-50/40 p-4">
                 {selectedReport.onScreen ? (
                   <BranchPerformanceTable

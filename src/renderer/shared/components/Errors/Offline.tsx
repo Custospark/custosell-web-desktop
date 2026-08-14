@@ -7,7 +7,7 @@ import { PRODUCT_NAME, TAGLINE } from '../../brand/custosellBrand';
 import { getUserFirstName } from '../../utils/userDisplayName';
 
 const CONNECTION_TIPS = [
-  { icon: Wifi, text: 'Check your internet connection — Wi‑Fi or mobile data should be on.' },
+  { icon: Wifi, text: 'Check your internet connection - Wi‑Fi or mobile data should be on.' },
   { icon: Plane, text: 'Turn off airplane mode if it is enabled.' },
   { icon: Router, text: 'Move closer to your router, or try a different network.' },
   { icon: Signal, text: 'When you are ready, tap Reconnect below.' },
@@ -30,7 +30,7 @@ export default function Offline() {
 
   const firstName = getUserFirstName(user?.name, '');
   const headline = firstName ? `${firstName}, you're offline` : "You're offline";
-  const reassurance = `Your data in ${PRODUCT_NAME} is safe — we'll reconnect when you're back.`;
+  const reassurance = `Your data in ${PRODUCT_NAME} is safe - we'll reconnect when you're back.`;
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-gray-50 via-white to-gray-100">

@@ -11,7 +11,7 @@ Platform admins grant plans from the Privileges modal. Choosing an account type 
 
 Enforce a single rule across **both** stacks (`a6a6897` FE, `db83d13` BE):
 
-- `storefront_buyer` accounts have **no subscription at all** — the subscription section is hidden in the UI and any subscription change is rejected by the API (422).
+- `storefront_buyer` accounts have **no subscription at all** - the subscription section is hidden in the UI and any subscription change is rejected by the API (422).
 - When an account type is chosen, only plans whose `type` matches it are offered:
   - `business` → business plans (`essential`, `professional`, `enterprise`)
   - `personal` → personal plans

@@ -19,7 +19,7 @@ export function AuthPendingBanner() {
         <span className="font-medium">
           {userName ? `${userName}, your account is pending sync` : 'Your account is pending sync'}
         </span>
-        <span className="text-amber-700"> — connect to the internet to register with the server.</span>
+        <span className="text-amber-700"> - connect to the internet to register with the server.</span>
       </div>
     </div>
   );

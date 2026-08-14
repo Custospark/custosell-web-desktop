@@ -61,7 +61,7 @@ export function PlatformUserStatusModal({
 
   const title = isBulk
     ? `Update status for ${users.length} users`
-    : `Change status — ${single?.name}`;
+    : `Change status - ${single?.name}`;
 
   return (
     <Modal
@@ -76,7 +76,7 @@ export function PlatformUserStatusModal({
         <PipelineModalHero
           icon={Shield}
           tone="indigo"
-          title={isBulk ? 'Update several accounts' : `Current status: ${single ? USER_STATUS_LABELS[singleStatus] : '—'}`}
+          title={isBulk ? 'Update several accounts' : `Current status: ${single ? USER_STATUS_LABELS[singleStatus] : '-'}`}
           description="Restricted and deactivated accounts cannot sign in. The change is audited and sent via the chosen channel."
         />
 

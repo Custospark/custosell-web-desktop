@@ -33,7 +33,7 @@ function shopLocation(shop: StorefrontShop): string {
   return [shop.address, shop.city, shop.state, shop.country].filter(Boolean).join(', ');
 }
 
-/** Browse all public shops — server search (name / city / @slug) + progressive pages. */
+/** Browse all public shops - server search (name / city / @slug) + progressive pages. */
 export function DiscoverShopsBrowse() {
   const [q, setQ] = useState('');
   const [debouncedQ, setDebouncedQ] = useState('');
@@ -122,7 +122,7 @@ export function DiscoverShopsBrowse() {
 
   if (!data && isLoading) {
     return (
-      <CustosellLoader message="Loading businesses — finding shops with a public storefront." />
+      <CustosellLoader message="Loading businesses - finding shops with a public storefront." />
     );
   }
 

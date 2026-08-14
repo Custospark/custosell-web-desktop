@@ -7,7 +7,7 @@ import { describeNavItem } from './searchDescriptions';
 import { keywordsForRoute, MODULE_ALIASES, MODULE_LANDING_ROUTES } from './searchKeywords';
 import type { SearchableNavItem } from './searchTypes';
 
-/** One entry per sidebar module (group) — routes to the module's landing page. */
+/** One entry per sidebar module (group) - routes to the module's landing page. */
 function groupEntries(group: SidebarNavGroup): SearchableNavItem[] {
   const first = group.subItems[0];
   if (!first) return [];

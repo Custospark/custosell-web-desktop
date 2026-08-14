@@ -8,7 +8,7 @@
 
 The post-registration intent modal opened with *"What brings you to Custosell?"* and a
 mandatory goal selection (Continue was disabled until a primary goal was picked). That
-felt investigative and intimidating right after signup. Skipping it ("Skip — take the
+felt investigative and intimidating right after signup. Skipping it ("Skip - take the
 tour anyway") **forced** the product tour because `skip_intent` optimistically sets
 `needs_tour = true` in `localStateForAction`.
 
@@ -18,16 +18,16 @@ Rewrite `IntentOnboardingModal` to be welcoming and non-forcing:
 
 - Header greets the user by first name: **"Welcome to Custosell, {name}!"** with warm,
   reassuring copy (works offline, nothing to set up).
-- Goal picking is now **optional** ("Make it yours (optional)") — the intent data is a
+- Goal picking is now **optional** ("Make it yours (optional)") - the intent data is a
   preference, never a gate.
 - The bottom now asks **"Want a quick tour of Custosell?"** with two real choices:
   - **Take the tour** → saves the picked intent (or `skip_intent` if none), which leads to
     `needs_tour = true` and opens the tour via `OnboardingGate`.
 - **No thanks** → sends a single **`dismiss_onboarding`** action (new FE+BE contract): it marks the
   intent as skipped (owner) *and* the tour as skipped in one update. Net state:
-  `needs_intent = false`, `needs_tour = false` — the modal closes and nothing is forced.
+  `needs_intent = false`, `needs_tour = false` - the modal closes and nothing is forced.
 - Because dismissal is persisted on the backend (`intent_skipped_at` + `tour_skipped_at`),
-  onboarding never reappears automatically on later logins — `payloadFor()` reports
+  onboarding never reappears automatically on later logins - `payloadFor()` reports
   `needs_intent = false` / `needs_tour = false` for that user.
 - Users can still replay the tour anytime from the navbar (`replay_tour`), so declining
   never permanently hides it.

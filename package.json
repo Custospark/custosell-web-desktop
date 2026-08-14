@@ -2,7 +2,7 @@
   "name": "CUSTOSELL",
   "private": true,
   "version": "5.2.0",
-  "description": "Custosell — Your Business Operating System",
+  "description": "Custosell - Your Business Operating System",
   "author": "Custospark Company Ltd",
   "type": "module",
   "main": "dist/desktop/main/main.js",

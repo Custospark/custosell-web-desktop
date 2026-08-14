@@ -29,7 +29,7 @@ export interface RecentSale {
   items_count: number;
 }
 
-/** Today-only VAT metrics — included in dashboard summary when business is VAT-registered. */
+/** Today-only VAT metrics - included in dashboard summary when business is VAT-registered. */
 export interface DashboardTodayVat {
   output_vat: number;
   output_vat_refunded: number;

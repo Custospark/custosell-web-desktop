@@ -1,4 +1,4 @@
-# Vera Logic — repo rules & contracts
+# Vera Logic - repo rules & contracts
 
 **Frontend:** `npm run vera:logic` (also inside `npm run vera:fast`)  
 **Backend:** `composer vera:logic` (also inside `composer vera:fast`)

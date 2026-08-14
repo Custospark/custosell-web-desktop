@@ -24,5 +24,5 @@ export function EmailSentCountBadge({ count, className }: EmailSentCountBadgePro
 
 export function emailSentLabel(count: number): string {
   if (count <= 0) return 'Email to customer';
-  return count === 1 ? 'Emailed once — send again' : `Emailed ${count} times — send again`;
+  return count === 1 ? 'Emailed once - send again' : `Emailed ${count} times - send again`;
 }

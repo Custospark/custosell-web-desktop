@@ -274,7 +274,7 @@ export default function HrOverviewPage() {
       <HrPageHeader
         icon={LayoutDashboard}
         title="HR dashboard"
-        description="People, attendance, leave, payroll, and talent — one overview for full HR access."
+        description="People, attendance, leave, payroll, and talent - one overview for full HR access."
         actions={(
           <Button
             type="button"
@@ -336,7 +336,7 @@ export default function HrOverviewPage() {
           label="Cash runway"
           value={
             coverage?.runway_months == null
-              ? '—'
+              ? '-'
               : `${coverage.runway_months_floor}+ mo`
           }
           badge="Cash"

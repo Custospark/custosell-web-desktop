@@ -1,4 +1,4 @@
-/** Custosell product brand — single source for tagline / lockups (Phase 1 Business OS). */
+/** Custosell product brand - single source for tagline / lockups (Phase 1 Business OS). */
 
 export const PRODUCT_NAME = 'Custosell';
 
@@ -8,18 +8,18 @@ export const TAGLINE = 'Your Business Operating System';
 /** Short lockup where space is tight. */
 export const TAGLINE_SHORT = 'Business OS';
 
-/** Document / OG title: "Custosell — Your Business Operating System" */
-export const DOCUMENT_TITLE = `${PRODUCT_NAME} — ${TAGLINE}`;
+/** Document / OG title: "Custosell - Your Business Operating System" */
+export const DOCUMENT_TITLE = `${PRODUCT_NAME} - ${TAGLINE}`;
 
-/** Compact shell line: "Custosell — Your Business Operating System" */
-export const BRAND_LOCKUP = `${PRODUCT_NAME} — ${TAGLINE}`;
+/** Compact shell line: "Custosell - Your Business Operating System" */
+export const BRAND_LOCKUP = `${PRODUCT_NAME} - ${TAGLINE}`;
 
 /**
- * Hero / auth supporting sentence — keep in sync with Backend `config/brand.php`
+ * Hero / auth supporting sentence - keep in sync with Backend `config/brand.php`
  * (`supporting_line`).
  */
 export const SUPPORTING_LINE =
-  'Custosell is your Business Operating System — Point of Sale (POS), E-commerce Storefront, Inventory & Supply Chain, Accounting, HR & Payroll, Invoicing, Expenses, Project Management, Sales Pipeline (CRM), Financial Forecasting, and Document Management — all in one connected system that works with or without the internet.';
+  'Custosell is your Business Operating System - Point of Sale (POS), E-commerce Storefront, Inventory & Supply Chain, Accounting, HR & Payroll, Invoicing, Expenses, Project Management, Sales Pipeline (CRM), Financial Forecasting, and Document Management - all in one connected system that works with or without the internet.';
 
 /**
  * Search-engine meta description (meta[name=description], og:description,
@@ -29,7 +29,7 @@ export const SUPPORTING_LINE =
  * Backend `config/brand.php` (`seo_description`).
  */
 export const SEO_DESCRIPTION =
-  'Custosell is your Business Operating System — Point of Sale, E-commerce, Inventory, Accounting, HR & Payroll, Invoicing and CRM in one connected system that works with or without the internet.';
+  'Custosell is your Business Operating System - Point of Sale, E-commerce, Inventory, Accounting, HR & Payroll, Invoicing and CRM in one connected system that works with or without the internet.';
 
 /**
  * Canonical product landing URL used for SEO (og:url, canonical link).
@@ -38,7 +38,7 @@ export const SEO_DESCRIPTION =
 export const SEO_URL = 'https://www.custosell.com';
 
 /**
- * Custospark Company Ltd — support / seller contact details.
+ * Custospark Company Ltd - support / seller contact details.
  * Keep in sync with Backend `config/brand.php` (company_* keys) and
  * `src/renderer/modules/guide/guideSupportConfig.ts` (full phone list).
  */

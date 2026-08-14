@@ -23,7 +23,7 @@ export interface AccessibleNavLeaf extends SidebarSubItem {
   groupLabel: string;
 }
 
-/** Same group filter as Sidebar — module access, limited HR/estimates, owner-only settings.
+/** Same group filter as Sidebar - module access, limited HR/estimates, owner-only settings.
  *  When `planAccessibleModules` is passed, it replaces `canAccessModule` for business module
  *  gating so the sidebar respects the user's subscription plan features. */
 export function resolveAccessibleNavGroups(
@@ -45,7 +45,7 @@ export function resolveAccessibleNavGroups(
     }
     if (group.label === 'Online Shopping') return true;
     if (group.label === 'Custosell Guide') return true;
-    // Settings is always surfaced for personal accounts (module gate would drop it —
+    // Settings is always surfaced for personal accounts (module gate would drop it -
     // personal never gets the `settings` module). The .map() below narrows its sub-items.
     if (group.label === 'Settings' && isPersonal) return true;
     if (group.label === 'Account') {

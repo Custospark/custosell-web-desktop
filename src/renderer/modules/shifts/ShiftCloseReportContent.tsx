@@ -58,7 +58,7 @@ export default function ShiftCloseReportContent({ data, forPrint = false }: Shif
 
       {data.isOfflineCopy && !forPrint && (
         <div className="text-center text-[10px] font-medium text-amber-800 bg-amber-50 border border-amber-200 rounded-lg py-2 px-3 mb-4 print:hidden">
-          Offline copy — official PDF available when Online.
+          Offline copy - official PDF available when Online.
         </div>
       )}
 
@@ -131,11 +131,11 @@ export default function ShiftCloseReportContent({ data, forPrint = false }: Shif
           <Row label="Expected cash in drawer" value={formatCurrency(data.expectedCash ?? 0)} bold />
           <Row
             label="Cash counted"
-            value={data.countedCash != null ? formatCurrency(data.countedCash) : '—'}
+            value={data.countedCash != null ? formatCurrency(data.countedCash) : '-'}
           />
           <Row
             label="Variance"
-            value={data.variance != null ? formatCurrency(Math.abs(data.variance)) : '—'}
+            value={data.variance != null ? formatCurrency(Math.abs(data.variance)) : '-'}
             negative={(data.variance ?? 0) < 0}
           />
         </tbody>

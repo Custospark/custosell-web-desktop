@@ -1,4 +1,4 @@
-# Subscription Persistence — BusinessQueries `setBusiness` Overwrite
+# Subscription Persistence - BusinessQueries `setBusiness` Overwrite
 
 **Date:** 2026-07-25
 
@@ -20,7 +20,7 @@ Debug tracing revealed:
 
 Root cause chain:
 1. `BusinessController::mine()` returned business without eager-loading `subscription.plan`
-2. `BusinessResource` used `$this->whenLoaded('subscription')` — since subscription was not loaded, the field was omitted from the response
+2. `BusinessResource` used `$this->whenLoaded('subscription')` - since subscription was not loaded, the field was omitted from the response
 3. `businessToAuthInfo` spread the raw API response into a new `BusinessInfo` object missing `subscription`
 4. `setBusiness` overwrote the good login data with this incomplete object
 
@@ -28,11 +28,11 @@ Root cause chain:
 
 Three changes, one on each layer:
 
-### 1. Backend — `BusinessController::mine()`
+### 1. Backend - `BusinessController::mine()`
 
 Added `->loadMissing('subscription.plan')` before returning the `BusinessResource`. This ensures the subscription relationship (and its nested plan) are always loaded so `whenLoaded('subscription')` evaluates to truthy.
 
-### 2. Backend — `BusinessResource`
+### 2. Backend - `BusinessResource`
 
 Changed the bare `$this->whenLoaded('subscription')` to a closure that returns a mapped array:
 
@@ -49,7 +49,7 @@ Changed the bare `$this->whenLoaded('subscription')` to a closure that returns a
 
 This matches the shape that `UserResource` returns on login (`plan_name`, `plan_slug`, `plan_features`), making the business endpoint compatible with the frontend's `SubscriptionInfo` type.
 
-### 3. Frontend — `BusinessQueries.ts` `useEffect`
+### 3. Frontend - `BusinessQueries.ts` `useEffect`
 
 Added a defensive guard: if the new business data from the API lacks `subscription.plan_features` but the existing Redux user has them, preserve the existing subscription object. This prevents regressions if any future endpoint also ships an incomplete subscription payload.
 

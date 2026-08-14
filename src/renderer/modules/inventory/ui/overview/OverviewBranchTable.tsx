@@ -33,7 +33,7 @@ export function OverviewBranchTable({ branches, scopeLabel }: OverviewBranchTabl
                   <td className="py-2.5 pr-3 text-right font-semibold text-gray-900 tabular-nums">{formatCurrency(b.value_cost)}</td>
                   <td className="py-2.5 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <span className="text-gray-600 tabular-nums">{b.share_pct === null ? '—' : `${b.share_pct}%`}</span>
+                      <span className="text-gray-600 tabular-nums">{b.share_pct === null ? '-' : `${b.share_pct}%`}</span>
                       <span className="hidden sm:inline-block w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                         <span className="block h-full bg-indigo-500 rounded-full" style={{ width: `${Math.max(0, Math.min(100, b.share_pct ?? 0))}%` }} />
                       </span>

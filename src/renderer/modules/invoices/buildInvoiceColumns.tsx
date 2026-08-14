@@ -198,7 +198,7 @@ export function buildInvoiceColumns({
                     : paymentCount > 0
                       ? `Payment history & receipts (${paymentCount})`
                       : balanceDue(item) > 0
-                        ? 'Payments — record or view history'
+                        ? 'Payments - record or view history'
                         : 'Payment history & receipts'
                 }
                 disabled={busyAction !== null}

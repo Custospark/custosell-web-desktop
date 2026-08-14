@@ -31,13 +31,13 @@ Managers needed reliable board visibility edits, teammates needed near-live kanb
    **Due Date cells:** Excel date-formatted cells arrive as serial numbers; BE normalizes serials / DateTime / common strings to `YYYY-MM-DD` before validation. Template stores the sample due date as text.
 
 6. **Goal decomposition anchors**  
-   FE sends `anchor_start` / `anchor_end` from the target **planning level** via `anchorsForPlanningLevel` (rolling horizon — e.g. decade = Jan 1 this year → Dec 31 year+9). The Progress view chip (Today / This month / …) does **not** drive decomposition; it only scopes the canvas period slice. Day-weighted shares + cumulative fields: [2026-07-14-day-weighted-horizon-decomposition.md](./2026-07-14-day-weighted-horizon-decomposition.md).
+   FE sends `anchor_start` / `anchor_end` from the target **planning level** via `anchorsForPlanningLevel` (rolling horizon - e.g. decade = Jan 1 this year → Dec 31 year+9). The Progress view chip (Today / This month / …) does **not** drive decomposition; it only scopes the canvas period slice. Day-weighted shares + cumulative fields: [2026-07-14-day-weighted-horizon-decomposition.md](./2026-07-14-day-weighted-horizon-decomposition.md).
 
 7. **Product public shop**  
    Storefront listing state is kept locally after save and parent `editingProduct` is patched to avoid checkbox snap-back. Products table filter: all / listed / unlisted. Thumbnails on products table and POS New Sale search.
 
 8. **Navbar business logo**  
-   Logo (and building fallback icon) use `hidden md:block` — name remains on small screens; logo from tablet+.
+   Logo (and building fallback icon) use `hidden md:block` - name remains on small screens; logo from tablet+.
 
 ## Failure states
 
@@ -51,6 +51,6 @@ Managers needed reliable board visibility edits, teammates needed near-live kanb
 
 ## Alternatives considered
 
-- Real-time websockets — deferred  
-- Soft-delete boards — rejected; Oscar requested permanent delete with confirmation  
-- Archive-only — replaced by delete for this product preference
+- Real-time websockets - deferred  
+- Soft-delete boards - rejected; Oscar requested permanent delete with confirmation  
+- Archive-only - replaced by delete for this product preference

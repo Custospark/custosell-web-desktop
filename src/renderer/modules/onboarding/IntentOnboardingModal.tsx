@@ -78,7 +78,7 @@ export function IntentOnboardingModal({ open }: IntentOnboardingModalProps) {
           Welcome to Custosell{firstName ? `, ${firstName}` : ''}!
         </h2>
         <p className="relative mx-auto mt-1.5 max-w-lg text-sm text-indigo-50">
-          We've set up your whole workspace for you — sales, stock, people, books, all in
+          We've set up your whole workspace for you - sales, stock, people, books, all in
           one place. Nothing to configure, and it works even when your internet doesn't.
         </p>
       </div>
@@ -128,7 +128,7 @@ export function IntentOnboardingModal({ open }: IntentOnboardingModalProps) {
             <div className="flex min-w-0 items-center gap-2">
               <Compass className="h-5 w-5 shrink-0 text-indigo-600" aria-hidden />
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-slate-800">See it in 60 seconds — skip the guesswork</p>
+                <p className="text-sm font-semibold text-slate-800">See it in 60 seconds - skip the guesswork</p>
                 <p className="truncate text-xs text-slate-500">
                   You'll know exactly where everything lives from day one.
                 </p>

@@ -18,7 +18,7 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   );
 
 /**
- * Header quick access — Open Orders (with a live count that polls every 30s)
+ * Header quick access - Open Orders (with a live count that polls every 30s)
  * and Products, so businesses can jump straight to what needs attention.
  * Gated by module access: orders → sales, products → inventory.
  */

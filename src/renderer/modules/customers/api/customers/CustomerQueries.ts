@@ -176,7 +176,7 @@ export function useCreateCustomer() {
           if (old.some((c) => c.id === customer.id || c.phone === customer.phone)) return old;
           return [customer, ...old];
         });
-        showToast('success', 'Customer saved — will sync when online');
+        showToast('success', 'Customer saved - will sync when online');
       } else {
         void refreshCustomerCatalogSnapshot();
         qc.invalidateQueries({ queryKey: customerKeys.customers() });
@@ -227,7 +227,7 @@ export function useUpdateCustomer() {
         patchCustomerCache(qc, (old) =>
           old.map((c) => c.id === id ? customer : c),
         );
-        showToast('success', 'Changes saved — will sync when online');
+        showToast('success', 'Changes saved - will sync when online');
       } else {
         void refreshCustomerCatalogSnapshot();
         qc.invalidateQueries({ queryKey: customerKeys.customers() });

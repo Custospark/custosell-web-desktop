@@ -20,15 +20,15 @@ interface StockAdjustModalProps {
 }
 
 const addReasons = [
-  { value: 'purchase', label: 'Purchase — New stock received from supplier' },
-  { value: 'return', label: 'Return — Customer returned item' },
-  { value: 'adjustment', label: 'Adjustment — Stock count correction (increase)' },
-  { value: 'initial', label: 'Initial — Setting up initial stock' },
+  { value: 'purchase', label: 'Purchase - New stock received from supplier' },
+  { value: 'return', label: 'Return - Customer returned item' },
+  { value: 'adjustment', label: 'Adjustment - Stock count correction (increase)' },
+  { value: 'initial', label: 'Initial - Setting up initial stock' },
 ];
 
 const removeReasons = [
-  { value: 'adjustment', label: 'Adjustment — Damage, loss, or write-off' },
-  { value: 'return', label: 'Return to Supplier — Sent back to vendor' },
+  { value: 'adjustment', label: 'Adjustment - Damage, loss, or write-off' },
+  { value: 'return', label: 'Return to Supplier - Sent back to vendor' },
 ];
 
 export default function StockAdjustModal({ open, onClose, product }: StockAdjustModalProps) {

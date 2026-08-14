@@ -23,8 +23,8 @@ export default function DocumentsLayout() {
         </h1>
         <p className="mt-1 text-sm text-gray-500">
           {isPersonal
-            ? 'Organize documents in cabinets — each with its own folders and tags.'
-            : 'Organize company documents in cabinets — each with its own folders, access rules, and workspace.'}
+            ? 'Organize documents in cabinets - each with its own folders and tags.'
+            : 'Organize company documents in cabinets - each with its own folders, access rules, and workspace.'}
         </p>
       </div>
 

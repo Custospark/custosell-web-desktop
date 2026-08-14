@@ -163,7 +163,7 @@ export default function PaymentReceiptModal({
                   <p className="mt-0.5 text-[11px] text-violet-700">{emailSentLabel(emailSentCount)}</p>
                 ) : null}
                 {payment._pendingSync ? (
-                  <p className="mt-1 text-xs text-amber-600">Saved locally — syncs when online</p>
+                  <p className="mt-1 text-xs text-amber-600">Saved locally - syncs when online</p>
                 ) : null}
               </div>
             </div>

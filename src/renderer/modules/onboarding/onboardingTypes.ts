@@ -142,7 +142,7 @@ export const INTENT_OPTIONS: IntentOption[] = [
   {
     id: 'explore',
     title: 'Show me everything',
-    description: 'Take the tour — I’ll choose modules as I go',
+    description: 'Take the tour - I’ll choose modules as I go',
     icon: Compass,
     tone: 'bg-fuchsia-50 text-fuchsia-600 ring-fuchsia-100',
   },

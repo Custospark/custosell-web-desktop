@@ -4,7 +4,7 @@ import { request } from 'node:https';
 
 const { GH_TOKEN } = process.env;
 if (!GH_TOKEN) {
-  console.error('Missing $GH_TOKEN — skipping draft publishing');
+  console.error('Missing $GH_TOKEN - skipping draft publishing');
   process.exit(0);
 }
 
@@ -57,12 +57,12 @@ if (listStatus !== 200) {
 const release = Array.isArray(releases) ? releases.find((r) => r.tag_name === tag) : null;
 
 if (!release) {
-  console.log(`ℹ️  No release found for ${tag} — skipping`);
+  console.log(`ℹ️  No release found for ${tag} - skipping`);
   process.exit(0);
 }
 
 if (!release.draft) {
-  console.log(`ℹ️  Release ${tag} is already published — nothing to do`);
+  console.log(`ℹ️  Release ${tag} is already published - nothing to do`);
   process.exit(0);
 }
 

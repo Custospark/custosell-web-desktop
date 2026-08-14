@@ -8,7 +8,7 @@ import { cn } from '../../utils/cn';
 export const MODAL_Z_INDEX_CLASS = 'z-[20000]';
 
 /**
- * Portaled menus/selects opened from inside a modal — above the modal panel,
+ * Portaled menus/selects opened from inside a modal - above the modal panel,
  * below confirm dialogs.
  */
 export const MODAL_NESTED_PORTAL_Z_INDEX_CLASS = 'z-[20500]';

@@ -154,7 +154,7 @@ async function fetchSalesMerged(): Promise<SaleWithSyncMeta[]> {
       },
     });
   } catch (err) {
-    console.warn('[Sales] Read failed — falling back to cached sales:', err);
+    console.warn('[Sales] Read failed - falling back to cached sales:', err);
     return readSalesFromClient();
   }
 }
@@ -187,7 +187,7 @@ async function fetchCustomers(): Promise<CustomerListItem[]> {
       },
     });
   } catch (err) {
-    console.warn('[Customers] Read failed — falling back to cached customers:', err);
+    console.warn('[Customers] Read failed - falling back to cached customers:', err);
     return readCustomersFromCache();
   }
 }
@@ -390,7 +390,7 @@ export function useCreateSale() {
       applySaleOptimisticUpdates(qc, sale, payload);
 
       if (!isLocal) {
-        // Cache is already updated optimistically — defer non-critical refetches so the modal opens faster.
+        // Cache is already updated optimistically - defer non-critical refetches so the modal opens faster.
         queueMicrotask(() => {
           void qc.invalidateQueries({ queryKey: dashboardKeys.summary() });
           void qc.invalidateQueries({ queryKey: orderKeys.all });
@@ -448,7 +448,7 @@ export function useRefund() {
 
       if (updatedSale._pendingRefundSync) {
         applyRefundOptimisticUpdates(qc, updatedSale, data, original);
-        showToast('success', 'Refund saved locally — will sync when online');
+        showToast('success', 'Refund saved locally - will sync when online');
       } else {
         qc.invalidateQueries({ queryKey: salesKeys.all });
         qc.invalidateQueries({ queryKey: dashboardKeys.summary() });

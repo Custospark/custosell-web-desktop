@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Alternative deploy — build the web frontend and drop it into the Laravel
+ * Alternative deploy - build the web frontend and drop it into the Laravel
  * backend's public folder so a single `git pull` on the server ships both.
  *
  *   all          → Backend/public/staging AND Backend/public/production
@@ -12,11 +12,11 @@
  *
  * Each target is built, copied, then committed + pushed to GitHub. Only the
  * backend repo carries the deploy (the fresh build under public/{target}); the
- * frontend repo is never auto-committed — frontend build output stays out of
+ * frontend repo is never auto-committed - frontend build output stays out of
  * git (dist/ is gitignored), and unrelated source changes are never swept in.
  *
  * The SPA .htaccess (deploy/htaccess.staging) is copied into the build folder
- * with each deploy, so the server copy always carries it — real files are
+ * with each deploy, so the server copy always carries it - real files are
  * served with correct MIME types and only non-file routes fall back to
  * index.html. On the server, wipe + recopy (rm -rf + cp) to keep the folder
  * consistent, and the .htaccess comes along automatically.
@@ -57,12 +57,12 @@ function run(cmd, cwd) {
   execSync(cmd, { cwd, stdio: ['pipe', 'inherit', 'inherit'] });
 }
 
-/** Capture-only git (status/porcelain) — never for push. */
+/** Capture-only git (status/porcelain) - never for push. */
 function gitQuiet(cwd, args) {
   return execSync(`git ${args}`, { cwd, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).toString();
 }
 
-/** Interactive git (add/commit/push) — inherit stdio so credential helpers,
+/** Interactive git (add/commit/push) - inherit stdio so credential helpers,
  *  prompts, and progress write to the terminal. Piped stdio on Windows makes
  *  `git push` fail when the credential helper needs stdin. */
 function gitRun(cwd, args) {
@@ -80,7 +80,7 @@ function hasChanges(cwd, path = '.') {
 
 /**
  * Commit ONLY `path` (the fresh build under Backend/public/{target}) and push.
- * Never `git add -A` — that would sweep unrelated backend/frontend changes into
+ * Never `git add -A` - that would sweep unrelated backend/frontend changes into
  * the deploy commit. Frontend build files stay out of git entirely (dist/ is
  * gitignored); the backend is the single source of truth for deployed builds.
  */
@@ -113,7 +113,7 @@ for (const target of targets) {
   run(`tsc -b && cross-env VITE_ASSET_BASE=./ vite build ${mode}`, FRONTEND_ROOT);
 
   if (!existsSync(DIST)) {
-    console.error('Build did not produce dist/web — aborting.');
+    console.error('Build did not produce dist/web - aborting.');
     process.exit(1);
   }
 
@@ -127,14 +127,14 @@ for (const target of targets) {
   console.log(`   copied ${DIST} → ${dest}`);
 
   // Ship the SPA .htaccess inside the build folder so the server's copy always
-  // carries it — no manual re-add after every deploy. It serves real files with
+  // carries it - no manual re-add after every deploy. It serves real files with
   // correct MIME types and only routes non-file paths to index.html.
   const htaccessSrc = resolve(__dirname, '..', 'deploy', 'htaccess.staging');
   if (existsSync(htaccessSrc)) {
     copyFileSync(htaccessSrc, resolve(dest, '.htaccess'));
     console.log(`   copied .htaccess → ${dest}/.htaccess`);
   } else {
-    console.warn('   ⚠ deploy/htaccess.staging not found — .htaccess NOT added');
+    console.warn('   ⚠ deploy/htaccess.staging not found - .htaccess NOT added');
   }
 
   step(`Commit + push backend: public/${target}`);
@@ -154,4 +154,4 @@ console.log(`   mkdir -p ${targets.map((t) => t).join(' ')}`);
 console.log(`   for t in ${targets.map((t) => t).join(' ')}; do`);
 console.log(`     cp -rT /home/u214605677/domains/staging-api.custosell.com/public/$t $t   # -T copies dotfiles like .htaccess`);
 console.log(`   done`);
-console.log(`   # .htaccess is inside the folder — cp -rT (NOT cp .../*) carries it\n`);
+console.log(`   # .htaccess is inside the folder - cp -rT (NOT cp .../*) carries it\n`);

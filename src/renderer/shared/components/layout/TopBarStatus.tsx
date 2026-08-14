@@ -46,7 +46,7 @@ function formatLastChecked(date: Date | null): string {
 }
 
 /**
- * TopBarStatus — the left cluster of the global search top bar, mirroring
+ * TopBarStatus - the left cluster of the global search top bar, mirroring
  * Custocare's SystemStatusIndicator: a connection pill (with latency), a last
  * checked timestamp, and the app version. The pill doubles as a retry trigger
  * when the connection is slow or down.
@@ -61,8 +61,8 @@ export function TopBarStatus() {
     systemStatus === 'online'
       ? latency != null ? `Connected · ${formatLatency(latency)} latency` : 'Connected'
       : systemStatus === 'slow'
-        ? 'Slow connection — tap to retry'
-        : 'No internet connection — tap to retry';
+        ? 'Slow connection - tap to retry'
+        : 'No internet connection - tap to retry';
 
   return (
     <div className="hidden min-w-0 flex-shrink-0 items-center gap-1 sm:flex sm:gap-2">

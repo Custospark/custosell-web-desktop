@@ -166,7 +166,7 @@ export function useCreateStaff() {
           if (list.some((s) => s.id === staff.id || s.email === staff.email)) return list;
           return [staff, ...list];
         });
-        showToast('success', 'Staff saved — will sync when online');
+        showToast('success', 'Staff saved - will sync when online');
       } else {
         qc.setQueryData<StaffWithSyncMeta[]>(staffKeys.list(), (old) => {
           const list = (old ?? []).filter(Boolean);
@@ -207,7 +207,7 @@ export function useUpdateStaff() {
         return completeOfflineUpdateStaffInstant(existing, data, role);
       }
       try {
-        // Backend rejects is_active on PUT — never send it.
+        // Backend rejects is_active on PUT - never send it.
         const { data: r } = await axiosInstance.put<{ data: StaffUser }>(USERS.BY_ID(id), data);
         return withResolvedRole(r.data) as StaffWithSyncMeta;
       } catch (err: unknown) {
@@ -229,7 +229,7 @@ export function useUpdateStaff() {
         );
         showToast(
           'success',
-          staff._mutationType ? 'Corrected changes saved — will retry sync' : 'Changes saved — will sync when online',
+          staff._mutationType ? 'Corrected changes saved - will retry sync' : 'Changes saved - will sync when online',
         );
       } else {
         qc.setQueryData<StaffWithSyncMeta[]>(staffKeys.list(), (old) =>

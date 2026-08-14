@@ -3,7 +3,7 @@ export interface RankingRow {
   sku?: string | null;
   metric: string;
   secondary?: string;
-  /** 0–100 bar width; omit to hide the progress bar. */
+  /** 0-100 bar width; omit to hide the progress bar. */
   share?: number;
 }
 
@@ -32,7 +32,7 @@ export function OverviewRankingList({ rows, emptyMessage = 'No products match ye
               </span>
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium text-gray-800">{row.name}</p>
-                <p className="text-xs text-gray-400 truncate">{row.sku ?? '—'}</p>
+                <p className="text-xs text-gray-400 truncate">{row.sku ?? '-'}</p>
               </div>
             </div>
             <div className="text-right shrink-0">

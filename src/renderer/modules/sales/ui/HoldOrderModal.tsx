@@ -14,7 +14,7 @@ interface Props {
   onClose: () => void;
 }
 
-/** Hold always creates a new open order — never updates an existing one. */
+/** Hold always creates a new open order - never updates an existing one. */
 function HoldOrderForm({ onClose }: { onClose: () => void }) {
   const dispatch = useAppDispatch();
   const cartItems = useAppSelector((s) => s.sales.cartItems);

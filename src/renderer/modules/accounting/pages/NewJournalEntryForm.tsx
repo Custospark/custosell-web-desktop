@@ -92,7 +92,7 @@ export function NewJournalEntryForm({
   const createEntry = useCreateJournalEntry();
   const accountOptions = (accounts ?? []).map((a) => ({
     value: String(a.id),
-    label: `${a.code} — ${a.name}`,
+    label: `${a.code} - ${a.name}`,
   }));
   const accountPlaceholder = accountsLoading
     ? 'Loading accounts…'
@@ -162,7 +162,7 @@ export function NewJournalEntryForm({
         <PipelineModalHero
           icon={BookOpen}
           title="Manual journal"
-          description="One amount per line — mark it Debit or Credit. Totals must match before you can create."
+          description="One amount per line - mark it Debit or Credit. Totals must match before you can create."
           tone="indigo"
         />
 
@@ -192,7 +192,7 @@ export function NewJournalEntryForm({
         <PipelineFormSection
           title="Entry lines"
           icon={Scale}
-          description="At least two lines — typically one debit and one credit for the same amount."
+          description="At least two lines - typically one debit and one credit for the same amount."
         >
           <div className="flex items-center justify-between gap-2">
             <p className="text-xs text-gray-500">
@@ -367,7 +367,7 @@ export function NewJournalEntryForm({
               {' '}({(attachment.size / 1024).toFixed(1)} KB)
             </p>
           ) : (
-            <p className="text-xs text-gray-400">No file chosen — e.g. rent_invoice_july.pdf</p>
+            <p className="text-xs text-gray-400">No file chosen - e.g. rent_invoice_july.pdf</p>
           )}
         </PipelineFormSection>
 

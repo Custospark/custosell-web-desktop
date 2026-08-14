@@ -15,7 +15,7 @@ const PIE_COLORS = ['#10b981', '#f59e0b', '#ef4444', '#9ca3af', '#7c3aed'];
 
 const ACTIVITY_LABELS: Record<string, string> = {
   active: 'Active (≤30d)',
-  dormant: 'Dormant (31–90d)',
+  dormant: 'Dormant (31-90d)',
   churned: 'Churned (90d+)',
   never_used: 'Never used',
   suspended: 'Suspended',
@@ -176,7 +176,7 @@ export function PlatformActivityPieChart({ overview }: { overview: PlatformOverv
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-5">
       <h3 className="text-sm font-semibold text-gray-800 mb-1">Business Activity Breakdown</h3>
-      <p className="text-xs text-gray-500 mb-4">Who is actively selling vs idle — guides outreach and onboarding</p>
+      <p className="text-xs text-gray-500 mb-4">Who is actively selling vs idle - guides outreach and onboarding</p>
       {pieData.length === 0 ? (
         <p className="text-sm text-gray-400 text-center py-8">No business data yet</p>
       ) : (
@@ -224,7 +224,7 @@ export function GrossIncomeDistributionPanel({ distributions }: { distributions:
     <div className="bg-white rounded-xl border border-gray-200 p-5">
       <div className="mb-4">
         <h3 className="text-sm font-semibold text-gray-800">Gross Income Distribution (30d)</h3>
-        <p className="text-xs text-gray-500 mt-0.5">5 tiers from lowest to highest gross sales — use for subscription band pricing</p>
+        <p className="text-xs text-gray-500 mt-0.5">5 tiers from lowest to highest gross sales - use for subscription band pricing</p>
       </div>
 
       {distributions.length > 1 && (
@@ -259,7 +259,7 @@ export function GrossIncomeDistributionPanel({ distributions }: { distributions:
               labelFormatter={(_, payload) => {
                 const tier = payload?.[0]?.payload as GrossIncomeDistribution['tiers'][0] | undefined;
                 if (!tier) return '';
-                return `${tier.label} · ${formatCurrency(tier.min_gross, current.currency)} – ${formatCurrency(tier.max_gross, current.currency)}`;
+                return `${tier.label} · ${formatCurrency(tier.min_gross, current.currency)} - ${formatCurrency(tier.max_gross, current.currency)}`;
               }}
             />
             <Bar dataKey="business_count" name="business_count" radius={[4, 4, 0, 0]}>

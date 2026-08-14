@@ -5,12 +5,12 @@ import { axiosInstance } from '../../../../app/api/axiosConfig';
 import ManualPaymentVerify from '../ManualPaymentVerify';
 
 /**
- * Self-serve payment sync — the manual "I've Completed Payment — Verify" control
+ * Self-serve payment sync - the manual "I've Completed Payment - Verify" control
  * must:
  *   1. POST to /billing/payments/{id}/confirm (the same endpoint the payment
  *      history 'Sync payment' button uses).
  *   2. On success, notify the caller (onVerified) AND invalidate the profile +
- *      subscription-access queries so the UI refetches and grants access —
+ *      subscription-access queries so the UI refetches and grants access -
  *      exactly what happens when the webhook auto-approves the payment.
  */
 
@@ -35,7 +35,7 @@ function renderVerify() {
   return { queryClient, onVerified, ...view };
 }
 
-const verifyButton = () => screen.getByRole('button', { name: 'I\'ve Completed Payment — Verify' });
+const verifyButton = () => screen.getByRole('button', { name: 'I\'ve Completed Payment - Verify' });
 
 describe('ManualPaymentVerify (self-serve payment sync)', () => {
   beforeEach(() => {

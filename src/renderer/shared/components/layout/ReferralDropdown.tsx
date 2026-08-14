@@ -80,7 +80,7 @@ export default function ReferralDropdown() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // fallback — ignore
+      // fallback - ignore
     }
   };
 
@@ -91,7 +91,7 @@ export default function ReferralDropdown() {
       setLinkCopied(true);
       setTimeout(() => setLinkCopied(false), 2000);
     } catch {
-      // fallback — ignore
+      // fallback - ignore
     }
   };
 

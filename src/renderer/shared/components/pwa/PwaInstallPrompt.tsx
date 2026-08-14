@@ -87,7 +87,7 @@ export function PwaInstallPrompt() {
         setAcked(true);
       }
     } catch {
-      // prompt() can throw if the browser revoked install affordance — ignore.
+      // prompt() can throw if the browser revoked install affordance - ignore.
     }
     setDeferred(null);
   };
@@ -127,7 +127,7 @@ export function PwaInstallPrompt() {
           <p className="text-sm font-semibold text-gray-900">Install Custosell</p>
           <p className="mt-0.5 text-xs leading-snug text-gray-500">
             {canNativeInstall
-              ? 'Run it like a native app — opens full-screen with no address bar.'
+              ? 'Run it like a native app - opens full-screen with no address bar.'
               : (
                 <span className="flex items-start gap-1">
                   <Share className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-500" aria-hidden />

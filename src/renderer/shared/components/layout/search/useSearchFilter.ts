@@ -21,8 +21,8 @@ function matchesQuery(item: SearchableNavItem, term: string): boolean {
 
 /**
  * Returns:
- * - `accessibleItems`  — the full access-filtered searchable catalog
- * - `filteredResults`  — debounced, query-filtered subset (max 8)
+ * - `accessibleItems`  - the full access-filtered searchable catalog
+ * - `filteredResults`  - debounced, query-filtered subset (max 8)
  */
 export function useSearchFilter(query: string) {
   const accessibleItems = useSearchIndex();

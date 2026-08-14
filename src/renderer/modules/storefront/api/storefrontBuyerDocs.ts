@@ -8,13 +8,13 @@ function unwrapEntity<T>(payload: unknown): T {
   return payload as T;
 }
 
-/** B2C buyer — sale receipt for a completed storefront order. */
+/** B2C buyer - sale receipt for a completed storefront order. */
 export async function fetchMyStorefrontOrderSale(orderId: number) {
   const { data } = await axiosInstance.get(STOREFRONT.MY_ORDER_SALE(orderId));
   return unwrapEntity(data);
 }
 
-/** B2C buyer — invoice (+ payments) when the shop invoiced the sale. */
+/** B2C buyer - invoice (+ payments) when the shop invoiced the sale. */
 export async function fetchMyStorefrontOrderInvoice(orderId: number) {
   const { data } = await axiosInstance.get(STOREFRONT.MY_ORDER_INVOICE(orderId));
   return unwrapEntity(data);

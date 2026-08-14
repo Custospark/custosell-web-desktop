@@ -13,7 +13,7 @@ Service businesses (salons, repair shops, consultancies) need to sell through th
 1. **Catalog discriminator:** `products.type` is `'product' | 'service'` (default `'product'`).
 2. **Stock:** Only `type === 'product'` tracks stock (`tracksStock()`). Services force `stock_quantity = 0` on create/update; sales and refunds skip stock checks, decrements, restores, and stock movements.
 3. **COGS:** `InventoryCogsService` excludes service lines. Refund COGS restore is product-only.
-4. **Sale journals (`AutomationService`):** Split revenue credits by line type — product → `sales_revenue` (4100), service → `service_revenue` (4200). VAT unchanged. Debits still equal credits (payment/AR + VAT + revenue split + optional COGS).
+4. **Sale journals (`AutomationService`):** Split revenue credits by line type - product → `sales_revenue` (4100), service → `service_revenue` (4200). VAT unchanged. Debits still equal credits (payment/AR + VAT + revenue split + optional COGS).
 5. **Invoice send (`AccountForInvoiceSent`):** When posting invoice revenue (no linked sale JE), split the same way. Description-only lines without `product_id` credit **4200**.
 6. **Frontend:** Product/Service toggle in the form; POS sellable = active && (service || stock > 0); soft qty cap 9999 for services; offline ledger and optimistic stock updates skip services; low-stock stats exclude services.
 7. **Refunds:** Sales returns (4400) remain the contra for all refunds; no separate service-returns account in v1.

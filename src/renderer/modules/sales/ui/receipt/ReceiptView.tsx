@@ -11,7 +11,7 @@ interface Props {
   onNewSale: () => void;
 }
 
-/** Legacy full-page receipt view — same action layout as Sale completed. */
+/** Legacy full-page receipt view - same action layout as Sale completed. */
 export default function ReceiptView({ receiptNumber, onNewSale }: Props) {
   const cartItems = useAppSelector((s) => s.sales.cartItems);
   const paymentMethod = useAppSelector((s) => s.sales.paymentMethod);

@@ -39,7 +39,7 @@ function clearLegacyHeldOrders(): void {
 
 /**
  * One-time: push remaining localStorage heldOrders to POST /orders, then clear the key.
- * Safe to call on every online sync — no-ops after migration flag or empty storage.
+ * Safe to call on every online sync - no-ops after migration flag or empty storage.
  */
 export async function migrateHeldOrdersFromLocalStorage(): Promise<number> {
   if (!isOnlineMode()) return 0;
@@ -79,7 +79,7 @@ export async function migrateHeldOrdersFromLocalStorage(): Promise<number> {
     }
   }
 
-  // Clear even if some failed — avoids infinite retry loops on permanently bad rows.
+  // Clear even if some failed - avoids infinite retry loops on permanently bad rows.
   clearLegacyHeldOrders();
   return migrated;
 }

@@ -1,5 +1,5 @@
 /**
- * Generic notification chime engine — Web Audio API synth (no audio files).
+ * Generic notification chime engine - Web Audio API synth (no audio files).
  *
  * Exposes a small, framework-free API so any caller (React hooks, polling
  * effects, imperative listeners) can play the order chime. The engine keeps a
@@ -15,7 +15,7 @@ const STATUS_CHIME_FREQ = 660;
 const BIG_ORDER_FREQ = 990;
 const PREVIEW_FREQ = 660;
 
-/** How an order-status change should *sound* — a bright finish for good news,
+/** How an order-status change should *sound* - a bright finish for good news,
  *  a flatter one for cancellations, neutral otherwise. */
 const STATUS_TONES: Record<string, readonly number[]> = {
   completed: [880, 1046],
@@ -46,7 +46,7 @@ export function unlockAudio(): void {
   void ctx.resume().catch(() => undefined);
 }
 
-/** Global mute switch — driven by the persisted preference. */
+/** Global mute switch - driven by the persisted preference. */
 export function setSoundMuted(next: boolean): void {
   muted = next;
 }
@@ -57,7 +57,7 @@ export function isSoundMuted(): boolean {
 
 /**
  * Play a short synthesized chime `times` times (spaced apart).
- * Adopts a soft pluck so it never startles — polite background alert.
+ * Adopts a soft pluck so it never startles - polite background alert.
  */
 export function playChime(times: number, freq = ORDER_CHIME_FREQ): void {
   if (muted || times < 1) return;
@@ -106,12 +106,12 @@ function playToneSequence(freqs: readonly number[]): void {
   });
 }
 
-/** Two chimes — a new online order has arrived. */
+/** Two chimes - a new online order has arrived. */
 export function playNewOrderChime(): void {
   playChime(2, ORDER_CHIME_FREQ);
 }
 
-/** Single lower chime — an existing order changed status.
+/** Single lower chime - an existing order changed status.
  *  The tone varies by status so you can tell the outcome without looking. */
 export function playStatusChime(status?: string): void {
   const tones = STATUS_TONES[status ?? ''];
@@ -119,12 +119,12 @@ export function playStatusChime(status?: string): void {
   else playChime(1, STATUS_CHIME_FREQ);
 }
 
-/** Three rising chimes — a new order that clears the big-order bar. */
+/** Three rising chimes - a new order that clears the big-order bar. */
 export function playBigOrderChime(): void {
   playChime(3, BIG_ORDER_FREQ);
 }
 
-/** One gentle two-note preview — plays regardless of the mute flag so a user
+/** One gentle two-note preview - plays regardless of the mute flag so a user
  *  can audition the sound before enabling it. */
 export function playPreviewChime(): void {
   if (muted) {

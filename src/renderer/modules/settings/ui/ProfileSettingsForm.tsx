@@ -296,7 +296,7 @@ export default function ProfileSettingsForm() {
                 </div>
                 <div className="min-w-0 flex-1 text-center sm:text-left">
                   <h2 className="text-xl font-bold text-gray-900">{baseline.name || 'Your name'}</h2>
-                  <p className="mt-1 text-sm text-gray-600">{baseline.email || '—'}</p>
+                  <p className="mt-1 text-sm text-gray-600">{baseline.email || '-'}</p>
                   <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
                     {roleLabel ? <Badge variant="primary">{roleLabel}</Badge> : null}
                     {authUser?.business_name ? (
@@ -413,13 +413,13 @@ export default function ProfileSettingsForm() {
             ) : (
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <ProfileViewField label="First name" icon={<User className="h-4 w-4 text-blue-600" />}>
-                  {baseline.firstName || '—'}
+                  {baseline.firstName || '-'}
                 </ProfileViewField>
                 <ProfileViewField label="Last name" icon={<User className="h-4 w-4 text-blue-600" />}>
-                  {baseline.lastName || '—'}
+                  {baseline.lastName || '-'}
                 </ProfileViewField>
                 <ProfileViewField label="Email" icon={<Mail className="h-4 w-4 text-blue-600" />}>
-                  {baseline.email || '—'}
+                  {baseline.email || '-'}
                 </ProfileViewField>
                 <ProfileViewField label="Phone" icon={<Phone className="h-4 w-4 text-blue-600" />}>
                   {formatPhoneDisplay(baseline.phone)}

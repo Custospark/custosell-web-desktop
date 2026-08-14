@@ -223,7 +223,7 @@ export function useAcceptPurchaseOrder() {
       showToast(
         'success',
         inv
-          ? `PO ${po.po_number} accepted — invoice ${inv} created`
+          ? `PO ${po.po_number} accepted - invoice ${inv} created`
           : `PO ${po.po_number} accepted`,
       );
     },
@@ -261,7 +261,7 @@ export function useFulfillPurchaseOrder() {
     },
     onSuccess: (po) => {
       invalidatePoQueries(qc);
-      showToast('success', `PO ${po.po_number} fulfilled — stock deducted`);
+      showToast('success', `PO ${po.po_number} fulfilled - stock deducted`);
     },
     onError: (e) => showToast('error', apiError(e, 'Failed to fulfill purchase order')),
   });

@@ -1,4 +1,4 @@
-# Renewal Top-Up Picker — frontend UX
+# Renewal Top-Up Picker - frontend UX
 
 **Date:** 2026-08-03
 **Status:** Accepted
@@ -14,8 +14,8 @@ and authoritative server-side.
 ## Why
 
 - A one-period renewal only ever adds exactly one billing cycle. Top-up lets users pay
-  in advance for any duration (1–60 months), anchored to the existing
-  `next_billing_date` — no schedule drift.
+  in advance for any duration (1-60 months), anchored to the existing
+  `next_billing_date` - no schedule drift.
 - Amount uses a single consistent rate prorated to the stored billing cycle:
   monthly = `months × price_monthly`, yearly = `months × (price_yearly / 12)`.
 - The server recomputes the amount authoritatively (`GatewayService`) and records
@@ -24,11 +24,11 @@ and authoritative server-side.
 ## UI
 
 - Preset chips: 1 mo / 3 mo / 6 mo / 1 yr / 2 yr.
-- Custom numeric input (1–60 months).
+- Custom numeric input (1-60 months).
 - Live previews:
-  - **Total due** — prorated amount in the business display currency
+  - **Total due** - prorated amount in the business display currency
     (`useUsdToLocal` for non-USD).
-  - **New billing date** — extends from `subscription.next_billing_date` (not today),
+  - **New billing date** - extends from `subscription.next_billing_date` (not today),
     so the preview matches what the server applies.
 - On confirm, opens `SubscriptionPaymentModal` with `payment_type = "topup"` and
   `topup_months` in both the payload and metadata.

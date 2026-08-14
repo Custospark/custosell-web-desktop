@@ -61,10 +61,10 @@ export default function MyWorkPage() {
                   </td>
                   <td className="px-4 py-3">{lead.stage?.name}</td>
                   <td className="px-4 py-3">
-                    {lead.estimated_value != null ? formatCurrency(lead.estimated_value, lead.currency) : '—'}
+                    {lead.estimated_value != null ? formatCurrency(lead.estimated_value, lead.currency) : '-'}
                   </td>
                   <td className="px-4 py-3 text-gray-500">
-                    {lead.updated_at ? formatShiftDate(lead.updated_at) : '—'}
+                    {lead.updated_at ? formatShiftDate(lead.updated_at) : '-'}
                   </td>
                 </tr>
               ))}

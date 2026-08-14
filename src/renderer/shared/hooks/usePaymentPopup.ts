@@ -28,7 +28,7 @@ function detectEnvironment(): PaymentEnvironment {
 /** Paint a lightweight loading page into the blank popup so it never shows an
  *  empty/white window while the initiate request is still in flight. The page is
  *  fully responsive (viewport meta + clamp() font size) so it renders cleanly in
- *  a mobile tab or a desktop popup. Only used for web/mobile — Electron hosts
+ *  a mobile tab or a desktop popup. Only used for web/mobile - Electron hosts
  *  the gateway in an in-app modal instead. */
 function paintLoading(win: Window): void {
   try {
@@ -75,8 +75,8 @@ export interface PaymentPopup {
  * A plain `window.open()` inside an async callback (e.g. the onSuccess of a
  * payment-initiation request) is treated by browsers as a popup and silently
  * blocked, leaving the user on a polling screen with no payment page. To avoid
- * this we open a blank popup/tab SYNCHRONOUSLY inside the user's click gesture —
- * which browsers allow — and then redirect that same window to the gateway URL
+ * this we open a blank popup/tab SYNCHRONOUSLY inside the user's click gesture -
+ * which browsers allow - and then redirect that same window to the gateway URL
  * once the API returns it.
  *
  * Per environment:
@@ -86,7 +86,7 @@ export interface PaymentPopup {
  * - Electron: NO separate OS window is created at all. The gateway is hosted
  *   INSIDE the app as a modal <webview> (see PaymentGatewayModal), exactly like
  *   every other modal in the app. Dismissing the payment just unmounts a React
- *   overlay — there is no child window to glitch, so cancelling never blanks or
+ *   overlay - there is no child window to glitch, so cancelling never blanks or
  *   interrupts whatever the user was doing.
  * - Mobile: a blank tab is opened synchronously (mobile ignores popup window
  *   features and blocks fewer synchronous opens), then redirected. If anything
@@ -102,7 +102,7 @@ export function usePaymentPopup(): PaymentPopup {
 
   const closePaymentPopupRef = useCallback(() => {
     if (environment === 'electron') {
-      // No separate window on Electron — the gateway is an in-app modal, so
+      // No separate window on Electron - the gateway is an in-app modal, so
       // nothing to close here. The modal unmounts and drops the <webview>.
       return;
     }
@@ -126,7 +126,7 @@ export function usePaymentPopup(): PaymentPopup {
     setPaymentUrl(null);
 
     if (environment === 'electron') {
-      // Nothing to open — the in-app modal hosts the gateway webview.
+      // Nothing to open - the in-app modal hosts the gateway webview.
       return true;
     }
 

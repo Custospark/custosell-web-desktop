@@ -67,7 +67,7 @@ export function MySuppliersModal({
       isOpen={open}
       onClose={handleClose}
       title="My suppliers"
-      subtitle="Your saved supplier shortlist — open a catalog in one tap."
+      subtitle="Your saved supplier shortlist - open a catalog in one tap."
       size="2xl"
       titleCentered
       panelClassName="h-[min(92vh,900px)]"

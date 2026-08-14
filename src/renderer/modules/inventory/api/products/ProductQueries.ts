@@ -126,12 +126,12 @@ async function readProductsMerged(): Promise<ProductWithSyncMeta[]> {
       },
     });
   } catch (err) {
-    console.warn('[Products] Read failed — falling back to cached products:', err);
+    console.warn('[Products] Read failed - falling back to cached products:', err);
     return readProductsFromClientCache();
   }
 }
 
-/** Merge server products with local pending creates — local wins by id/name. */
+/** Merge server products with local pending creates - local wins by id/name. */
 function mergeProductLists(base: Product[], local: ProductWithSyncMeta[]): ProductWithSyncMeta[] {
   const safeBase = base.filter(Boolean) as Product[];
   const safeLocal = local.filter(Boolean) as ProductWithSyncMeta[];
@@ -262,7 +262,7 @@ export function useCreateProduct() {
           if (list.some((item) => item.id === product.id || item.name === product.name)) return list;
           return [product, ...list];
         });
-        showToast('success', 'Product saved — will sync when online');
+        showToast('success', 'Product saved - will sync when online');
       } else {
         void refreshProductCatalogSnapshot();
         qc.invalidateQueries({ queryKey: inventoryKeys.products() });
@@ -346,7 +346,7 @@ export function useUpdateProduct() {
         );
         showToast(
           'success',
-          product._mutationType ? 'Corrected product saved — will retry sync' : 'Changes saved — will sync when online',
+          product._mutationType ? 'Corrected product saved - will retry sync' : 'Changes saved - will sync when online',
         );
       } else {
         qc.removeQueries({ queryKey: inventoryKeys.product(id) });

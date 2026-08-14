@@ -31,7 +31,7 @@ export function Pagination({ currentPage, totalPages, totalItems, pageSize, onPa
     <div className="flex flex-col gap-3 pt-4 border-t border-gray-100 mt-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <p className="text-sm text-gray-500">
-          Showing <span className="font-medium">{from}</span>–<span className="font-medium">{to}</span> of{' '}
+          Showing <span className="font-medium">{from}</span>-<span className="font-medium">{to}</span> of{' '}
           <span className="font-medium">{totalItems}</span>
         </p>
         {onPageSizeChange && (

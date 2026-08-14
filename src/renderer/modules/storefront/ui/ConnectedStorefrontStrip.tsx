@@ -25,7 +25,7 @@ interface ConnectedStorefrontStripProps {
 }
 
 /**
- * Bottom strip — Wishlist sits left of Orders. On a shop page, Shops/Products leave the shop.
+ * Bottom strip - Wishlist sits left of Orders. On a shop page, Shops/Products leave the shop.
  */
 export function ConnectedStorefrontStrip({
   active,
@@ -51,7 +51,7 @@ export function ConnectedStorefrontStrip({
   const focus = new URLSearchParams(location.search).get('focus');
   const onShopsList = path === ROUTES.DISCOVER && focus !== 'products';
   const onProductsList = path === ROUTES.DISCOVER && focus === 'products';
-  // Shopping accounts have no dashboard — hide the home/Dashboard tab entirely.
+  // Shopping accounts have no dashboard - hide the home/Dashboard tab entirely.
   const shopping = isStorefrontBuyer(user);
 
   const leaveCartThen = (fn: () => void) => {

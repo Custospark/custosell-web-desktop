@@ -165,13 +165,13 @@ export default function StockLedger() {
                 </button>
               )},
               { key: 'created_at', header: 'Date', render: (item) => new Date(item.created_at).toLocaleString() },
-              { key: 'product', header: 'Product', render: (item) => item.product?.name || <span className="text-gray-400">—</span> },
+              { key: 'product', header: 'Product', render: (item) => item.product?.name || <span className="text-gray-400">-</span> },
               { key: 'type', header: 'Type', render: (item) => <Badge variant={typeBadgeVariant[item.type] || 'neutral'}>{item.type.charAt(0).toUpperCase() + item.type.slice(1)}</Badge> },
               { key: 'quantity_change', header: 'Change', render: (item) => <span className={item.quantity_change > 0 ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>{item.quantity_change > 0 ? '+' : ''}{item.quantity_change}</span> },
               { key: 'stock_before', header: 'Before' },
               { key: 'stock_after', header: 'After' },
-              { key: 'reference', header: 'Reference', render: (item) => item.reference || <span className="text-gray-400">—</span> },
-              { key: 'notes', header: 'Notes', render: (item) => item.notes || <span className="text-gray-400">—</span> },
+              { key: 'reference', header: 'Reference', render: (item) => item.reference || <span className="text-gray-400">-</span> },
+              { key: 'notes', header: 'Notes', render: (item) => item.notes || <span className="text-gray-400">-</span> },
               {
                 key: 'created_by',
                 header: 'By',
@@ -180,7 +180,7 @@ export default function StockLedger() {
                   return actor ? (
                     <UserIdentityChip name={actor.name} avatar={actor.avatar} size="xs" />
                   ) : (
-                    <span className="text-gray-400">—</span>
+                    <span className="text-gray-400">-</span>
                   );
                 },
               },

@@ -110,11 +110,11 @@ export function RunDepreciationModal({
             <ul className="space-y-2 text-sm text-gray-600">
               <li className="flex gap-2">
                 <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-500" />
-                <span><span className="font-medium text-gray-800">Debit</span> Depreciation Expense (6300) — expense hits the income statement.</span>
+                <span><span className="font-medium text-gray-800">Debit</span> Depreciation Expense (6300) - expense hits the income statement.</span>
               </li>
               <li className="flex gap-2">
                 <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-500" />
-                <span><span className="font-medium text-gray-800">Credit</span> Accumulated Depreciation (1205) — reduces net book value on the balance sheet.</span>
+                <span><span className="font-medium text-gray-800">Credit</span> Accumulated Depreciation (1205) - reduces net book value on the balance sheet.</span>
               </li>
               <li className="flex gap-2">
                 <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-500" />
@@ -171,12 +171,12 @@ export function RunDepreciationModal({
                         <p className="truncate font-medium">{r.asset_name}</p>
                         <p className="text-xs capitalize opacity-80">
                           {r.status}
-                          {r.error ? ` — ${r.error}` : ''}
+                          {r.error ? ` - ${r.error}` : ''}
                         </p>
                       </div>
                     </div>
                     <p className="shrink-0 font-medium tabular-nums">
-                      {r.amount != null ? r.amount.toLocaleString(undefined, { minimumFractionDigits: 2 }) : '—'}
+                      {r.amount != null ? r.amount.toLocaleString(undefined, { minimumFractionDigits: 2 }) : '-'}
                     </p>
                   </div>
                 ))}

@@ -4,7 +4,7 @@
  */
 
 function parseApiDate(iso: string): Date {
-  // Date-only (YYYY-MM-DD) — parse as local calendar day to avoid UTC midnight shifts.
+  // Date-only (YYYY-MM-DD) - parse as local calendar day to avoid UTC midnight shifts.
   if (/^\d{4}-\d{2}-\d{2}$/.test(iso.trim())) {
     const [y, m, d] = iso.trim().split('-').map(Number);
     return new Date(y, m - 1, d);
@@ -13,23 +13,23 @@ function parseApiDate(iso: string): Date {
 }
 
 export function formatShiftTime(iso: string | null | undefined): string {
-  if (!iso) return '—';
+  if (!iso) return '-';
   const d = parseApiDate(iso);
-  if (Number.isNaN(d.getTime())) return '—';
+  if (Number.isNaN(d.getTime())) return '-';
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
 export function formatShiftDate(iso: string | null | undefined): string {
-  if (!iso) return '—';
+  if (!iso) return '-';
   const d = parseApiDate(iso);
-  if (Number.isNaN(d.getTime())) return '—';
+  if (Number.isNaN(d.getTime())) return '-';
   return d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 export function formatShiftDateTime(iso: string | null | undefined): string {
-  if (!iso) return '—';
+  if (!iso) return '-';
   const d = parseApiDate(iso);
-  if (Number.isNaN(d.getTime())) return '—';
+  if (Number.isNaN(d.getTime())) return '-';
   const datePart = d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
 
   const hasTime = /T\d{2}:\d{2}/.test(iso);
@@ -45,8 +45,8 @@ export function formatShiftDateRange(
 ): string {
   const a = formatShiftDate(start);
   const b = formatShiftDate(end);
-  if (a === '—' && b === '—') return '—';
-  if (a === '—') return b;
-  if (b === '—') return a;
+  if (a === '-' && b === '-') return '-';
+  if (a === '-') return b;
+  if (b === '-') return a;
   return `${a} → ${b}`;
 }

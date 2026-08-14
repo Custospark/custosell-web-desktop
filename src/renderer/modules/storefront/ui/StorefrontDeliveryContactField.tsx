@@ -212,7 +212,7 @@ export function StorefrontDeliveryContactField({
             />
           </Section>
 
-          <Section icon={MapPin} title="Delivery location" hint="Optional — helps the business find you">
+          <Section icon={MapPin} title="Delivery location" hint="Optional - helps the business find you">
             <div className="space-y-2">
               <input
                 value={address}
@@ -231,7 +231,7 @@ export function StorefrontDeliveryContactField({
             </div>
           </Section>
 
-          <Section icon={MessageSquare} title="Notes for the business" hint="Optional — timing, extras">
+          <Section icon={MessageSquare} title="Notes for the business" hint="Optional - timing, extras">
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}

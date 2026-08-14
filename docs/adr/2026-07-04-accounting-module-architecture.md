@@ -10,9 +10,9 @@
 
 Custosell is a POS platform for Ugandan retail businesses. As the product matures, businesses increasingly need:
 
-1. **URA compliance** — the Uganda Revenue Authority requires registered businesses to maintain proper books of accounts and file tax returns with auditable financial data.
-2. **Financial reporting** — business owners need income statements, balance sheets, and trial balances to understand profitability, manage cash flow, and secure loans.
-3. **Professional credibility** — businesses want to move from receipt-scanning bookkeeping to GAAP-compliant accounting, comparable to QuickBooks or Sage.
+1. **URA compliance** - the Uganda Revenue Authority requires registered businesses to maintain proper books of accounts and file tax returns with auditable financial data.
+2. **Financial reporting** - business owners need income statements, balance sheets, and trial balances to understand profitability, manage cash flow, and secure loans.
+3. **Professional credibility** - businesses want to move from receipt-scanning bookkeeping to GAAP-compliant accounting, comparable to QuickBooks or Sage.
 
 The existing POS system records sales and expenses as transactional data but has no accounting engine. There is no chart of accounts, no double-entry journal, no period concept, and no way to produce financial statements.
 
@@ -25,17 +25,17 @@ We will build a **full double-entry accounting system** as a native module withi
 - **Integration:** Auto-accounting service that generates journal entries from Sales and Expense events.
 
 Key architectural constraints:
-- **Immutable journal entries** — posted entries are locked. Corrections require reversing entries.
-- **Strict period closing** — closed periods reject new entries. Reopening is admin-only and audited.
-- **Start from activation** — no retroactive conversion of pre-activation transactions.
-- **Single currency** — business currency from settings.
-- **URA-compliant default COA template** — seeded on business registration.
+- **Immutable journal entries** - posted entries are locked. Corrections require reversing entries.
+- **Strict period closing** - closed periods reject new entries. Reopening is admin-only and audited.
+- **Start from activation** - no retroactive conversion of pre-activation transactions.
+- **Single currency** - business currency from settings.
+- **URA-compliant default COA template** - seeded on business registration.
 
 ## Consequences
 
 ### Positive
 - URA-compliant financial reports available on demand.
-- Full audit trail — every entry is traceable, immutable, and reversible.
+- Full audit trail - every entry is traceable, immutable, and reversible.
 - Professional financial statements (income statement, balance sheet) for stakeholders.
 - Auto-accounting removes manual double-entry for POS transactions.
 - Financial ratio analysis for business health monitoring.
@@ -43,10 +43,10 @@ Key architectural constraints:
 
 ### Negative
 - Immutable entries require a reversing workflow for corrections, adding operational steps.
-- Period closing adds operational complexity — businesses must close periods regularly.
-- No multi-currency support — businesses trading in multiple currencies cannot use the module for FX transactions.
-- No retroactive conversion — businesses with months of pre-activation sales cannot generate historical financial statements.
-- Offline posting is limited — the immutability constraint requires server confirmation for the post action.
+- Period closing adds operational complexity - businesses must close periods regularly.
+- No multi-currency support - businesses trading in multiple currencies cannot use the module for FX transactions.
+- No retroactive conversion - businesses with months of pre-activation sales cannot generate historical financial statements.
+- Offline posting is limited - the immutability constraint requires server confirmation for the post action.
 
 ## Alternatives Considered
 

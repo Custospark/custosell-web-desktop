@@ -91,7 +91,7 @@ export const NAV_GROUP_MODULE: Record<string, BusinessModuleSlug | 'account' | '
   'Guide Settings': 'guide_settings',
 };
 
-/** Shopping accounts (storefront_buyer) — Discover-only buyers, no workspace. */
+/** Shopping accounts (storefront_buyer) - Discover-only buyers, no workspace. */
 export function isStorefrontBuyer(user: AuthUser | null | undefined): boolean {
   return user?.account_type === 'storefront_buyer';
 }
@@ -116,13 +116,13 @@ function storedBusinessModules(user: AuthUser): BusinessModuleSlug[] {
   return normalized;
 }
 
-/** Modules an owner may grant to staff — full business catalog. */
+/** Modules an owner may grant to staff - full business catalog. */
 export function assignableStaffModuleSlugs(owner: AuthUser | null | undefined): BusinessModuleSlug[] {
   void owner;
   return [...BUSINESS_MODULE_SLUGS];
 }
 
-/** Staff modules intersected with what the owner currently allows — for forms and display. */
+/** Staff modules intersected with what the owner currently allows - for forms and display. */
 export function intersectStaffModulesWithOwner(
   staffModules: readonly string[] | null | undefined,
   owner: AuthUser | null | undefined,
@@ -138,7 +138,7 @@ export function intersectStaffModulesWithOwner(
   return filtered;
 }
 
-/** Owner sidebar/API modules — settings is always included. */
+/** Owner sidebar/API modules - settings is always included. */
 export function resolvedOwnerBusinessModules(user: AuthUser): BusinessModuleSlug[] {
   const stored = storedBusinessModules(user);
   if (stored.length === 0) {
@@ -313,13 +313,13 @@ export function hasEstimatesBoardsAccess(user: AuthUser | null | undefined): boo
     || (user.project_member_ids?.length ?? 0) > 0;
 }
 
-/** Staff with Estimates module or invited collaborators — not business owners. */
+/** Staff with Estimates module or invited collaborators - not business owners. */
 export function isLimitedEstimatesUser(user: AuthUser | null | undefined): boolean {
   if (!user) return false;
   return hasEstimatesBoardsAccess(user) && !canViewFullEstimates(user);
 }
 
-/** Users with base `hr` but not `hr_full` — sidebar and routes stay self-service only. */
+/** Users with base `hr` but not `hr_full` - sidebar and routes stay self-service only. */
 export function isLimitedHrUser(user: AuthUser | null | undefined): boolean {
   if (!user) return false;
   return canAccessModule(user, 'hr') && !canViewFullHr(user);
@@ -421,7 +421,7 @@ export function getDefaultRoute(user: AuthUser | null | undefined): string {
     return ROUTES.ESTIMATES.BOARDS;
   }
 
-  // Storefront shoppers (no business) — Products & Services, not empty POS shell
+  // Storefront shoppers (no business) - Products & Services, not empty POS shell
   if (!user.business_id && accessible.has('discover')) {
     return ROUTES.DISCOVER;
   }
@@ -430,7 +430,7 @@ export function getDefaultRoute(user: AuthUser | null | undefined): string {
   if (accessible.has('guide')) return MODULE_DEFAULT_ROUTES.guide;
 
   // If business has an unpaid onboarding fee, redirect to onboarding so the user
-  // picks a plan before paying — not straight to a plan-less payment page.
+  // picks a plan before paying - not straight to a plan-less payment page.
   const subscription = user?.business?.subscription;
   if (subscription && subscription.onboarding_fee_paid === false) {
     return ROUTES.ONBOARDING;
@@ -473,7 +473,7 @@ export function canAccessPath(user: AuthUser | null | undefined, pathname: strin
   return canAccessModule(user, module);
 }
 
-/** Shift close PDF — sales staff (own shift) or dashboard users (any shift). */
+/** Shift close PDF - sales staff (own shift) or dashboard users (any shift). */
 export function canUseShiftCloseReport(user: AuthUser | null | undefined): boolean {
   return canAccessModule(user, 'sales') || canAccessModule(user, 'dashboard');
 }

@@ -10,13 +10,13 @@ import { useNetworkStatus } from '../../app/store/hooks/useNetworkStatus';
 type ExportFormat = 'json' | 'csv' | 'xlsx';
 
 const FORMATS: { value: ExportFormat; label: string; description: string; icon: typeof Database }[] = [
-  { value: 'json', label: 'JSON', description: 'Full structured data — all your records in one file', icon: Database },
-  { value: 'csv', label: 'CSV', description: 'Comma-separated values — easy to open in spreadsheets', icon: Table },
+  { value: 'json', label: 'JSON', description: 'Full structured data - all your records in one file', icon: Database },
+  { value: 'csv', label: 'CSV', description: 'Comma-separated values - easy to open in spreadsheets', icon: Table },
   { value: 'xlsx', label: 'Excel (XLSX)', description: 'Formatted Excel workbook', icon: FileSpreadsheet },
 ];
 
 /**
- * The actual data records included in an export — hardcoded per account type and
+ * The actual data records included in an export - hardcoded per account type and
  * independent of the subscription's live status. A lapsed/suspended user must still
  * see exactly what data their export contains, so we never derive this from
  * plan_features or the currently-accessible modules.

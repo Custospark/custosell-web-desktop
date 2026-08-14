@@ -22,9 +22,9 @@ Related: [architecture.md](./architecture.md) · [auth.md](./auth.md) · [README
 
 1. Load app online; open POS products.
 2. DevTools → Network → **Offline**.
-3. Complete a sale — expect `<200ms`, `OFF-*` receipt, “Pending sync” badge.
+3. Complete a sale - expect `<200ms`, `OFF-*` receipt, “Pending sync” badge.
 4. Check Sales History, Dashboard today, My Shift totals include the sale.
-5. Reconnect — sync runs; badge clears; server receipt ID assigned.
+5. Reconnect - sync runs; badge clears; server receipt ID assigned.
 
 ## 2. Logout → offline login → catalog
 
@@ -43,7 +43,7 @@ Related: [architecture.md](./architecture.md) · [auth.md](./auth.md) · [README
 
 ## 4. Silent session upgrade (ordering / no 401 logout)
 
-1. Offline login (existing user) — **no** `AuthPendingBanner`.
+1. Offline login (existing user) - **no** `AuthPendingBanner`.
 2. Restore internet while staying in app.
 3. User **not** redirected to login; no `{"message":"Unauthenticated."}` logout.
 4. Silent auth completes **before** sales/products refetch or mutation sync.
@@ -54,25 +54,25 @@ Related: [architecture.md](./architecture.md) · [auth.md](./auth.md) · [README
 
 1. Register new business **offline**.
 2. `AuthPendingBanner` visible.
-3. Reconnect — registration + login sync; banner clears.
+3. Reconnect - registration + login sync; banner clears.
 
 ## 6. Shift offline
 
 1. Offline: clock in → negative shift ID, “Shift pending sync”.
 2. Make sales attached to shift.
-3. Reconnect — shift open syncs first; IDs remap; sales queue uses server shift ID.
-4. Clock out offline — close queued; syncs after open.
+3. Reconnect - shift open syncs first; IDs remap; sales queue uses server shift ID.
+4. Clock out offline - close queued; syncs after open.
 
 ## 7. Refund offline
 
-1. Refund a **synced** sale offline — refund pending badge.
-2. Attempt refund on `OFF-*` sale — should block until sale syncs.
+1. Refund a **synced** sale offline - refund pending badge.
+2. Attempt refund on `OFF-*` sale - should block until sale syncs.
 
 ## 8. Product sync failure correction
 
 1. Queue invalid product create offline.
-2. Reconnect — server rejects; red “Sync failed” on row.
-3. Edit product online — direct correction or requeue; badge clears on success.
+2. Reconnect - server rejects; red “Sync failed” on row.
+3. Edit product online - direct correction or requeue; badge clears on success.
 
 ## 9. Category duplicate on sync
 

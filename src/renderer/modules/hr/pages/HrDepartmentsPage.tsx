@@ -86,7 +86,7 @@ export default function HrDepartmentsPage() {
       <HrPageHeader
         icon={Building2}
         title="Departments & positions"
-        description="Shape your org chart before assigning people — departments group teams, positions define roles."
+        description="Shape your org chart before assigning people - departments group teams, positions define roles."
       />
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -106,7 +106,7 @@ export default function HrDepartmentsPage() {
               className="border-0 bg-transparent shadow-none backdrop-blur-none"
               icon={<Building2 className="h-5 w-5" />}
               title="No departments yet"
-              description="Start with one team — you can always add more as you grow."
+              description="Start with one team - you can always add more as you grow."
               action={
                 <Button size="sm" onClick={() => setDeptOpen(true)} className="inline-flex items-center gap-1.5">
                   <Plus className="h-3.5 w-3.5" /> Add your first department
@@ -151,7 +151,7 @@ export default function HrDepartmentsPage() {
               className="border-0 bg-transparent shadow-none backdrop-blur-none"
               icon={<Briefcase className="h-5 w-5" />}
               title="No positions yet"
-              description="Add titles like Cashier, Store Manager, or Accountant — optionally tie them to a department."
+              description="Add titles like Cashier, Store Manager, or Accountant - optionally tie them to a department."
               action={
                 <Button size="sm" onClick={() => setPosOpen(true)} className="inline-flex items-center gap-1.5">
                   <Plus className="h-3.5 w-3.5" /> Add your first position
@@ -172,7 +172,7 @@ export default function HrDepartmentsPage() {
                   {positions.map((p) => (
                     <tr key={p.id}>
                       <td className="px-3 py-2 font-medium text-gray-900">{p.title}</td>
-                      <td className="px-3 py-2 text-gray-600">{p.department?.name ?? '—'}</td>
+                      <td className="px-3 py-2 text-gray-600">{p.department?.name ?? '-'}</td>
                       <td className="px-3 py-2 text-right">
                         <button
                           type="button"
@@ -221,7 +221,7 @@ export default function HrDepartmentsPage() {
                 value={deptDesc}
                 onChange={(e) => setDeptDesc(e.target.value)}
                 rows={2}
-                placeholder="Optional — what this team is responsible for"
+                placeholder="Optional - what this team is responsible for"
                 className={hrInputClass}
               />
             </HrIconField>
@@ -270,7 +270,7 @@ export default function HrDepartmentsPage() {
                 value={posDesc}
                 onChange={(e) => setPosDesc(e.target.value)}
                 rows={2}
-                placeholder="Optional — responsibilities or requirements"
+                placeholder="Optional - responsibilities or requirements"
                 className={hrInputClass}
               />
             </HrIconField>

@@ -69,7 +69,7 @@ export function useOfflineSync(): void {
         showToast('error', 'Account sync failed. Check your connection or use a different email.');
       }
       if (result.authPaused) {
-        showToast('error', 'Sync paused — please sign in again.');
+        showToast('error', 'Sync paused - please sign in again.');
       }
 
       if (!result.skipped && result.failed > 0) {

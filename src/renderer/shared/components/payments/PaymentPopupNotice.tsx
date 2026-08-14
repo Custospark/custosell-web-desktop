@@ -12,7 +12,7 @@ interface PaymentPopupNoticeProps {
 const POPUP_NAME = 'custosell_payment_window';
 
 /** Open a URL from a user gesture.
- *  - Electron: window.open with the named frame — main.ts's setWindowOpenHandler
+ *  - Electron: window.open with the named frame - main.ts's setWindowOpenHandler
  *    allows it as the secure in-app modal child window, so it opens inside the
  *    app (never a blank in-app window, never a system-browser detour).
  *  - Web/mobile: window.open is fine (real browser tab). */
@@ -45,14 +45,14 @@ export default function PaymentPopupNotice({
 }: PaymentPopupNoticeProps) {
   const [manualOpenFailed, setManualOpenFailed] = useState(false);
 
-  // Electron: payment opened in the system browser — informational only.
+  // Electron: payment opened in the system browser - informational only.
   if (openedExternally) {
     return (
       <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-xs text-blue-800 text-left space-y-1.5">
         <div className="flex items-start gap-1.5">
           <MonitorCheck className="w-3.5 h-3.5 mt-0.5 shrink-0" />
           <span>
-            Payment opened in your browser. Complete it there, then come back — we'll confirm automatically.
+            Payment opened in your browser. Complete it there, then come back - we'll confirm automatically.
           </span>
         </div>
         {paymentUrl ? (
@@ -69,13 +69,13 @@ export default function PaymentPopupNotice({
           </button>
         ) : null}
         {manualOpenFailed && (
-          <p className="text-blue-700">Couldn't reopen the page — tap the button above again.</p>
+          <p className="text-blue-700">Couldn't reopen the page - tap the button above again.</p>
         )}
       </div>
     );
   }
 
-  // Normal waiting state: the in-app modal is the payment path — no alternative.
+  // Normal waiting state: the in-app modal is the payment path - no alternative.
   if (!popupBlocked) return null;
 
   return (

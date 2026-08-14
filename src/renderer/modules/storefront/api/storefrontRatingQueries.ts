@@ -59,7 +59,7 @@ function patchProductInShopList(old: unknown, product: StorefrontProduct): unkno
   return mapProductsInShopList(old, (p) => (p.id === product.id ? { ...p, ...product } : p));
 }
 
-/** One-tap 1–5 rating with optimistic cache patch. */
+/** One-tap 1-5 rating with optimistic cache patch. */
 export function useRateStorefrontProduct() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -144,7 +144,7 @@ export function useRateStorefrontProduct() {
   });
 }
 
-/** Shop 1–5 rating with optimistic shops list + shop detail patch. */
+/** Shop 1-5 rating with optimistic shops list + shop detail patch. */
 export function useRateStorefrontShop() {
   const queryClient = useQueryClient();
   return useMutation({

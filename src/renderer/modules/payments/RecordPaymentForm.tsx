@@ -181,7 +181,7 @@ export default function RecordPaymentForm({
           </div>
         ) : null}
 
-        <PipelineIconField label="Notes" icon={StickyNote} hint="Optional — reference, cheque #, mobile money ID">
+        <PipelineIconField label="Notes" icon={StickyNote} hint="Optional - reference, cheque #, mobile money ID">
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}

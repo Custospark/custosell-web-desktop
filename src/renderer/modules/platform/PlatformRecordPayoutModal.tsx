@@ -52,7 +52,7 @@ export default function PlatformRecordPayoutModal({ entity, onClose }: Props) {
       <div className="space-y-5">
         <PipelineModalHero
           icon={DollarSign}
-          title={`Record Payout — ${entity.name}`}
+          title={`Record Payout - ${entity.name}`}
           description={
             `${entity.type === 'sales_rep' ? 'Sales Rep' : 'User'} · ${entity.email ?? ''}${entity.code ? ` · ${entity.code}` : ''}`
           }
@@ -79,10 +79,10 @@ export default function PlatformRecordPayoutModal({ entity, onClose }: Props) {
             <div className="text-sm text-gray-600 space-y-1">
               <p><span className="text-gray-400">Method:</span> {PAYMENT_METHOD_LABELS[entity.payment_method ?? ''] ?? entity.payment_method}</p>
               {entity.mobile_money_provider && entity.mobile_money_number && (
-                <p><span className="text-gray-400">Mobile:</span> {entity.mobile_money_provider} — {entity.mobile_money_number}{entity.mobile_money_name ? ` (${entity.mobile_money_name})` : ''}</p>
+                <p><span className="text-gray-400">Mobile:</span> {entity.mobile_money_provider} - {entity.mobile_money_number}{entity.mobile_money_name ? ` (${entity.mobile_money_name})` : ''}</p>
               )}
               {(entity.bank_name && entity.bank_account_name) && (
-                <p><span className="text-gray-400">Bank:</span> {entity.bank_name} — {entity.bank_account_name}</p>
+                <p><span className="text-gray-400">Bank:</span> {entity.bank_name} - {entity.bank_account_name}</p>
               )}
             </div>
             {!showOverride && (

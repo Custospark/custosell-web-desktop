@@ -27,7 +27,7 @@ async function fetchEfrisStatus(): Promise<EfrisPublicStatus> {
   return data;
 }
 
-/** Safe EFRIS flags for Tax settings — never returns credentials. */
+/** Safe EFRIS flags for Tax settings - never returns credentials. */
 export function useEfrisStatus() {
   const isOffline = useAppSelector(selectIsCompletelyOffline);
 

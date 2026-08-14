@@ -1,4 +1,4 @@
-# ADR: `useBusiness` subscription overwrite — gate redirect fix
+# ADR: `useBusiness` subscription overwrite - gate redirect fix
 
 **Date:** 2026-07-27
 **Status:** Accepted
@@ -42,7 +42,7 @@ After (fix):
 subscription: state.user.business?.subscription ?? incoming.subscription
 ```
 
-The business endpoint `GET /businesses/mine` is never the source of truth for subscription data — only `GET /auth/me` (via `setUser`) is. This defense-in-depth prevents any future caller from accidentally overwriting subscription.
+The business endpoint `GET /businesses/mine` is never the source of truth for subscription data - only `GET /auth/me` (via `setUser`) is. This defense-in-depth prevents any future caller from accidentally overwriting subscription.
 
 **2. Fix `useBusiness` effect (`BusinessQueries.ts`)**
 
@@ -59,24 +59,24 @@ info.subscription = existing?.subscription ?? info.subscription;
 dispatch(setBusiness(info));
 ```
 
-Always preserve the existing subscription from `/auth/me`. The `plan_features` guard was insufficient — the incoming subscription could have `plan_features` but still be stale in other fields.
+Always preserve the existing subscription from `/auth/me`. The `plan_features` guard was insufficient - the incoming subscription could have `plan_features` but still be stale in other fields.
 
 **3. Remove stale `useOnboardingState` re-fetch concerns**
 
-The `useOnboardingState` query was ruled out as a culprit — its `queryFn` only returns onboarding state and does not dispatch `setUser` or `setBusiness`.
+The `useOnboardingState` query was ruled out as a culprit - its `queryFn` only returns onboarding state and does not dispatch `setUser` or `setBusiness`.
 
 ## Consequences
 
 - No more gate-loop after successful onboarding payment
-- Business data (name, email, phone, tax settings, etc.) still syncs correctly — only subscription is protected from overwrite
+- Business data (name, email, phone, tax settings, etc.) still syncs correctly - only subscription is protected from overwrite
 - Subscription updates from legitimate flows (plan upgrades, admin changes) flow through `setUser` from `/auth/me`, not `setBusiness`
-- All existing `setBusiness` callers (sync engine, offline settings, business mutation callbacks) are now safe — they update business metadata without corrupting subscription state
+- All existing `setBusiness` callers (sync engine, offline settings, business mutation callbacks) are now safe - they update business metadata without corrupting subscription state
 
 ## Related files
 
-- `src/renderer/app/store/slices/authSlice.ts:248` — `setBusiness` reducer
-- `src/renderer/modules/settings/api/settings/BusinessQueries.ts:112-113` — `useBusiness` effect
-- `src/renderer/modules/settings/api/settings/businessAuthSync.ts` — `businessToAuthInfo` (unchanged, but now safe)
-- `src/renderer/app/store/offline/sync/syncEngine.ts:346` — sync engine caller (now safe by reducer defense)
-- `src/renderer/app/store/offline/settings/completeOfflineSettings.ts:385` — offline settings caller (now safe)
-- `docs/adr/2026-07-25-subscription-persistence-businessQueries-overwrite.md` — prior ADR on related persist issue
+- `src/renderer/app/store/slices/authSlice.ts:248` - `setBusiness` reducer
+- `src/renderer/modules/settings/api/settings/BusinessQueries.ts:112-113` - `useBusiness` effect
+- `src/renderer/modules/settings/api/settings/businessAuthSync.ts` - `businessToAuthInfo` (unchanged, but now safe)
+- `src/renderer/app/store/offline/sync/syncEngine.ts:346` - sync engine caller (now safe by reducer defense)
+- `src/renderer/app/store/offline/settings/completeOfflineSettings.ts:385` - offline settings caller (now safe)
+- `docs/adr/2026-07-25-subscription-persistence-businessQueries-overwrite.md` - prior ADR on related persist issue

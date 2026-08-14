@@ -59,11 +59,11 @@ export function HrEmployeeAssetsPanel({ employeeId }: { employeeId: number }) {
                       {asset.name}
                     </Link>
                     {assigneeLabel(asset) ? (
-                      <p className="text-xs text-gray-400">{asset.category ?? '—'}</p>
+                      <p className="text-xs text-gray-400">{asset.category ?? '-'}</p>
                     ) : null}
                   </td>
-                  <td className="px-4 py-2.5 text-gray-600">{asset.asset_tag ?? '—'}</td>
-                  <td className="px-4 py-2.5 capitalize text-gray-600">{asset.condition ?? '—'}</td>
+                  <td className="px-4 py-2.5 text-gray-600">{asset.asset_tag ?? '-'}</td>
+                  <td className="px-4 py-2.5 capitalize text-gray-600">{asset.condition ?? '-'}</td>
                 </tr>
               ))}
             </tbody>

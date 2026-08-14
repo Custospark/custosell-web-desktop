@@ -94,13 +94,13 @@ async function clearAuthSessionWithTimeout(): Promise<void> {
 }
 
 /**
- * Logout — clears persisted session first, then navigates to login.
+ * Logout - clears persisted session first, then navigates to login.
  * Works offline; never waits on the network.
  */
 export async function runAppLogout(options?: { navigate?: NavigateFunction; redirectTo?: string }): Promise<void> {
   const { token, isLocalSession } = store.getState().auth;
 
-  // Session is cleared before navigate — no logout intent (that flag is for 401 hard-redirect races only).
+  // Session is cleared before navigate - no logout intent (that flag is for 401 hard-redirect races only).
   store.dispatch(logout());
   clearLegacyLocalStorage();
 

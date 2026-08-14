@@ -1,4 +1,4 @@
-/** Recompute avg/count after an optimistic 1–5 star upsert. */
+/** Recompute avg/count after an optimistic 1-5 star upsert. */
 export function applyOptimisticRating(
   prevAvg: number,
   prevCount: number,

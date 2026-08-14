@@ -24,7 +24,7 @@ interface ReceiptActionBarProps {
 }
 
 /**
- * Shared receipt footer — Sale completed pattern:
+ * Shared receipt footer - Sale completed pattern:
  * primary row (Download PDF · Print · optional CTA) + More overflow for secondary.
  */
 export function ReceiptActionBar({

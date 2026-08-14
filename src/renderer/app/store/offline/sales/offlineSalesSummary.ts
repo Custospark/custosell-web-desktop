@@ -181,7 +181,7 @@ export async function computeOfflineSalesTrend(): Promise<Map<string, { revenue:
   return trendMap;
 }
 
-/** Server baseline + pending sales/refunds overlay — idempotent, no double-counting. */
+/** Server baseline + pending sales/refunds overlay - idempotent, no double-counting. */
 export async function applyDashboardPendingOverlay(
   server: DashboardSummary,
 ): Promise<DashboardSummary> {

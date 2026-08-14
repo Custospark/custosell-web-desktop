@@ -165,7 +165,7 @@ export function PlatformUserNotificationModal({
             className="mt-0.5 rounded border-gray-300 text-blue-600"
           />
           <span className="text-xs leading-relaxed text-blue-900">
-            <strong>Mark as notified</strong> — sets account status to &quot;Notified&quot; for tracking (login stays allowed).
+            <strong>Mark as notified</strong> - sets account status to &quot;Notified&quot; for tracking (login stays allowed).
             Use with the duration filter to find users notified ≥ 7/30/60/90 days ago.
           </span>
         </label>

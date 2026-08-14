@@ -218,7 +218,7 @@ export default function PlansTab({ subscription, onUpgradeComplete, onGoToHistor
             <span className="text-sm">
               {subscription.billing_cycle
                 ? subscription.billing_cycle === 'yearly' ? 'Yearly billing' : 'Monthly billing'
-                : '—'}
+                : '-'}
             </span>
           </div>
           <div className="flex items-center gap-2 text-blue-100">
@@ -228,7 +228,7 @@ export default function PlansTab({ subscription, onUpgradeComplete, onGoToHistor
                 ? `Next bill: ${new Date(subscription.next_billing_date).toLocaleDateString()}`
                 : subscription.trial_ends_at
                   ? `Trial ends: ${new Date(subscription.trial_ends_at).toLocaleDateString()}`
-                  : '—'}
+                  : '-'}
             </span>
           </div>
           <div className="flex items-center gap-2 text-blue-100">
@@ -250,7 +250,7 @@ export default function PlansTab({ subscription, onUpgradeComplete, onGoToHistor
         {subscription.status === 'active' && !subscription.payment_action?.required && currentPlan && (
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3 bg-white/10 backdrop-blur rounded-lg p-3">
             <p className="text-sm text-white font-medium">
-              All set — your {currentPlan.name} plan is active through{' '}
+              All set - your {currentPlan.name} plan is active through{' '}
               {subscription.next_billing_date
                 ? new Date(subscription.next_billing_date).toLocaleDateString()
                 : 'your billing date'}
@@ -370,7 +370,7 @@ export default function PlansTab({ subscription, onUpgradeComplete, onGoToHistor
                   const has = p.features?.[key] === true;
                   return (
                     <td key={p.id} className={`text-center py-2.5 px-2 ${has ? 'text-blue-500 font-bold' : 'text-gray-300'}`}>
-                      {has ? '✓' : '—'}
+                      {has ? '✓' : '-'}
                     </td>
                   );
                 })}
@@ -388,7 +388,7 @@ export default function PlansTab({ subscription, onUpgradeComplete, onGoToHistor
                   const val = p.limits?.[key];
                   return (
                     <td key={p.id} className="text-center py-2.5 px-2 font-semibold text-gray-900">
-                      {val === null || val === undefined ? '—' : Intl.NumberFormat('en-US').format(val)}
+                      {val === null || val === undefined ? '-' : Intl.NumberFormat('en-US').format(val)}
                     </td>
                   );
                 })}

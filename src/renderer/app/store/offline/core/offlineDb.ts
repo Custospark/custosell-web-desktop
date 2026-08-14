@@ -145,7 +145,7 @@ function openOfflineDatabase(): Promise<IDBPDatabase> {
       }
     },
     blocked() {
-      console.warn('[OfflineDB] Upgrade blocked — close other tabs using Custosell');
+      console.warn('[OfflineDB] Upgrade blocked - close other tabs using Custosell');
     },
     blocking() {
       console.warn('[OfflineDB] Blocking older connection for upgrade');

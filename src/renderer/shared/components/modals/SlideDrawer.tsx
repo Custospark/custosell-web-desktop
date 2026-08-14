@@ -16,7 +16,7 @@ interface SlideDrawerProps {
   isSubmitting?: boolean;
   canSubmit?: boolean;
   width?: string;
-  /** Span main content area only — leave the sidebar visible on large screens. */
+  /** Span main content area only - leave the sidebar visible on large screens. */
   fullContentWidth?: boolean;
   /** Hide Save/Cancel footer (e.g. read-only or auto-save drawers). */
   hideFooter?: boolean;

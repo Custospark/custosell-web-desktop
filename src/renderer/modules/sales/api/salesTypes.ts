@@ -7,7 +7,7 @@ export interface CartItem {
   quantity: number;
   discount_amount: number;
   unit?: string | null;
-  /** Active price tier for this line — wholesale uses wholesale_price as unit_price. */
+  /** Active price tier for this line - wholesale uses wholesale_price as unit_price. */
   price_tier: CartPriceTier;
   /** Fixed retail price captured at add time (so tier toggling offline is stable). */
   retail_price: number;
@@ -27,7 +27,7 @@ export interface SaleItem {
   product_price: string;
   quantity: number;
   unit_price: string;
-  /** Charged price tier for this line — 'wholesale' when sold at wholesale_price. */
+  /** Charged price tier for this line - 'wholesale' when sold at wholesale_price. */
   price_tier?: CartPriceTier;
   subtotal: string;
   tax_amount: string;
@@ -101,7 +101,7 @@ export interface Sale {
   sale_items?: SaleItem[];
   payments?: import('../../payments/paymentTypes').Payment[];
   email_sent_count?: number;
-  /** URA EFRIS fiscalization — none when EFRIS off or not yet attempted. */
+  /** URA EFRIS fiscalization - none when EFRIS off or not yet attempted. */
   fiscal_status?: 'none' | 'pending' | 'fiscalized' | 'failed';
   fiscal_fdn?: string | null;
   fiscal_qr?: string | null;
@@ -145,9 +145,9 @@ export interface SalesState {
   activeOrderId: number | null;
   /**
    * How the cart is linked to activeOrderId:
-   * - `sale` — resumed to complete a sale (order_id on checkout)
-   * - `update` — user chose Update on an order (explicit PUT save)
-   * - null — no order edit session
+   * - `sale` - resumed to complete a sale (order_id on checkout)
+   * - `update` - user chose Update on an order (explicit PUT save)
+   * - null - no order edit session
    */
   activeOrderMode: 'sale' | 'update' | null;
 }

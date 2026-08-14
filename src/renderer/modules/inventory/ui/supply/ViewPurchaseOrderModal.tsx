@@ -22,12 +22,12 @@ const BUYER_ACTION: Record<string, string> = {
 };
 
 const SELLER_ACTION: Record<string, string> = {
-  draft: 'Not visible yet — the buyer is still composing this order.',
+  draft: 'Not visible yet - the buyer is still composing this order.',
   submitted: 'Review the order. Accepting creates an invoice for the buyer automatically.',
   accepted: 'Invoice created. Prepare and ship the items, then mark as fulfilled. Record payments under Sales invoices.',
   rejected: 'You rejected this order. You can delete it from your list.',
   fulfilled: 'Stock deducted. Waiting for the buyer to confirm receipt. Record payments under Sales invoices.',
-  received: 'The buyer confirmed receipt. This order is complete — keep recording payment under Sales invoices.',
+  received: 'The buyer confirmed receipt. This order is complete - keep recording payment under Sales invoices.',
   cancelled: 'The buyer cancelled this order. You can delete it from your list.',
 };
 

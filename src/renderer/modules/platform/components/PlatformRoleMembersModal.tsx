@@ -157,7 +157,7 @@ export function PlatformRoleMembersModal({ open, role, onClose }: PlatformRoleMe
             </div>
           ) : (
             <p className="rounded-lg border border-dashed border-gray-200 bg-gray-50/50 p-4 text-center text-sm text-gray-400">
-              No members yet — search above to assign the first one.
+              No members yet - search above to assign the first one.
             </p>
           )}
           {membersPage && membersPage.total > (membersPage.data?.length ?? 0) && (

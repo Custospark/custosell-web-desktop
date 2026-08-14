@@ -20,11 +20,11 @@ Dismiss state for offline banner: `offline/core/offlinePreferences.ts` + `networ
 
 | Element | Behavior |
 |---------|----------|
-| **Hamburger** | **Desktop (`lg+`) only** — collapses/expands the sidebar. On mobile, open the drawer via the bottom **Menu** tab instead. |
+| **Hamburger** | **Desktop (`lg+`) only** - collapses/expands the sidebar. On mobile, open the drawer via the bottom **Menu** tab instead. |
 | **Network status** | `online` = emerald, `slow` = orange, `offline` = red (`NETWORK_STATUS_THEME`); larger tap targets on small screens |
-| **Sync chip** | `SyncHeaderChip` — compact % when sync active |
+| **Sync chip** | `SyncHeaderChip` - compact % when sync active |
 | **Shift badge** | Shows `shift_clock_in` from auth slice (lg+ in the header; also in the profile menu on small screens) |
-| **Apps launcher** | 9-dot control left of Guide — opens `ModuleLauncherModal` (boards-style) with only modules the signed-in user can access |
+| **Apps launcher** | 9-dot control left of Guide - opens `ModuleLauncherModal` (boards-style) with only modules the signed-in user can access |
 | **Guide nav** | Tutorials, FAQs, notifications (offline dot on notifications when offline) |
 
 Network button calls `checkNetworkConnectivity()` on click (retry probe).
@@ -33,7 +33,7 @@ Module launcher catalog: `moduleLauncherCatalog.ts`. Visibility = staff/owner dr
 
 ## Mobile bottom tabs (auth, below `lg`)
 
-`AppMobileTabBar.tsx` — in-flow thumb bar under Main (not fixed overlay): **Menu** | **first two accessible leaf routes** | **More**. Leaves resolve via `resolveAccessibleNavLeaves`. **More** opens a sheet with Browse the app (friendly copy, no “modules” wording) + quick links. Footer is `lg+` only. See ADR `2026-07-14-auth-mobile-bottom-tabs`.
+`AppMobileTabBar.tsx` - in-flow thumb bar under Main (not fixed overlay): **Menu** | **first two accessible leaf routes** | **More**. Leaves resolve via `resolveAccessibleNavLeaves`. **More** opens a sheet with Browse the app (friendly copy, no “modules” wording) + quick links. Footer is `lg+` only. See ADR `2026-07-14-auth-mobile-bottom-tabs`.
 
 ## Sidebar
 
@@ -47,12 +47,12 @@ If the user is already on an online-only route while offline, `Main.tsx` shows `
 
 ## Dashboard charts
 
-`DashboardCharts.tsx` uses My Shift–style area chart for 7-day net sales trend. Graph subtitles use uppercase tracking-wide styling (`chartPrimitives.tsx`).
+`DashboardCharts.tsx` uses My Shift-style area chart for 7-day net sales trend. Graph subtitles use uppercase tracking-wide styling (`chartPrimitives.tsx`).
 
 ## Sales / shift offline hints
 
-- `MyShiftPage` — amber offline strip when `isCompletelyOffline`
-- `New Sale`, `RefundPanel` — offline sale/refund messaging
+- `MyShiftPage` - amber offline strip when `isCompletelyOffline`
+- `New Sale`, `RefundPanel` - offline sale/refund messaging
 - Pending sync badges on lists (sales, products, staff, etc.)
 
 ## Routes

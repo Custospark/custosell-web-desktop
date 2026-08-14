@@ -146,7 +146,7 @@ export default function StaffTransferModal({ open, onClose, staff }: StaffTransf
           <div>
             <p className="text-sm font-semibold text-indigo-900">Branch transfer</p>
             <p className="text-xs text-indigo-700 mt-0.5">
-              {activeStaff?.name ?? 'The selected staff member'} will be moved to the destination branch — future sales, stock, and shifts scope to it.
+              {activeStaff?.name ?? 'The selected staff member'} will be moved to the destination branch - future sales, stock, and shifts scope to it.
             </p>
           </div>
         </div>
@@ -178,7 +178,7 @@ export default function StaffTransferModal({ open, onClose, staff }: StaffTransf
               <label className={labelClass}>Current branch</label>
               <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
                 <GitBranch className="w-4 h-4 text-gray-400" />
-                {safeLocations.find((l) => l.id === fromLocationId)?.name ?? '—'}
+                {safeLocations.find((l) => l.id === fromLocationId)?.name ?? '-'}
               </div>
             </div>
           </div>

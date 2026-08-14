@@ -23,7 +23,7 @@ export function resolveBusinessLogoPath(
   return user?.business?.logo_path?.trim() || null;
 }
 
-/** Header-safe user label — first name on narrow screens, full name when space allows. */
+/** Header-safe user label - first name on narrow screens, full name when space allows. */
 export function resolveUserMenuLabel(name: string | null | undefined, compact = false): string {
   if (!name?.trim()) return 'Account';
   if (compact) {

@@ -25,7 +25,7 @@ export default function JournalEntriesPage() {
   const [hoveredDescId, setHoveredDescId] = useState<number | null>(null);
   const [descPos, setDescPos] = useState({ top: 0, left: 0 });
 
-  // All filtering client-side — always fetch all entries
+  // All filtering client-side - always fetch all entries
   const { data: entries, isLoading } = useJournalEntries();
   const postEntry = usePostJournalEntry();
   const deleteEntry = useDeleteJournalEntry();
@@ -128,7 +128,7 @@ export default function JournalEntriesPage() {
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
           View
         </a>
-      ) : <span className="text-xs text-gray-300">—</span>,
+      ) : <span className="text-xs text-gray-300">-</span>,
     },
     {
       key: 'total_debits',
@@ -233,7 +233,7 @@ export default function JournalEntriesPage() {
 
       {pageCount > 1 && (
         <div className="flex items-center justify-between text-sm text-gray-500">
-          <span>Showing {safePage * PAGE_SIZE + 1}–{Math.min((safePage + 1) * PAGE_SIZE, filtered.length)} of {filtered.length}</span>
+          <span>Showing {safePage * PAGE_SIZE + 1}-{Math.min((safePage + 1) * PAGE_SIZE, filtered.length)} of {filtered.length}</span>
           <div className="flex items-center gap-1">
             <button onClick={() => setPage(safePage - 1)} disabled={safePage === 0} className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"><ChevronLeft className="w-4 h-4" /></button>
             {Array.from({ length: pageCount }, (_, i) => (

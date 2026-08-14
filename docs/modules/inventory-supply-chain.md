@@ -42,9 +42,9 @@ Online-only marketplace and purchase orders between businesses. See ADR [2026-07
 
 ### Scale notes (display)
 
-- Current UI is built for **realistic B2B carts and per-seller catalogs** (tens–thousands), not millions of DOM rows.
+- Current UI is built for **realistic B2B carts and per-seller catalogs** (tens-thousands), not millions of DOM rows.
 - Catalog and cart use **chunked render + client filter**; supplier browse still loads the open-for-supply list then filters locally.
-- Millions of records would need **server pagination / search** (and ideally virtualized lists) — not the current full-array `.map()` path.
+- Millions of records would need **server pagination / search** (and ideally virtualized lists) - not the current full-array `.map()` path.
 
 ### Supplier list APIs
 
@@ -66,7 +66,7 @@ Lifecycle: `draft → submitted → accepted|rejected → fulfilled → received
 
 Billing rule: **Accept creates the invoice.** **Only the seller records payments.** Buyers view **Supplier invoices** / in-place `ViewInvoiceModal`. Seller AR + buyer AP journals: [2026-07-11-buyer-ap-supplier-invoice-automation.md](../adr/2026-07-11-buyer-ap-supplier-invoice-automation.md). See also [2026-07-11-supplier-invoices-seller-payments.md](../adr/2026-07-11-supplier-invoices-seller-payments.md).
 
-### Buyer — Purchase orders (`/inventory/purchase-orders`)
+### Buyer - Purchase orders (`/inventory/purchase-orders`)
 
 | Status | Allowed actions | Notes |
 |--------|-----------------|-------|
@@ -78,11 +78,11 @@ Billing rule: **Accept creates the invoice.** **Only the seller records payments
 | **rejected** | View, **Delete** | Review rejection reason, then remove from list. |
 | **cancelled** | View, **Delete** | Terminal on the order flow; delete to clean up. |
 
-### Seller — Incoming orders (`/inventory/incoming-orders`)
+### Seller - Incoming orders (`/inventory/incoming-orders`)
 
 | Status | Allowed actions | Notes |
 |--------|-----------------|-------|
-| **draft** | — | Hidden from seller (buyer still composing). |
+| **draft** | - | Hidden from seller (buyer still composing). |
 | **submitted** | View, **Accept**, **Reject** | Accept → status `accepted` **and** auto-creates/sends invoice for buyer. Reject requires a reason. |
 | **accepted** | View, **Fulfill**, Invoice, Receipts | Fulfill deducts seller stock. Record payment under Sales invoices / modal. |
 | **fulfilled** | View, Invoice, Receipts | Waiting for buyer receive. |
@@ -107,8 +107,8 @@ Billing rule: **Accept creates the invoice.** **Only the seller records payments
 ### Explicitly not available on PO screens
 
 - Buyer must **not** generate their own invoice from a PO.
-- Seller must **not** manually “Generate invoice” after fulfill — Accept already created it.
-- Payments are **not** recorded on the PO page — only under Invoices.
+- Seller must **not** manually “Generate invoice” after fulfill - Accept already created it.
+- Payments are **not** recorded on the PO page - only under Invoices.
 
 ---
 

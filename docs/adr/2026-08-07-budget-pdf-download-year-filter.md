@@ -5,12 +5,12 @@
 
 ## Context
 
-Personal-account users needed to take their budgets off-screen — a printable "document" of a budget (its plan, linked income, and spend) so they can keep a paper copy or share it. Budgets accumulate across years, so the My Budgets page also needed a way to find a specific budget when there are many.
+Personal-account users needed to take their budgets off-screen - a printable "document" of a budget (its plan, linked income, and spend) so they can keep a paper copy or share it. Budgets accumulate across years, so the My Budgets page also needed a way to find a specific budget when there are many.
 
 ## Decisions
 
 1. **PDF, not XLSX.** Budgets are personal planning documents, so the download uses the backend's canonical PDF path (`BudgetPdfBuilder` → `ReportExportService::downloadPdf` → DomPDF on `reports.layouts.base`). XLSX (PhpSpreadsheet) is reserved for data exports, not documents.
-2. **Personal-account header.** For `account_type === 'personal'`, the PDF header and filename use the **user's name**, not the business name — budgets are personal documents. The builder replicates the business model and overrides `name` for the header/filename only.
+2. **Personal-account header.** For `account_type === 'personal'`, the PDF header and filename use the **user's name**, not the business name - budgets are personal documents. The builder replicates the business model and overrides `name` for the header/filename only.
 3. **PDF contents.** Summary cards (Planned / Spent / Income / Remaining, with tone for negative remaining), the plan lines table (item, qty, unit price, line total, bought), income table, spend table, and a remaining total row.
 4. **New endpoint.** `GET /budgets/{budget}/download` behind the same `auth:sanctum + business.active + subscription.active + module:expenses` guards, ownership-checked like `show` via `findOwned`.
 5. **FE download pattern mirrors invoices/estimates.** `useBudgetPdf.ts` fetches a blob (`responseType: 'blob'`), parses `Content-Disposition` for the filename, and triggers the save through the shared `downloadBlob` helper. The card shows a spinner while downloading and toasts on failure.

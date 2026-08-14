@@ -14,11 +14,11 @@ Custosell businesses need people operations beyond Settings → Staff: org struc
 
 Ship a first-class **`hr`** module labeled **HR & Payroll** with:
 
-1. **Frontend** under `src/renderer/modules/hr/` — outlet-only `HrLayout` (no in-module sidenav), React Query API layer against `/api/v1/hr/*`, pages for People, Departments, Attendance, Leave, Payroll, Talent, Reports, and Settings.
-2. **Identity** — `hr_employees.user_id` optionally links to Staff users. **Auto-mirror:** every staff `User` gets a linked HR employee (on Settings create + People list backfill). Admin/HR may create logins from HR (`with-account` / `create-account`) with an admin-set password (no invite email in v1). Unlink keeps the User; remove-account soft-deletes the User.
-3. **Payroll locale** — Uganda-first (UGX, progressive PAYE, NSSF 5%/10%) with extensible statutory rate sets on the backend.
-4. **UI shell** — App Sidebar group (already registered) is the sole HR navigation; `HrLayout` renders `<Outlet />` only. Pages match Documents/Pipeline surface quality (`HrSurface`, `hrFormFields`, status badges, empty states, Confirm + Toast).
-5. **Module access** — same `ModuleAccessMiddleware` / `BUSINESS_MODULE_SLUGS` pattern as Documents and Accounting.
+1. **Frontend** under `src/renderer/modules/hr/` - outlet-only `HrLayout` (no in-module sidenav), React Query API layer against `/api/v1/hr/*`, pages for People, Departments, Attendance, Leave, Payroll, Talent, Reports, and Settings.
+2. **Identity** - `hr_employees.user_id` optionally links to Staff users. **Auto-mirror:** every staff `User` gets a linked HR employee (on Settings create + People list backfill). Admin/HR may create logins from HR (`with-account` / `create-account`) with an admin-set password (no invite email in v1). Unlink keeps the User; remove-account soft-deletes the User.
+3. **Payroll locale** - Uganda-first (UGX, progressive PAYE, NSSF 5%/10%) with extensible statutory rate sets on the backend.
+4. **UI shell** - App Sidebar group (already registered) is the sole HR navigation; `HrLayout` renders `<Outlet />` only. Pages match Documents/Pipeline surface quality (`HrSurface`, `hrFormFields`, status badges, empty states, Confirm + Toast).
+5. **Module access** - same `ModuleAccessMiddleware` / `BUSINESS_MODULE_SLUGS` pattern as Documents and Accounting.
 
 ## Consequences
 
@@ -33,7 +33,7 @@ Ship a first-class **`hr`** module labeled **HR & Payroll** with:
 
 - Payroll rules are jurisdiction-sensitive; non-UG locales need future rate packs.
 - Posting to Accounting **fails hard** if the journal cannot be created (run stays approved); see [ADR: payroll accounting bridge](./2026-07-10-hr-payroll-accounting-bridge.md).
-- Offline-first mutation queue for HR is deferred — HR is online-primary in v1.
+- Offline-first mutation queue for HR is deferred - HR is online-primary in v1.
 
 ## Alternatives considered
 

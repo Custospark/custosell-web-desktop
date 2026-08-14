@@ -55,7 +55,7 @@ export function ProjectAlerts({ canCosting, isOverBudget, isMarginNegative, actu
             <p className="font-semibold">Negative margin</p>
             <p className="mt-0.5 text-rose-700">
               The project is running at {marginActual.toFixed(1)}% margin (budgeted: {marginBudget.toFixed(1)}%).
-              Costs are exceeding revenue — review pricing and expenses.
+              Costs are exceeding revenue - review pricing and expenses.
             </p>
           </div>
         </div>
@@ -213,7 +213,7 @@ export function ProjectOverviewTab({ project, canCosting, currency, members, pro
           </div>
           <p className="text-sm text-gray-700">
             {formatShiftDate(project.start_date)}
-            {project.due_date && <> — {formatShiftDate(project.due_date)}</>}
+            {project.due_date && <> - {formatShiftDate(project.due_date)}</>}
           </p>
         </Card>
       )}
@@ -306,11 +306,11 @@ export function ProjectTasksTab({ tasks, currency }: { tasks?: Project['tasks'];
                   <td className="py-2.5 pr-4 tabular-nums text-gray-600">{task.actual_hours}</td>
                   <td className="py-2.5 pr-4 tabular-nums text-gray-600">{formatCurrency(n(task.budget_cost), currency)}</td>
                   <td className="py-2.5 pr-4 tabular-nums text-gray-500">
-                    {task.due_date ? formatShiftDate(task.due_date) : '—'}
+                    {task.due_date ? formatShiftDate(task.due_date) : '-'}
                   </td>
                   <td className="py-2.5 text-gray-600">
                     <div className="flex flex-col gap-1">
-                      <span>{task.assignee?.name ?? '—'}</span>
+                      <span>{task.assignee?.name ?? '-'}</span>
                       {task.assigned_to ? (
                         <EvaluateStaffPerformanceLink userId={task.assigned_to} />
                       ) : null}
@@ -366,7 +366,7 @@ export function ProjectTimesheetsTab({ entries, currency }: { entries?: Project[
                     </span>
                   </td>
                   <td className="py-2.5 pr-4 tabular-nums text-gray-500">{formatShiftDate(entry.entry_date)}</td>
-                  <td className="py-2.5 text-gray-500 max-w-[160px] truncate">{entry.notes ?? '—'}</td>
+                  <td className="py-2.5 text-gray-500 max-w-[160px] truncate">{entry.notes ?? '-'}</td>
                 </tr>
               ))}
             </tbody>
@@ -395,7 +395,7 @@ export function ProjectBoardTab({ board }: {
           </div>
           <h3 className="mt-4 text-lg font-semibold text-gray-900">{board.name}</h3>
           <p className="mt-1 text-sm text-gray-500">
-            Manage tasks with a Kanban board — drag cards between stages,
+            Manage tasks with a Kanban board - drag cards between stages,
             assign team members, track progress.
           </p>
           <div className="mt-6 flex items-center gap-6 text-sm text-gray-500">

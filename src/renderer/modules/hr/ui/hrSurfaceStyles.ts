@@ -1,4 +1,4 @@
-/** Clear gray borders — readable panels without frosted clutter. */
+/** Clear gray borders - readable panels without frosted clutter. */
 export const HR_SURFACE = {
   panel: 'rounded-2xl border border-gray-200 bg-white shadow-sm',
   tableWrap: 'overflow-x-auto rounded-xl border border-gray-200 bg-white',

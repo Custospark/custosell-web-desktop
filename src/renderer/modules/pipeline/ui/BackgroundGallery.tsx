@@ -107,7 +107,7 @@ export default function BackgroundGallery({
         <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-gray-600">
           <Image className="h-3 w-3" />
           Gallery images
-          <span className="font-normal text-gray-400">— {GALLERY_IMAGES.length} options</span>
+          <span className="font-normal text-gray-400">- {GALLERY_IMAGES.length} options</span>
         </p>
         <div className="max-h-56 overflow-y-auto rounded-lg border border-gray-100 p-1.5">
           <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
@@ -176,7 +176,7 @@ export default function BackgroundGallery({
           <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-gray-600">
             <History className="h-3 w-3" />
             Your uploads
-            <span className="font-normal text-gray-400">— reuse a previous image</span>
+            <span className="font-normal text-gray-400">- reuse a previous image</span>
           </p>
           <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
             {historyThumbs.map(({ path, url }) => (

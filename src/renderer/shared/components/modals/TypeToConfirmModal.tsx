@@ -15,7 +15,7 @@ interface TypeToConfirmModalProps {
   subtitle?: string;
   /** The exact text the user must type to enable deletion. */
   keyword: string;
-  /** Optional label for the keyword — defaults to "Reference". */
+  /** Optional label for the keyword - defaults to "Reference". */
   keywordLabel?: string;
   /** Body copy describing the consequences. */
   message?: string;
@@ -27,7 +27,7 @@ interface TypeToConfirmModalProps {
 
 /**
  * Shared destructive confirmation modal. Requires the user to type the record
- * reference (e.g. "EST-0001") before the delete button is enabled — mirrors the
+ * reference (e.g. "EST-0001") before the delete button is enabled - mirrors the
  * Business Settings account-delete flow, but without sending a security code.
  */
 export function TypeToConfirmModal({

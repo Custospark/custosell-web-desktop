@@ -61,7 +61,7 @@ export default function InsightsPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold text-gray-900">Pipeline performance</h2>
-          <p className="mt-1 text-sm text-gray-500">Sales leads only — project boards and task cards are excluded.</p>
+          <p className="mt-1 text-sm text-gray-500">Sales leads only - project boards and task cards are excluded.</p>
         </div>
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-gray-400" />

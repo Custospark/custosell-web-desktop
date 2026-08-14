@@ -97,7 +97,7 @@ function createWindow(): BrowserWindow {
   });
 
   // Window-open policy: the payment gateway is hosted INSIDE the app as a modal
-  // (Electron <webview>) — no separate child BrowserWindow exists, so dismissing
+  // (Electron <webview>) - no separate child BrowserWindow exists, so dismissing
   // it can never blank the app. Any external http(s) window.open (PDFs, social
   // links, etc.) opens in the user's default browser via shell.openExternal.
   // Everything else is denied.

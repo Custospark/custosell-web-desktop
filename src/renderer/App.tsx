@@ -25,7 +25,7 @@ const Router = isElectron ? HashRouter : BrowserRouter;
 const CACHE_VERSION = 'v3';
 
 if (typeof window !== 'undefined') {
-  // Browsers/Electron require a user gesture before an AudioContext can start —
+  // Browsers/Electron require a user gesture before an AudioContext can start -
   // unlock once on the first interaction so polling chimes can play afterwards.
   const unlockOnce = () => {
     unlockAudio();

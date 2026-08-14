@@ -58,7 +58,7 @@ export function HrLeaveTypeModal({
         <HrModalHero
           icon={Tag}
           title={editing ? 'Edit leave type' : 'New leave type'}
-          description="Annual, sick, maternity — set the rules once and they apply to everyone."
+          description="Annual, sick, maternity - set the rules once and they apply to everyone."
           tone="emerald"
         />
         <HrFormSection title="Policy" icon={CalendarDays} description="Name and code appear on requests and balances.">
@@ -170,7 +170,7 @@ export function HrLeaveRequestModal({
         <HrModalHero
           icon={CalendarDays}
           title="Time off request"
-          description="We'll hold the days as pending until you approve — balances update automatically."
+          description="We'll hold the days as pending until you approve - balances update automatically."
           tone="indigo"
         />
         <HrFormSection title="Who & when" icon={User} description={isFullHr ? 'Pick the person, leave type, and date range.' : 'Choose leave type and dates for your request.'}>
@@ -230,7 +230,7 @@ export function HrLeaveRequestModal({
             </HrIconField>
           </div>
         </HrFormSection>
-        <HrFormSection title="Context" icon={MessageSquare} description="Optional — helpful when reviewing the request.">
+        <HrFormSection title="Context" icon={MessageSquare} description="Optional - helpful when reviewing the request.">
           <HrIconField label="Reason" icon={MessageSquare}>
             <textarea
               value={form.reason}

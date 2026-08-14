@@ -45,7 +45,7 @@ export function isReceivedInvoice(inv: Invoice): boolean {
 
 /**
  * Counterparty for list/modal headers.
- * `asBuyer` — Discover B2C / supplier view: always the issuing shop, never the customer row.
+ * `asBuyer` - Discover B2C / supplier view: always the issuing shop, never the customer row.
  */
 export function invoicePartyLabel(
   inv: Invoice,

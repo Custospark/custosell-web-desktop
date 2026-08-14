@@ -137,7 +137,7 @@ export function PlatformUserPrivilegesModal({
 
   const title = isBulk
     ? `Set privileges for ${users.length} users`
-    : `Privileges — ${single?.name}`;
+    : `Privileges - ${single?.name}`;
 
   return (
     <Modal
@@ -324,7 +324,7 @@ export function PlatformUserPrivilegesModal({
               />
             </PipelineIconField>
             <p className="mt-1 pl-10 text-xs text-gray-500">
-              Applies to {DATE_FIELD_BY_STATUS[subscriptionStatus || singleSub?.status || 'active']} status —{' '}
+              Applies to {DATE_FIELD_BY_STATUS[subscriptionStatus || singleSub?.status || 'active']} status -{' '}
               {subscriptionStatus ? `the status you selected (${subscriptionStatus})` : 'the current status'}.
             </p>
           </div>

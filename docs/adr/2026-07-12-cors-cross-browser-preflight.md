@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-12
 **Status:** Resolved
-**Impact:** Login blocked on Edge/Firefox in production — `www.` subdomain mismatch + explicit origin list
+**Impact:** Login blocked on Edge/Firefox in production - `www.` subdomain mismatch + explicit origin list
 
 ---
 
@@ -20,7 +20,7 @@ Chrome worked fine on the same network.
 
 ### 1. `www.` subdomain is a different origin
 
-The backend `.env` had `FRONTEND_URL=https://custosell.com` (no `www.`). But the user's browser was at `https://www.custosell.com`. CORS treats `custosell.com` and `www.custosell.com` as **two completely different origins** — the `Access-Control-Allow-Origin` header must match exactly.
+The backend `.env` had `FRONTEND_URL=https://custosell.com` (no `www.`). But the user's browser was at `https://www.custosell.com`. CORS treats `custosell.com` and `www.custosell.com` as **two completely different origins** - the `Access-Control-Allow-Origin` header must match exactly.
 
 ### 2. Explicit origin list stricter than pattern
 
@@ -33,7 +33,7 @@ The original `config/cors.php` used an explicit `allowed_origins` array:
 ],
 ```
 
-Chrome is more lenient with CORS validation on `localhost`-like origins. Edge and Firefox strictly enforce the spec — if the origin doesn't appear in the allowed list, the preflight `OPTIONS` request returns without an `Access-Control-Allow-Origin` header, and the browser blocks the actual request.
+Chrome is more lenient with CORS validation on `localhost`-like origins. Edge and Firefox strictly enforce the spec - if the origin doesn't appear in the allowed list, the preflight `OPTIONS` request returns without an `Access-Control-Allow-Origin` header, and the browser blocks the actual request.
 
 ---
 
@@ -83,7 +83,7 @@ This ensures Vite dev server works on all browsers, not just Chrome.
 
 ## What to check on deploy
 
-- `FRONTEND_URL` in the backend `.env` should be set to the **exact** frontend domain (with or without `www.` — the regex pattern handles both, but the explicit env entry avoids ambiguity)
+- `FRONTEND_URL` in the backend `.env` should be set to the **exact** frontend domain (with or without `www.` - the regex pattern handles both, but the explicit env entry avoids ambiguity)
 - Run `php artisan config:clear` after pulling
 - Verify the preflight `OPTIONS` response includes `Access-Control-Allow-Origin: https://www.custosell.com`
 

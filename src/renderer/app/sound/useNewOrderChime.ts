@@ -17,7 +17,7 @@ function numeric(value: string | number | undefined): number {
 }
 
 /**
- * Business-side alert — watches the polled open-orders list (the same one the
+ * Business-side alert - watches the polled open-orders list (the same one the
  * header Open Orders badge counts) and fires a double chime + toast whenever a
  * NEW open order appears. Because it runs from the header, it sounds no matter
  * which page the user is on.
@@ -59,7 +59,7 @@ export function useNewOrderChime(orders: AlertableOrder[]) {
     if (bigOrder) {
       imperativeToast.show(
         'success',
-        `Big order ${bigOrder.order_number} — ${formatCurrency(numeric(bigOrder.total_amount))} — tap to review`,
+        `Big order ${bigOrder.order_number} - ${formatCurrency(numeric(bigOrder.total_amount))} - tap to review`,
         8000,
       );
       return;
@@ -67,7 +67,7 @@ export function useNewOrderChime(orders: AlertableOrder[]) {
 
     imperativeToast.show(
       'info',
-      `${newcomers.length === 1 ? `New open order ${newcomers[0].order_number}` : `${newcomers.length} new open orders`} — tap to review`,
+      `${newcomers.length === 1 ? `New open order ${newcomers[0].order_number}` : `${newcomers.length} new open orders`} - tap to review`,
       7000,
     );
   }, [orders]);

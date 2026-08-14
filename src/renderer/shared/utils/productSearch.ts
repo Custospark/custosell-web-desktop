@@ -14,7 +14,7 @@ export function matchesProductSearch(product: ProductSearchFields, query: string
   return false;
 }
 
-/** Exact barcode match — used for scanner auto-add at POS. */
+/** Exact barcode match - used for scanner auto-add at POS. */
 export function findProductByBarcode<T extends ProductSearchFields>(
   products: T[],
   code: string,

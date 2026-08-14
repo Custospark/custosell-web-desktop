@@ -250,7 +250,7 @@ export function HrAddEmployeeModal({ open, onClose }: HrAddEmployeeModalProps) {
         <HrFormSection
           title="Will they sign in?"
           icon={KeyRound}
-          description="Admin or HR sets the password — same as Settings → Staff."
+          description="Admin or HR sets the password - same as Settings → Staff."
         >
           <div className="grid gap-2 sm:grid-cols-2">
             <button
@@ -264,7 +264,7 @@ export function HrAddEmployeeModal({ open, onClose }: HrAddEmployeeModalProps) {
               )}
             >
               <p className="text-sm font-semibold text-gray-900">No login yet</p>
-              <p className="mt-0.5 text-xs text-gray-500">HR profile only — they won’t sign in until you add an account.</p>
+              <p className="mt-0.5 text-xs text-gray-500">HR profile only - they won’t sign in until you add an account.</p>
             </button>
             <button
               type="button"

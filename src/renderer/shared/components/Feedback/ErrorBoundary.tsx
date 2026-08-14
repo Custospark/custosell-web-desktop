@@ -59,7 +59,7 @@ export class ErrorBoundary extends Component<Props, State> {
           </span>
           <h2 className="mb-2 text-lg font-semibold text-gray-900">Sorry, we hit a bump</h2>
           <p className="mb-1 max-w-md text-sm text-gray-500">
-            Something went wrong while loading this screen. No action was lost on your end — your
+            Something went wrong while loading this screen. No action was lost on your end - your
             work is safe. You can try again, or head back.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">

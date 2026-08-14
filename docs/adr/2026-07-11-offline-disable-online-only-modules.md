@@ -14,7 +14,7 @@ Several modules have no IndexedDB / mutation-queue path (Pipeline, Estimates, Do
 2. When `systemStatus === 'offline'` (`isCompletelyOffline`):
    - Sidebar: replace matching `NavLink`s with `OfflineDisabledNav` (opacity + not-allowed + `title` message). Inventory core items stay enabled; Marketplace / PO / Incoming / Supplier invoices / **Discover & My Orders** disable.
    - Module launcher: disable matching tiles (incl. `discover`); Inventory / Sales / etc. stay clickable.
-3. If the user is already on an online-only route when going offline, `Main` shows `OnlineOnlyModuleBanner` — no auto-redirect.
+3. If the user is already on an online-only route when going offline, `Main` shows `OnlineOnlyModuleBanner` - no auto-redirect.
 4. `slow` is not treated as offline.
 
 ## Consequences

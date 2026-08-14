@@ -17,7 +17,7 @@ export interface PersistLoginCredentialsInput {
 
 /**
  * Single entry point: refresh encrypted session + device credential record on every login.
- * Logout clears the session only — credentials stay for offline re-login on this device.
+ * Logout clears the session only - credentials stay for offline re-login on this device.
  */
 export async function persistLoginCredentials(input: PersistLoginCredentialsInput): Promise<void> {
   const session: StoredAuthSession = {
@@ -58,7 +58,7 @@ export async function persistLoginCredentials(input: PersistLoginCredentialsInpu
   });
 }
 
-/** Refresh stored user profile after online profile fetch — keeps offline login snapshot current. */
+/** Refresh stored user profile after online profile fetch - keeps offline login snapshot current. */
 export async function refreshStoredUserSnapshot(email: string, user: AuthUser): Promise<void> {
   await localAuthStore.updateUserSnapshot(email, user);
 }

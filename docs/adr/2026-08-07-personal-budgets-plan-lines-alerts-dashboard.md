@@ -1,18 +1,18 @@
-# ADR: Personal Budgets — Plan Lines, Recurring Income, Alerts & Money Dashboard
+# ADR: Personal Budgets - Plan Lines, Recurring Income, Alerts & Money Dashboard
 
 **Date:** 2026-08-07
 **Status:** Accepted
 
 ## Context
 
-Personal accounts could not budget their money — `income_target` was business-only and there was no way to create budgets for personal use. The user asked for a complete, in-sync personal budgeting/income/expense engine covering: a priced "shopping list" plan that auto-totals, recurring income, converting a plan item into a real expense, affordability recommendations, alerts, per-budget transaction views, and a money dashboard.
+Personal accounts could not budget their money - `income_target` was business-only and there was no way to create budgets for personal use. The user asked for a complete, in-sync personal budgeting/income/expense engine covering: a priced "shopping list" plan that auto-totals, recurring income, converting a plan item into a real expense, affordability recommendations, alerts, per-budget transaction views, and a money dashboard.
 
 ## Decisions
 
 1. **`personal_budgets` + `budget_lines` tables** (new). A budget is a named goal pot ("Groceries", "June holiday", "Overall"). `planned_amount` auto-totals from its `budget_lines` (quantity × unit_price) when lines are synced.
-2. **Legacy migration** — `Business.income_target` for personal accounts folds into a default **"Overall"** budget so there is one source of truth. Idempotent; personal accounts only.
+2. **Legacy migration** - `Business.income_target` for personal accounts folds into a default **"Overall"** budget so there is one source of truth. Idempotent; personal accounts only.
 3. **Recurring income** mirrors recurring expenses (`is_recurring`, `recurrence_interval`, `next_due_date`); service defaults `next_due_date` from the interval when omitted.
-4. **Delete = unlink.** Deleting a budget sets `budget_id → NULL` on linked income/expenses (nullOnDelete) — records are kept.
+4. **Delete = unlink.** Deleting a budget sets `budget_id → NULL` on linked income/expenses (nullOnDelete) - records are kept.
 5. **Convert plan → expense.** `POST /budgets/{id}/lines/{line}/purchase` creates an `Expense` (amount = line total, `budget_id` = budget) and marks the line `purchased` + `expense_id`.
 6. **Affordability** compares plan remaining vs income available (incl. recurring income) and returns a human recommendation.
 7. **Alerts** at ≥80% (near) and ≥100% (over) of planned spend; **money summary** aggregates income/spend/savings/planned totals for the dashboard.
@@ -22,7 +22,7 @@ Personal accounts could not budget their money — `income_target` was business-
 ## Consequences
 
 - Personal budgets and their plan lines are now first-class; business accounts keep the business Forecasting engine and never see the personal budget routes (guarded by `PersonalIncomeMiddleware` + `module:expenses`).
-- The engine answers "can I afford my plan / am I over budget / what's my net position" directly from the same income + expense records — no silos.
+- The engine answers "can I afford my plan / am I over budget / what's my net position" directly from the same income + expense records - no silos.
 
 ## Amendment (2026-08-07)
 

@@ -255,7 +255,7 @@ export default function EstimatesInsightsPage() {
       <Card className="flex items-center gap-3 p-4 text-sm text-gray-600">
         <FileSpreadsheet className="h-5 w-5 text-blue-600 shrink-0" />
         <span>
-          <strong className="text-gray-900">{analytics.total_estimates}</strong> estimates total —
+          <strong className="text-gray-900">{analytics.total_estimates}</strong> estimates total -
           {' '}{analytics.draft_count} drafts, {analytics.sent_count} sent,
           {' '}{analytics.approved_count} approved, {analytics.rejected_count} rejected,
           {' '}{analytics.converted_count} converted.

@@ -15,7 +15,7 @@ import { localGuideFeedbackStore, type GuideFeedbackWithSyncMeta } from '../guid
 import type { SaleWithSyncMeta } from '../sales/localSalesStore';
 import type { ExpenseCategoryWithSyncMeta, ExpenseWithSyncMeta } from '../../../../modules/expenses/api/ExpenseTypes';
 
-/** Query key literals — avoid importing from query modules (circular deps). */
+/** Query key literals - avoid importing from query modules (circular deps). */
 const SALES_ALL_PREFIX = ['sales'] as const;
 const SALES_LIST_KEY = ['sales', 'list'] as const;
 const SHIFTS_SALES_PREFIX = ['shifts', 'sales'] as const;
@@ -30,7 +30,7 @@ const STAFF_LIST_KEY = ['staff', 'list'] as const;
 const BUSINESS_MINE_KEY = ['business', 'mine'] as const;
 const GUIDE_FEEDBACK_MINE_KEY = ['guide', 'feedback-mine'] as const;
 
-/** Local-only sale row — not yet confirmed on server. */
+/** Local-only sale row - not yet confirmed on server. */
 export function isOptimisticSale(sale: SaleWithSyncMeta): boolean {
   return Boolean(
     sale._pendingSync ||

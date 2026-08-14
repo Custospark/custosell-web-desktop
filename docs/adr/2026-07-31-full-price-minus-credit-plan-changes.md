@@ -1,4 +1,4 @@
-# Full New Plan Price Minus Unused Credit — Unified Plan-Change Rule
+# Full New Plan Price Minus Unused Credit - Unified Plan-Change Rule
 
 **Date:** 2026-07-31
 
@@ -13,7 +13,7 @@ When a user on Plan A upgrades to Plan B, the backend prorated the **charge** by
 due of **$40.50 ≈ USh 150,197.90** for a Professional → Enterprise upgrade with 15/30 days left.
 
 Oscar (product owner) identified the intended model: the unused credit should be **deducted from
-the next plan the user is subscribing to — the full price**, not from a prorated slice of it.
+the next plan the user is subscribing to - the full price**, not from a prorated slice of it.
 Expected due: full Enterprise $135 − $27 credit = **$108 ≈ USh 400,527.72** (~400,000 UGX).
 
 ## Decision
@@ -21,7 +21,7 @@ Expected due: full Enterprise $135 − $27 credit = **$108 ≈ USh 400,527.72** 
 For **ALL immediate plan changes** (upgrade, downgrade, billing-cycle change) on a subscription:
 
 - **charge** = the **full price of the target plan** for the target billing cycle (monthly or
-  yearly) — never prorated by days remaining
+  yearly) - never prorated by days remaining
 - **credit** = unused credit from the current plan, still prorated by unused days
   (`old_price × days_remaining / days_in_period`)
 - **proration_due** = `max(0, charge − credit)`
@@ -38,7 +38,7 @@ The trial rule is unchanged: a trial has no unused credit, so due = full target 
 |------|--------|
 | `SubscriptionProrationCalculator.php` | `charge = full new plan price` (removed `× daysRemaining/daysInPeriod`); credit stays prorated |
 | `PaymentQuoteService.php` | Cycle-change branch unified: both monthly and yearly targets use **full target price − credit** (removed the prorated-monthly branch) |
-| `SubscriptionService.php` | `changePlan()` now resets `next_billing_date` to `now + target period` (matches `applyBillingCycleChange`) — prevents double-billing when upgrade completes mid-period |
+| `SubscriptionService.php` | `changePlan()` now resets `next_billing_date` to `now + target period` (matches `applyBillingCycleChange`) - prevents double-billing when upgrade completes mid-period |
 | `tests/.../ProrationAccuracyTest.php` | `expectedProration()` helper: `charge = full new price` |
 | `tests/.../BillingLifecycleTest.php` | New `test_active_upgrade_quote_charges_full_new_price_minus_unused_credit`; `charge` assertion in Tim Berners-Lee upgrade test |
 
@@ -46,7 +46,7 @@ The trial rule is unchanged: a trial has no unused credit, so due = full target 
 
 | File | Change |
 |------|--------|
-| `UpgradeFlowConfirmStep.tsx` | Label `Charge for remaining days` → `New plan price`; copy → "Review the charges before confirming." (no arithmetic change — it displays the backend's full-price charge) |
+| `UpgradeFlowConfirmStep.tsx` | Label `Charge for remaining days` → `New plan price`; copy → "Review the charges before confirming." (no arithmetic change - it displays the backend's full-price charge) |
 
 ## Consequences
 

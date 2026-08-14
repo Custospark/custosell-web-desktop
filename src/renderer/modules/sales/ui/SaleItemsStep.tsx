@@ -127,7 +127,7 @@ export function SaleItemsStep({ onNext }: SaleItemsStepProps) {
     <>
       {cartItems.length > 0 && (
         <button
-          title="Create a draft invoice from the current cart — adjust items before saving"
+          title="Create a draft invoice from the current cart - adjust items before saving"
           onClick={() => {
             setInvoiceSession((s) => s + 1);
             setInvoiceModalOpen(true);
@@ -198,7 +198,7 @@ export function SaleItemsStep({ onNext }: SaleItemsStepProps) {
     searchRef.current?.focus();
   }, [dispatch]);
 
-  /** Scanner / typed barcode — add as soon as the code fully matches a product. */
+  /** Scanner / typed barcode - add as soon as the code fully matches a product. */
   useEffect(() => {
     if (!products || !search.trim()) return;
     const match = findProductByBarcode(products, search);
@@ -363,7 +363,7 @@ export function SaleItemsStep({ onNext }: SaleItemsStepProps) {
         {activeOrderMode === 'update' && activeOrderId ? (
           <div className="mb-3 flex items-center justify-between gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-900">
             <span>
-              Updating open order — use <strong>Update Order</strong> to save. Hold creates a new order instead.
+              Updating open order - use <strong>Update Order</strong> to save. Hold creates a new order instead.
             </span>
             <button
               type="button"
@@ -441,7 +441,7 @@ export function SaleItemsStep({ onNext }: SaleItemsStepProps) {
           )}
         </div>
 
-        {/* Secondary action toolbar — mobile keeps its own row; desktop moves into the sticky cart bar */}
+        {/* Secondary action toolbar - mobile keeps its own row; desktop moves into the sticky cart bar */}
         <div className="lg:hidden flex items-center gap-3 overflow-x-auto overscroll-x-contain -mx-4 px-4 sm:-mx-6 sm:px-6 pb-2 pt-3 mt-auto w-max min-w-full">
           {mobileActions}
         </div>

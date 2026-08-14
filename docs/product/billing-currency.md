@@ -1,4 +1,4 @@
-# Billing Currency — Multi-Currency Pricing & Payment
+# Billing Currency - Multi-Currency Pricing & Payment
 
 How Custosell handles multi-currency pricing display and payment routing.
 
@@ -29,9 +29,9 @@ PesaPal payment ──► Redirect to gateway with selected currency
 ### How it works
 
 1. `useDisplayPrices()` reads the business's `currency` from Redux
-2. For UGX businesses — raw UGX price used for local equivalent, USD price from plan/subscription snapshot
-3. For USD businesses — USD price used directly
-4. For other currencies (KES, TZS, etc.) — `useCurrencyConvert(1, 'USD', currency)` fetches the live rate with 6h cache, multiplies to get local equivalent
+2. For UGX businesses - raw UGX price used for local equivalent, USD price from plan/subscription snapshot
+3. For USD businesses - USD price used directly
+4. For other currencies (KES, TZS, etc.) - `useCurrencyConvert(1, 'USD', currency)` fetches the live rate with 6h cache, multiplies to get local equivalent
 
 ### Components
 
@@ -62,7 +62,7 @@ function monthlyPrice(plan: Plan | Subscription): number {
 
 ## Payment Currency Selection
 
-### `getPaymentCurrency()` — the routing helper
+### `getPaymentCurrency()` - the routing helper
 
 Location: `src/renderer/shared/api/account/SubscriptionQueries.ts`
 
@@ -126,8 +126,8 @@ if (abs($submitted - $expected) / $expected > $tolerance) {
 ### Subscription snapshot vs plan price
 
 Subscriptions snapshot prices at creation/upgrade time:
-- `subscriptions.price_monthly_usd` — locked-in USD price
-- `subscriptions.price_monthly` — locked-in UGX price
+- `subscriptions.price_monthly_usd` - locked-in USD price
+- `subscriptions.price_monthly` - locked-in UGX price
 
 This means a user who subscribed to Enterprise when it was $54/mo still pays $54 even if the plan price later rises to $135. The payment validation always checks the **subscription snapshot**, not the **plan's current price**.
 
@@ -209,5 +209,5 @@ This means a user who subscribed to Enterprise when it was $54/mo still pays $54
 
 ## Related ADRs
 
-- [2026-07-26-multi-currency-exchange-rate.md](../adr/2026-07-26-multi-currency-exchange-rate.md) — Original design decision (expanded)
-- [2026-07-26-upgrade-flow-proration.md](../adr/2026-07-26-upgrade-flow-proration.md) — Proration in USD
+- [2026-07-26-multi-currency-exchange-rate.md](../adr/2026-07-26-multi-currency-exchange-rate.md) - Original design decision (expanded)
+- [2026-07-26-upgrade-flow-proration.md](../adr/2026-07-26-upgrade-flow-proration.md) - Proration in USD

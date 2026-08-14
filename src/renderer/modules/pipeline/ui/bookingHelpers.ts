@@ -33,7 +33,7 @@ export function fmtTimeRange(startIso: string | null, endIso: string | null): st
   const end = fmtTime(endIso);
   if (!start) return '';
   if (!end) return start;
-  return `${start} — ${end}`;
+  return `${start} - ${end}`;
 }
 
 export function ensureHttps(url: string | null | undefined): string | undefined {

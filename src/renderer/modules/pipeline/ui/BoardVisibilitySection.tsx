@@ -18,7 +18,7 @@ interface BoardVisibilitySectionProps {
   /** Selected visibility (may differ from saved while editing). */
   visibility: PipelineVisibility;
   onVisibilityChange: (value: PipelineVisibility) => void;
-  /** Saved visibility on the server — omit on create board. */
+  /** Saved visibility on the server - omit on create board. */
   savedVisibility?: PipelineVisibility;
   members: BoardMemberInput[];
   onMembersChange: (members: BoardMemberInput[]) => void;
@@ -142,7 +142,7 @@ export default function BoardVisibilitySection({
       {visibility === 'shared' && (
         <PipelineFormSection title="Invite collaborators" icon={Users}>
           <p className="mb-3 text-xs text-gray-500">
-            Invite viewers, contributors, or managers. Only people you add here get access — team visibility is separate.
+            Invite viewers, contributors, or managers. Only people you add here get access - team visibility is separate.
           </p>
           <BoardMemberPicker
             workspace={workspace}
@@ -190,7 +190,7 @@ export default function BoardVisibilitySection({
                       size="sm"
                       nameClassName="text-sm font-medium text-gray-900"
                     />
-                    <span className="truncate text-xs text-gray-500">{person.email ?? '—'}</span>
+                    <span className="truncate text-xs text-gray-500">{person.email ?? '-'}</span>
                   </li>
                 ))}
               </ul>
@@ -205,7 +205,7 @@ export default function BoardVisibilitySection({
       {visibility === 'private' && (
         <PipelineFormSection title="Private access" icon={Users}>
           <p className="text-xs text-gray-500">
-            This board is private. Only the board owner can view or manage it — team visibility and shared invites do not apply.
+            This board is private. Only the board owner can view or manage it - team visibility and shared invites do not apply.
           </p>
         </PipelineFormSection>
       )}

@@ -20,7 +20,7 @@ export const PLANNING_LEVEL_OPTIONS: { value: PlanningLevel; label: string; desc
   { value: 'decade', label: 'Decade', description: '10-year strategic horizon' },
   { value: 'five_year', label: '5-year', description: 'Medium-term strategic plan' },
   { value: 'year', label: 'Year', description: '12-month plan with quarterly breakdown' },
-  { value: 'quarter', label: 'Quarter', description: 'Q1–Q4 focus period' },
+  { value: 'quarter', label: 'Quarter', description: 'Q1-Q4 focus period' },
   { value: 'month', label: 'Month', description: 'Monthly execution target' },
   { value: 'week', label: 'Week', description: 'Weekly sprint goal' },
   { value: 'day', label: 'Day', description: 'Daily contribution target' },
@@ -150,7 +150,7 @@ export function targetPeriodSliceLabel(slice: TargetPeriodSlice): string {
   const range =
     slice.period_start === slice.period_end
       ? slice.period_start
-      : `${slice.period_start} – ${slice.period_end}`;
+      : `${slice.period_start} - ${slice.period_end}`;
   if (viewLabel) {
     return `${viewLabel} · ${range}`;
   }

@@ -24,7 +24,7 @@ import { HrFormSection, HrIconField, hrInputClass, hrSelectClass } from './hrFor
 import { HR_SURFACE } from './hrSurfaceStyles';
 
 function formatMoney(n: number | undefined | null) {
-  if (n == null) return '—';
+  if (n == null) return '-';
   return new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n);
 }
 
@@ -129,7 +129,7 @@ function CoverageSummary({
 }) {
   const runway =
     coverage.runway_months == null
-      ? '—'
+      ? '-'
       : `${coverage.runway_months.toFixed(1)} mo`;
 
   return (
@@ -269,7 +269,7 @@ export function HrPayrollAffordabilityPanel() {
                 <span className="flex flex-wrap items-center gap-2">
                   <span>
                     {data.coverage.runway_months == null
-                      ? '—'
+                      ? '-'
                       : `${data.coverage.runway_months.toFixed(1)}`}
                   </span>
                   <RunwayStatusBadge status={data.coverage.status} />
@@ -281,7 +281,7 @@ export function HrPayrollAffordabilityPanel() {
 
           {data.period ? (
             <p className="text-xs text-gray-500">
-              Period {data.period.name} ({data.period.start_date} – {data.period.end_date})
+              Period {data.period.name} ({data.period.start_date} - {data.period.end_date})
               {data.period.is_closed ? ' · closed' : ' · open'} · as of {data.as_of_date}
             </p>
           ) : null}

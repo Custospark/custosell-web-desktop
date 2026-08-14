@@ -48,7 +48,7 @@ function useSubscriptionAccess() {
   const subscription = user?.business?.subscription;
   const isOnline = useAppSelector(selectIsOnline);
 
-  // Cached truth used by the subscription dropdown — reconcile against it when
+  // Cached truth used by the subscription dropdown - reconcile against it when
   // the live call is unavailable so the guard never surprises users whose
   // dropdown already shows they have access.
   const cachedAccess = subscription ? computeOfflineAccess(subscription) : false;
@@ -101,7 +101,7 @@ export function SubscriptionGuard() {
   const status = subscription?.status as string | undefined;
 
   // Keep showing the loader while a decision is still pending or the live call
-  // errored, unless we already have confirmed access — this prevents the
+  // errored, unless we already have confirmed access - this prevents the
   // denial card flashing during "Updating account…" / bootstrapping/offline refetch.
   const pendingDecision = (isLoading || isFetching || isError) && access !== true;
 

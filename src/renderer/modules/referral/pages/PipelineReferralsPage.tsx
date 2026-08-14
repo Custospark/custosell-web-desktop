@@ -201,7 +201,7 @@ export default function PipelineReferralsPage() {
                   const reward = (Number(r.reward_amount) || 0) + (Number(r.commission_earned) || 0);
                   return (
                     <span className="text-sm text-gray-600">
-                      {reward > 0 ? formatUSD(reward) : '—'}
+                      {reward > 0 ? formatUSD(reward) : '-'}
                     </span>
                   );
                 }},

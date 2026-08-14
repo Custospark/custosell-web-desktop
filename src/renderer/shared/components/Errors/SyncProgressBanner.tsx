@@ -237,7 +237,7 @@ function DismissButton({
   );
 }
 
-/** Compact sync indicator for Navbar — icon only on xs, percent from sm up. */
+/** Compact sync indicator for Navbar - icon only on xs, percent from sm up. */
 export function SyncHeaderChip() {
   const sync = useAppSelector((state) => state.sync);
   const isActive = sync.status === 'running' || sync.status === 'paused';
@@ -254,7 +254,7 @@ export function SyncHeaderChip() {
         'inline-flex items-center justify-center gap-1 h-8 w-8 sm:w-auto sm:h-auto sm:gap-1.5 text-xs font-medium shrink-0',
         isPaused ? 'text-amber-600' : 'text-blue-600',
       )}
-      title={`Syncing ${processed} of ${total} — ${percent}%`}
+      title={`Syncing ${processed} of ${total} - ${percent}%`}
     >
       {isPaused ? (
         <PauseCircle className="w-3.5 h-3.5" aria-hidden />

@@ -1,4 +1,4 @@
-# URA EFRIS — sandbox / pilot credentials setup
+# URA EFRIS - sandbox / pilot credentials setup
 
 **Product decisions:** [ADR 2026-07-12 EFRIS fiscalization](../adr/2026-07-12-efris-fiscalization.md)  
 **Backend config:** `Backend/config/efris.php` ← reads from `.env`  
@@ -17,7 +17,7 @@ Official URA pages (verify if URLs move):
 | Question | Decision |
 |----------|----------|
 | Where first? | **Uganda (UG) first** for EFRIS; architecture stays **country-configurable** for later regimes |
-| How? | **Direct URA EFRIS API** — **not** a hardware fiscal / EFD device in v1 |
+| How? | **Direct URA EFRIS API** - **not** a hardware fiscal / EFD device in v1 |
 | What fiscalizes? | **Both** POS sales and sales invoices |
 | Offline? | **Allow sale, sync fiscal later** (do not block checkout) |
 | Credentials | You place sandbox / pilot values in **Backend `.env`** |
@@ -29,7 +29,7 @@ Official URA pages (verify if URLs move):
 In `Backend/.env`:
 
 ```env
-# Master switch — false = never call URA / never queue fiscal jobs
+# Master switch - false = never call URA / never queue fiscal jobs
 EFRIS_ENABLED=false
 ```
 
@@ -50,7 +50,7 @@ URA does not publish a single “download API key” page for every taxpayer. Ty
 
 1. Valid **TIN** for the pilot business (and URA portal login password).
 2. Business should be (or become) set up for **EFRIS** on the URA portal.
-3. Decide **e-invoicing / API** (system-to-system) — **not** EFD hardware for this Custosell path.
+3. Decide **e-invoicing / API** (system-to-system) - **not** EFD hardware for this Custosell path.
 
 ### 2. Register / activate EFRIS on the URA portal
 
@@ -62,8 +62,8 @@ URA does not publish a single “download API key” page for every taxpayer. Ty
 ### 3. Register a **virtual device** (DeviceNo) for API
 
 1. In the EFRIS portal, register a **device / virtual device** for system-to-system use.
-2. Note the **Device number (DSN / DeviceNo)** — maps to `EFRIS_DEVICE_NO`.
-3. Register **branch** place of business if required — maps to `EFRIS_BRANCH_ID` when URA assigns one.
+2. Note the **Device number (DSN / DeviceNo)** - maps to `EFRIS_DEVICE_NO`.
+3. Register **branch** place of business if required - maps to `EFRIS_BRANCH_ID` when URA assigns one.
 
 ### 4. Certificates / keys (API encryption)
 
@@ -83,7 +83,7 @@ Exact T-codes (T102/T103 auth, invoice submit, etc.) will live in the EFRIS clie
 | Sandbox / test | `https://efristest.ura.go.ug` | `EFRIS_ENVIRONMENT=sandbox` |
 | Production | `https://efrisws.ura.go.ug` | `EFRIS_ENVIRONMENT=production` |
 
-Confirm the current hosts with URA before go-live — they can change.
+Confirm the current hosts with URA before go-live - they can change.
 
 ### 6. Fill Backend `.env`
 
@@ -135,9 +135,9 @@ config('efris.tin');
 
 | Piece | Status |
 |-------|--------|
-| `EfrisClient` + `EfrisService` | Shipped — no-op when `EFRIS_ENABLED=false` |
-| Hook: `SaleService::create` | Shipped — never blocks checkout |
-| Hook: `InvoiceService::send` | Shipped — never blocks send |
+| `EfrisClient` + `EfrisService` | Shipped - no-op when `EFRIS_ENABLED=false` |
+| Hook: `SaleService::create` | Shipped - never blocks checkout |
+| Hook: `InvoiceService::send` | Shipped - never blocks send |
 | Jobs | `FiscalizeSaleJob` / `FiscalizeInvoiceJob` with backoff retries |
 | Persistence | `fiscal_status`, `fiscal_fdn`, `fiscal_qr`, `fiscal_verification_code`, payload/response, `fiscalized_at`, `fiscal_last_error` |
 | Safe status | `GET /api/v1/efris/status` → `{ enabled, configured, country, environment, … }` |

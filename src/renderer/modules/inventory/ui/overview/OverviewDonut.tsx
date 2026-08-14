@@ -17,7 +17,7 @@ interface OverviewDonutProps {
   nameKey: string;
 }
 
-/** Cost-value donut with a legend — category and branch breakdowns. */
+/** Cost-value donut with a legend - category and branch breakdowns. */
 export function OverviewDonut({ data, title, subtitle, dataKey, nameKey }: OverviewDonutProps) {
   const empty = !data.length;
   return (

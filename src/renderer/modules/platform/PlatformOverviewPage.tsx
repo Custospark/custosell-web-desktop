@@ -73,7 +73,7 @@ export default function PlatformOverviewPage() {
               <TrendingUp className="w-4 h-4 text-green-500 shrink-0" />
               Top Earners (30d gross sales)
             </h3>
-            <p className="text-xs text-gray-500 mb-4">Businesses generating the most gross sales — anchor premium tiers here</p>
+            <p className="text-xs text-gray-500 mb-4">Businesses generating the most gross sales - anchor premium tiers here</p>
             {overview.top_businesses_30d.length === 0 ? (
               <p className="text-sm text-gray-400 text-center py-8">No gross sales yet</p>
             ) : (

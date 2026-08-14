@@ -1,8 +1,8 @@
-# Subscription & Payment Amount Accuracy — Master Scenario Document
+# Subscription & Payment Amount Accuracy - Master Scenario Document
 
 **Date:** 2026-07-31
 **Owner:** Mike (Orchestrator) · **Reviewer:** Oscar
-**Status:** Living document — every scenario below is backed by a real-number automated test in
+**Status:** Living document - every scenario below is backed by a real-number automated test in
 `Backend/tests/Feature/Api/Billing/ProrationAccuracyTest.php`.
 
 ## Goal
@@ -15,7 +15,7 @@ authoritative math, credits, proration, discounts, downgrades and rewards must a
 
 | Truth | Value | Source |
 |-------|-------|--------|
-| Plan prices (USD) | Essential **$20/mo · $200/yr** — Professional **$54/mo · $540/yr** — Enterprise **$135/mo · $1350/yr** | `Backend/database/seeders/PlanSeeder.php` |
+| Plan prices (USD) | Essential **$20/mo · $200/yr** - Professional **$54/mo · $540/yr** - Enterprise **$135/mo · $1350/yr** | `Backend/database/seeders/PlanSeeder.php` |
 | Subscription price snapshot | `subscriptions.price_monthly_usd` / `price_yearly_usd` | Locked at subscribe/upgrade time |
 | Exchange rate (USD→local) | Resolved at display (`useDisplayPrices`) and at initiation (`CurrencyExchangeService`) | Both must reconcile within tolerance |
 | PesaPal supported currencies | **UGX, KES, TZS, USD** | `getPaymentCurrency()` |
@@ -40,7 +40,7 @@ authoritative math, credits, proration, discounts, downgrades and rewards must a
 
 ---
 
-## All User Actions — Amounts Shown vs. Amounts Sent
+## All User Actions - Amounts Shown vs. Amounts Sent
 
 Legend: **UI** = amount displayed · **API** = amount sent to backend · **Provider** = amount actually sent to PesaPal (after backend discounts/credits) · **Backend** = authoritative math.
 
@@ -73,7 +73,7 @@ Triggered when status is `trial` and `onboarding_fee_paid = false` (trial_unpaid
 | **Backend** | `plan.onboarding_fee_usd` (server override) | authoritative |
 
 Notes:
-- Trial keeps running if `trial_ends_at` is still in the future — payment only clears the onboarding flag.
+- Trial keeps running if `trial_ends_at` is still in the future - payment only clears the onboarding flag.
 - Referral reward: yes, via `activateForSubscription()`.
 
 ### C. Pay Outstanding (`renewal`)
@@ -88,7 +88,7 @@ Triggered when status is `past_due` (current plan → Pay Outstanding).
 | **Backend** | plan price snapshot matching billing cycle; credits via `CreditService::applyToRenewal()` | authoritative |
 
 Notes:
-- **Credits** are applied on the backend only (UI displays them but must not subtract them from the API amount — that is correct today, but the *display arithmetic* mixes currencies, see BUG D).
+- **Credits** are applied on the backend only (UI displays them but must not subtract them from the API amount - that is correct today, but the *display arithmetic* mixes currencies, see BUG D).
 - Referral: discount applied at initiation if referral still PENDING; reward NOT re-created (already active).
 
 ### D. Upgrade (`upgrade_proration`)
@@ -100,7 +100,7 @@ Flow: `GET proration-quote` → `POST upgrade(immediate)` → if due > 0 `POST i
 | Amount | Value | Currency |
 |--------|-------|----------|
 | **UI** | Proration breakdown: credit, charge, due today (`price(proration_due)` → local) | local |
-| **API** | `proration_due` from quote — **always the USD value**, even for non-USD businesses | USD (backend contract) |
+| **API** | `proration_due` from quote - **always the USD value**, even for non-USD businesses | USD (backend contract) |
 | **Provider** | due − referral discount − credits, converted to local by backend at initiation rate | local |
 | **Backend** | `calculateUpgradeCost()` = **full new-plan price** − credit(unused days of current plan); stored as `pending_upgrade_amount_usd`; validate amount as USD, then convert | USD → local |
 
@@ -108,21 +108,21 @@ Flow: `GET proration-quote` → `POST upgrade(immediate)` → if due > 0 `POST i
 > interprets the incoming `amount` as **USD** (`GatewayService` line 78 forces `currency='USD'`
 > before `PaymentValidator`), validates it against the stored USD pending amount, then converts
 > to the business payment currency for the gateway. The frontend therefore sends the **USD**
-> proration figure — sending the local-converted figure would be rejected. The `currency` field
+> proration figure - sending the local-converted figure would be rejected. The `currency` field
 > sent by the frontend is informational only for these types.
 
-**Proration math (USD) — active (paid) subscriptions only:**
+**Proration math (USD) - active (paid) subscriptions only:**
 ```
 daysInPeriod  = next_billing_date − (next_billing_date − 1 billing period)
 daysRemaining = today → next_billing_date        (0 if period already over)
 credit        = round(old_price × daysRemaining / daysInPeriod, 2)
-charge        = FULL target plan price (for the target billing cycle) — NOT prorated
+charge        = FULL target plan price (for the target billing cycle) - NOT prorated
 proration_due = round(max(0, charge − credit), 2)
 ```
 
 > **Unified plan-change rule (business decision, 2026-07-31):** for ALL immediate plan changes
 > (upgrade, downgrade, cycle change), the charge is the **full price of the next plan the user is
-> subscribing to**, and the unused credit from the current plan is deducted from that full price —
+> subscribing to**, and the unused credit from the current plan is deducted from that full price -
 > e.g. Enterprise $135/mo with $27 unused Professional credit → **due $108 ≈ USh 400,527.72**.
 > The charge is **never** prorated by days remaining (that was the bug that showed USh 150,197.90
 > instead of ~400,000). On payment/zero-cost completion, `next_billing_date` **resets to today +
@@ -146,7 +146,7 @@ Triggered by "Apply Yearly/Monthly Billing". Monthly→Yearly is immediate + pay
 | Amount | Value | Currency |
 |--------|-------|----------|
 | **UI** | `proration_due_usd` (currently shown in USD always) | USD (BUG C) |
-| **API** | `proration_due_usd` — **USD value**, same contract as upgrade | USD (backend contract) |
+| **API** | `proration_due_usd` - **USD value**, same contract as upgrade | USD (backend contract) |
 | **Provider** | validated against `pending_cycle_change_amount_usd`, converted to local | local |
 | **Backend** | **full yearly price − unused monthly credit** (e.g. 540 − 34.84 = 505.16); stored as `pending_cycle_change_amount_usd` | USD, validated |
 
@@ -171,7 +171,7 @@ Triggered when status is `suspended` (Reactivate on any plan card).
 Triggered by `lower` relation → Schedule Downgrade. **No payment required.**
 - `effective=end_of_period` (default): `schedulePlanChange()`; applied by cron at `next_billing_date`.
 - `effective=immediate`: plan changed immediately via `subscriptionService->update()`, single update, no side effects.
-- Proration **credit is NOT paid out** on downgrade — the user simply drops to the lower price next period.
+- Proration **credit is NOT paid out** on downgrade - the user simply drops to the lower price next period.
 
 ### H. Cancel (no payment)
 
@@ -187,8 +187,8 @@ Triggered by `lower` relation → Schedule Downgrade. **No payment required.**
 | Confirmation | `activateForSubscription()` → `markActive()` creates BillingCredit (remaining discount months) + referrer reward |
 
 Notes:
-- `discount_applied` is **informational only** — `price_monthly`/`price_yearly` are NEVER reduced; reward/commission always on full price.
-- **Quote endpoint does NOT include the referral discount** (future improvement #1 in the ADR) — the frontend subtracts `referral.discount_applied` manually.
+- `discount_applied` is **informational only** - `price_monthly`/`price_yearly` are NEVER reduced; reward/commission always on full price.
+- **Quote endpoint does NOT include the referral discount** (future improvement #1 in the ADR) - the frontend subtracts `referral.discount_applied` manually.
 
 ---
 
@@ -198,11 +198,11 @@ Notes:
 
 ```
 credit = round(54.00 × 15/30, 2)  = 27.00
-charge = 135.00 (FULL Enterprise monthly price — not prorated)
+charge = 135.00 (FULL Enterprise monthly price - not prorated)
 due    = round(max(0, 135.00 − 27.00), 2) = 108.00
 ```
 - **UI (UGX):** USh 400,527.72 (108.00 × 3708.59)
-- **API:** sends `108.00` (USD) + `currency: 'UGX'` — backend validates as USD vs `pending_upgrade_amount_usd = 108.00`, then charges **USh 400,527.72** (108.00 × 3708.59)
+- **API:** sends `108.00` (USD) + `currency: 'UGX'` - backend validates as USD vs `pending_upgrade_amount_usd = 108.00`, then charges **USh 400,527.72** (108.00 × 3708.59)
 - **Backend stored:** `pending_upgrade_amount_usd = 108.00`
 - **After payment:** `next_billing_date` resets to **today + 30 days** (no double bill in 15 days)
 
@@ -249,10 +249,10 @@ due    = round(max(0, 540.00 − 34.84), 2) = 505.16
 
 | ID | Severity | Issue | Where |
 |----|----------|-------|-------|
-| BUG A | 🔴 Fixed | Trial upgrades were forced to proration (or earlier, to $0). Now trial = **full plan price, no credit** | `PaymentQuoteService::getQuote()` — trial rule + zeroing removed |
-| BUG E | 🔴 Fixed | `PaymentMethod` enum only had `gateway`/`manual`; `processZeroCostUpgrade()` used `'internal'` and the credit bypass used `'credit'` → `ValueError` crash (500) on zero-due upgrades | `App\Enums\Billing\PaymentMethod` — added `CREDIT`/`INTERNAL` |
-| BUG F | 🔴 Fixed | Zero-cost upgrade created the payment via `createPending()` which forces `status='pending'` → plan changed but payment stayed pending forever | `GatewayService::processZeroCostUpgrade()` — now completes the internal payment |
-| BUG G | 🔴 Fixed | Monthly→yearly charged `yearly × days/31` (treated yearly as monthly) → under-charged a full year by ~$172; now `full year − unused credit` | `PaymentQuoteService::getQuote()` — cycle-change branch |
+| BUG A | 🔴 Fixed | Trial upgrades were forced to proration (or earlier, to $0). Now trial = **full plan price, no credit** | `PaymentQuoteService::getQuote()` - trial rule + zeroing removed |
+| BUG E | 🔴 Fixed | `PaymentMethod` enum only had `gateway`/`manual`; `processZeroCostUpgrade()` used `'internal'` and the credit bypass used `'credit'` → `ValueError` crash (500) on zero-due upgrades | `App\Enums\Billing\PaymentMethod` - added `CREDIT`/`INTERNAL` |
+| BUG F | 🔴 Fixed | Zero-cost upgrade created the payment via `createPending()` which forces `status='pending'` → plan changed but payment stayed pending forever | `GatewayService::processZeroCostUpgrade()` - now completes the internal payment |
+| BUG G | 🔴 Fixed | Monthly→yearly charged `yearly × days/31` (treated yearly as monthly) → under-charged a full year by ~$172; now `full year − unused credit` | `PaymentQuoteService::getQuote()` - cycle-change branch |
 | BUG C | 🔴 Fixed | Upgrade **paying/polling step** and Billing Cycle modal showed the **USD** proration as if local or as USD-only. Now the USD figure is converted to the local payment currency at the live rate via the shared `useUsdToLocal` hook (USD businesses unchanged) | `UpgradeFlowModal`, `BillingCyclePaymentModal` |
 | BUG D | 🔴 Fixed | Renewal credit display mixed USD credit with the local amount (`creditApplied = min(USD, local)`, totals shown in USD). The USD credit is now converted to local before subtracting, and every amount displays in one consistent currency | `SubscriptionPaymentModal` |
 
@@ -286,9 +286,9 @@ Every scenario below is asserted with real numbers in
 
 ## Related Documents
 
-- `Backend/docs/adr/2026-07-30-payment-architecture.md` — payment type lifecycle & atomicity
-- `Backend/docs/billing-scenarios.md` — real-life user scenarios (older, narrative)
-- `Frontend/docs/forensic/subscription-payment-audit.md` — prior C/H/M/L audit
-- `Frontend/docs/product/billing-currency.md` — multi-currency display & payment routing
-- `Frontend/docs/adr/2026-07-26-upgrade-flow-proration.md` — upgrade flow redesign
-- `Backend/docs/adr/2026-07-26-referral-credit-system.md` — credit & rewards
+- `Backend/docs/adr/2026-07-30-payment-architecture.md` - payment type lifecycle & atomicity
+- `Backend/docs/billing-scenarios.md` - real-life user scenarios (older, narrative)
+- `Frontend/docs/forensic/subscription-payment-audit.md` - prior C/H/M/L audit
+- `Frontend/docs/product/billing-currency.md` - multi-currency display & payment routing
+- `Frontend/docs/adr/2026-07-26-upgrade-flow-proration.md` - upgrade flow redesign
+- `Backend/docs/adr/2026-07-26-referral-credit-system.md` - credit & rewards

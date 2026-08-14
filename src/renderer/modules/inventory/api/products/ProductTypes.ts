@@ -22,7 +22,7 @@ export interface Product {
   sku: string | null;
   barcode: string | null;
   unit_price: string;
-  /** 0–100 sale discount for public shop; null/empty = no sale. POS till ignores in v1. */
+  /** 0-100 sale discount for public shop; null/empty = no sale. POS till ignores in v1. */
   discount_percent?: string | number | null;
   wholesale_price: string | null;
   cost_price: string | null;

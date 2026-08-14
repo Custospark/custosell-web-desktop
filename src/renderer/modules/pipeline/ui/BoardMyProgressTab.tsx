@@ -68,7 +68,7 @@ export default function BoardMyProgressTab({ data }: BoardMyProgressTabProps) {
           <ul className="mt-2 space-y-1">
             {data.pace_alerts.map((alert) => (
               <li key={alert.target_id} className="text-xs text-amber-800">
-                {alert.title} — {alert.pace_status.replace('_', ' ')} ({alert.progress_percent}%)
+                {alert.title} - {alert.pace_status.replace('_', ' ')} ({alert.progress_percent}%)
               </li>
             ))}
           </ul>

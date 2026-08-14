@@ -150,28 +150,28 @@ export function BusinessPaymentSection({
       ) : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <BusinessViewField label="Bank name" icon={<Landmark className="h-4 w-4 text-blue-600" />}>
-            {baseline.payment_bank_name || '—'}
+            {baseline.payment_bank_name || '-'}
           </BusinessViewField>
           <BusinessViewField label="Bank branch" icon={<Building className="h-4 w-4 text-blue-600" />}>
-            {baseline.payment_bank_branch || '—'}
+            {baseline.payment_bank_branch || '-'}
           </BusinessViewField>
           <BusinessViewField label="Account name" icon={<User className="h-4 w-4 text-blue-600" />}>
-            {baseline.payment_bank_account_name || '—'}
+            {baseline.payment_bank_account_name || '-'}
           </BusinessViewField>
           <BusinessViewField label="Account number" icon={<Hash className="h-4 w-4 text-blue-600" />}>
-            {baseline.payment_bank_account_number || '—'}
+            {baseline.payment_bank_account_number || '-'}
           </BusinessViewField>
           <BusinessViewField label="Mobile money provider" icon={<Smartphone className="h-4 w-4 text-blue-600" />}>
-            {baseline.payment_mobile_money_provider || '—'}
+            {baseline.payment_mobile_money_provider || '-'}
           </BusinessViewField>
           <BusinessViewField label="Mobile money name" icon={<User className="h-4 w-4 text-blue-600" />}>
-            {baseline.payment_mobile_money_account_name || '—'}
+            {baseline.payment_mobile_money_account_name || '-'}
           </BusinessViewField>
           <BusinessViewField label="Mobile money number" icon={<Phone className="h-4 w-4 text-blue-600" />} className="md:col-span-2">
-            {baseline.payment_mobile_money_number || '—'}
+            {baseline.payment_mobile_money_number || '-'}
           </BusinessViewField>
           <BusinessViewField label="Payment instructions" icon={<FileText className="h-4 w-4 text-blue-600" />} className="md:col-span-2">
-            {baseline.payment_instructions || '—'}
+            {baseline.payment_instructions || '-'}
           </BusinessViewField>
         </div>
       )}

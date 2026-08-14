@@ -14,7 +14,7 @@ export const SALE_STATUS_FILTERS: StatusFilterOption[] = [
   { value: 'refunded', label: 'Refunded' },
 ];
 
-/** Superscript badge colors per status — counts use the Take Order badge style. */
+/** Superscript badge colors per status - counts use the Take Order badge style. */
 const STATUS_BADGE_COLORS: Record<string, string> = {
   '': 'bg-blue-500',
   paid: 'bg-emerald-600',

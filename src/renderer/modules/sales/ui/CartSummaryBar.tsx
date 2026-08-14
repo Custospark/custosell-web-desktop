@@ -7,7 +7,7 @@ interface CartSummaryBarProps {
   count: number;
   subtotal: number;
   onNext: () => void;
-  /** Secondary actions (invoice/orders/hold/take) — shown in place of the item-count line on large screens. */
+  /** Secondary actions (invoice/orders/hold/take) - shown in place of the item-count line on large screens. */
   actions?: ReactNode;
 }
 

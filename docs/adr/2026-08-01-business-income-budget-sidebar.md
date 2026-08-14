@@ -14,8 +14,8 @@ Oscar requested that Budgets and Income appear under "Income & Expenses" on busi
 
 ## What changed
 
-- `src/renderer/shared/components/layout/resolveAccessibleNavLeaves.ts` — the `Income & Expenses` business filter now renames `My Budgets → Budgets` instead of dropping Income + Budgets.
-- `src/renderer/modules/expenses/MyBudgetsPage.tsx` — page header shows **Budgets** for business accounts, **My Budgets** for personal, matching the sidebar label.
+- `src/renderer/shared/components/layout/resolveAccessibleNavLeaves.ts` - the `Income & Expenses` business filter now renames `My Budgets → Budgets` instead of dropping Income + Budgets.
+- `src/renderer/modules/expenses/MyBudgetsPage.tsx` - page header shows **Budgets** for business accounts, **My Budgets** for personal, matching the sidebar label.
 
 Personal accounts are untouched (label stays **My Budgets**). Mobile leaves derive from the same resolver, so tabs stay consistent.
 

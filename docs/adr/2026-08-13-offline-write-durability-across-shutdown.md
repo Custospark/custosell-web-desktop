@@ -1,4 +1,4 @@
-# ADR — Offline write durability across shutdown (flush barrier + persisted storage)
+# ADR - Offline write durability across shutdown (flush barrier + persisted storage)
 
 - **Date:** 2026-08-13
 - **Status:** Accepted
@@ -10,10 +10,10 @@ All offline writes (stock adjustments, sales, products, expenses, customers, etc
 
 ## Decision
 
-- **Track in-flight writes** — new `core/offlineWriteTracker.ts`: `trackWrite(promise)` registers every fire-and-forget background persist; `flushPendingWrites()` awaits all settled (with a timeout). All offline domains' background persists are wrapped in it.
-- **Await the primary flows** — `completeOfflineStockAdjustmentInstant`, `completeOfflineSaleInstant`, and product create/update now `await` the durable IndexedDB write (mutation queue + local record + stock ledger) before the mutation resolves, so the UI only reports complete once the write is committed.
-- **Shutdown flush barrier** — new `core/shutdownFlushBarrier.ts` installed at app bootstrap: drains in-flight writes on `pagehide`/`beforeunload`/`visibilitychange(hidden)`. In Electron, `before-quit` sends an `offline:flush-before-quit` IPC (via preload `offlineBridge`); the renderer flushes and replies, and `app.quit()` is deferred until done (5s timeout guard).
-- **Eviction exemption** — `navigator.storage.persist()` is requested on boot so the IndexedDB backing store is not evicted under storage pressure.
+- **Track in-flight writes** - new `core/offlineWriteTracker.ts`: `trackWrite(promise)` registers every fire-and-forget background persist; `flushPendingWrites()` awaits all settled (with a timeout). All offline domains' background persists are wrapped in it.
+- **Await the primary flows** - `completeOfflineStockAdjustmentInstant`, `completeOfflineSaleInstant`, and product create/update now `await` the durable IndexedDB write (mutation queue + local record + stock ledger) before the mutation resolves, so the UI only reports complete once the write is committed.
+- **Shutdown flush barrier** - new `core/shutdownFlushBarrier.ts` installed at app bootstrap: drains in-flight writes on `pagehide`/`beforeunload`/`visibilitychange(hidden)`. In Electron, `before-quit` sends an `offline:flush-before-quit` IPC (via preload `offlineBridge`); the renderer flushes and replies, and `app.quit()` is deferred until done (5s timeout guard).
+- **Eviction exemption** - `navigator.storage.persist()` is requested on boot so the IndexedDB backing store is not evicted under storage pressure.
 
 ## Consequences
 

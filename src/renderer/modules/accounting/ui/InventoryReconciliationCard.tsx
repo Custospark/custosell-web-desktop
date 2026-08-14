@@ -98,7 +98,7 @@ export function InventoryReconciliationCard() {
                 ))}
                 {data.raw_stock_book_value > data.stock_book_value * 1.01 && (
                   <li>
-                    Raw unfiltered total was {fmt(data.raw_stock_book_value)} — unrealistic rows were excluded.
+                    Raw unfiltered total was {fmt(data.raw_stock_book_value)} - unrealistic rows were excluded.
                   </li>
                 )}
               </ul>

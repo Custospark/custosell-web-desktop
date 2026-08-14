@@ -143,7 +143,7 @@ export default function GuideFaqsPage() {
       {!isOffline && !isLoading && !isError && allItems.length === 0 && (
         <EmptyState
           title="No published FAQs yet"
-          description="Check back soon — the Custosell team will add answers here."
+          description="Check back soon - the Custosell team will add answers here."
         />
       )}
 

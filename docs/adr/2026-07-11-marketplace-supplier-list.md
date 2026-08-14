@@ -12,8 +12,8 @@ Marketplace browse lists every business open for supply. Buyers who reorder from
 
 1. Persist a **buyer → seller** shortlist in `business_supplier_list` (`buyer_business_id`, `seller_business_id`, optional `notes`, unique pair).
 2. APIs (auth + `module:inventory`):
-   - `GET /marketplace/suppliers` — saved suppliers (searchable via `q`)
-   - `POST /marketplace/suppliers` — `{ seller_business_id, notes? }` (seller must be open for supply; cannot save self)
+   - `GET /marketplace/suppliers` - saved suppliers (searchable via `q`)
+   - `POST /marketplace/suppliers` - `{ seller_business_id, notes? }` (seller must be open for supply; cannot save self)
    - `DELETE /marketplace/suppliers/{sellerBusinessId}`
 3. Annotate `GET /marketplace/businesses` with `is_saved`, `listed_products_count`, and `is_open_for_supply` so Browse can show bookmark state without a second round-trip.
 4. Frontend: **My suppliers** modal + bookmark on Browse; selecting either opens the same catalog → cart flow. Online-only (same as marketplace).
@@ -31,4 +31,4 @@ Marketplace browse lists every business open for supply. Buyers who reorder from
 ## Consequences
 
 - Supplier list is tenant-scoped and cascades with business delete.
-- Does not create customers, POs, or invoices by itself — only a bookmark into marketplace browse.
+- Does not create customers, POs, or invoices by itself - only a bookmark into marketplace browse.

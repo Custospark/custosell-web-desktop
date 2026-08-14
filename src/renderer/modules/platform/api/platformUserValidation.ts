@@ -218,19 +218,19 @@ function buildUserDecisionInsights(users: PlatformUser[]): string[] {
   }
 
   if (churned > 0) {
-    notes.push(`${churned} user${churned === 1 ? '' : 's'} have not signed in for 90+ days — consider a reactivation nudge.`);
+    notes.push(`${churned} user${churned === 1 ? '' : 's'} have not signed in for 90+ days - consider a reactivation nudge.`);
   }
   if (dormant > 0) {
-    notes.push(`${dormant} dormant user${dormant === 1 ? '' : 's'} (31–90d since login) may need engagement before they churn.`);
+    notes.push(`${dormant} dormant user${dormant === 1 ? '' : 's'} (31-90d since login) may need engagement before they churn.`);
   }
   if (neverLoggedIn > 0) {
-    notes.push(`${neverLoggedIn} account${neverLoggedIn === 1 ? '' : 's'} never logged in — prioritize onboarding or verify invite delivery.`);
+    notes.push(`${neverLoggedIn} account${neverLoggedIn === 1 ? '' : 's'} never logged in - prioritize onboarding or verify invite delivery.`);
   }
   if (deactivated > 0) {
-    notes.push(`${deactivated} deactivated account${deactivated === 1 ? '' : 's'} in the loaded set — review before bulk outreach.`);
+    notes.push(`${deactivated} deactivated account${deactivated === 1 ? '' : 's'} in the loaded set - review before bulk outreach.`);
   }
   if (noBusiness > 0) {
-    notes.push(`${noBusiness} user${noBusiness === 1 ? '' : 's'} without a linked business — may be incomplete sign-ups.`);
+    notes.push(`${noBusiness} user${noBusiness === 1 ? '' : 's'} without a linked business - may be incomplete sign-ups.`);
   }
   if (notes.length === 0) {
     notes.push('No urgent login or account-status patterns in the loaded user sample.');

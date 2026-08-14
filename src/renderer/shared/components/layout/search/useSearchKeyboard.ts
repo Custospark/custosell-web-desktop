@@ -5,14 +5,14 @@ import { useCallback, useSyncExternalStore } from 'react';
 // A module-level boolean + a Set of subscriber callbacks. This means:
 //  • The ⌘K / Ctrl+K listener is registered ONCE, at module load time.
 //  • It survives component unmounts (the Navbar trigger may not always be mounted).
-//  • Every hook instance shares the same open/close state — so clicking the
+//  • Every hook instance shares the same open/close state - so clicking the
 //    search trigger and pressing ⌘K always talk to the same palette.
 //
 // ─────────────────────────────────────────────────────────────────────────────
 let globalIsOpen = false;
 const subscribers = new Set<(open: boolean) => void>();
 
-/** Central mutator — updates the singleton and notifies every subscriber. */
+/** Central mutator - updates the singleton and notifies every subscriber. */
 function setGlobal(open: boolean): void {
   globalIsOpen = open;
   subscribers.forEach((fn) => fn(open));

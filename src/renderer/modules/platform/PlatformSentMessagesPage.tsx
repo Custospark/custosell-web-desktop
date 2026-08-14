@@ -49,7 +49,7 @@ const CHANNEL_LABELS: Record<string, string> = {
 };
 
 function formatWhen(iso: string | null) {
-  if (!iso) return '—';
+  if (!iso) return '-';
   return new Date(iso).toLocaleString(undefined, {
     month: 'short',
     day: 'numeric',
@@ -166,7 +166,7 @@ export default function PlatformSentMessagesPage() {
               Review what was sent to users and businesses, when, and why.
             </p>
             <p className="mt-1 text-xs text-gray-500">
-              Removing entries here clears the admin log only — it does not recall emails or remove notifications from recipients&apos; inboxes.
+              Removing entries here clears the admin log only - it does not recall emails or remove notifications from recipients&apos; inboxes.
             </p>
           </div>
         </div>
@@ -347,7 +347,7 @@ export default function PlatformSentMessagesPage() {
                 {detail.status_from || detail.status_to ? (
                   <DetailField
                     label="Status change"
-                    value={`${detail.status_from ?? '—'} → ${detail.status_to ?? '—'}`}
+                    value={`${detail.status_from ?? '-'} → ${detail.status_to ?? '-'}`}
                   />
                 ) : null}
                 {detail.mark_as_notified ? <DetailField label="Marked notified" value="Yes" /> : null}

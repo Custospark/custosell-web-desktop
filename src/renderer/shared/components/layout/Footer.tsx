@@ -1,7 +1,7 @@
 import { PRODUCT_NAME, TAGLINE } from '../../brand/custosellBrand';
 
 export function Footer() {
-  // Brand footer is desktop-only — mobile uses the bottom tab bar instead.
+  // Brand footer is desktop-only - mobile uses the bottom tab bar instead.
   return (
     <footer className="hidden lg:flex shrink-0 px-6 py-3 border-t border-gray-200 bg-white lg:flex-col xl:flex-row items-center justify-between gap-2 text-xs">
       <span className="text-gray-500 text-center sm:text-left">

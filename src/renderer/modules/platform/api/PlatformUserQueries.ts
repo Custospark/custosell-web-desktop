@@ -47,7 +47,7 @@ async function patchPlatformUserStatus(
   }
 }
 
-/** Enabled — GET /platform/users/stats is implemented on the API. */
+/** Enabled - GET /platform/users/stats is implemented on the API. */
 export const PLATFORM_USER_STATS_API_ENABLED = true;
 
 export function usePlatformUserStats(params: Record<string, string> = {}, enabled = true) {

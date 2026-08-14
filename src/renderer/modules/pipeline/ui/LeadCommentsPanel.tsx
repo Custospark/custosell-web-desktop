@@ -345,7 +345,7 @@ export default function LeadCommentsPanel({
     <div className={cn('space-y-4', compact && 'space-y-3')}>
       {!canContribute ? (
         <p className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-900">
-          You have viewer access — you can read comments but cannot post or reply.
+          You have viewer access - you can read comments but cannot post or reply.
         </p>
       ) : (
       <>
@@ -442,7 +442,7 @@ export default function LeadCommentsPanel({
             </li>
           ) : (
             <li className="rounded-lg border border-dashed border-gray-200 py-8 text-center text-xs text-gray-500">
-              No comments yet — be the first to leave one.
+              No comments yet - be the first to leave one.
             </li>
           )
         ) : (

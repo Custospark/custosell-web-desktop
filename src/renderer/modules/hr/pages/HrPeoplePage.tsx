@@ -45,7 +45,7 @@ export default function HrPeoplePage() {
     if (!employee.user_id) return;
     const ok = await confirm({
       title: 'Detach from organization?',
-      message: `Remove ${employeeDisplayName(employee)} from this business? Their login stays — they just lose access here. The HR profile remains.`,
+      message: `Remove ${employeeDisplayName(employee)} from this business? Their login stays - they just lose access here. The HR profile remains.`,
       confirmText: 'Detach',
       variant: 'danger',
     });
@@ -77,7 +77,7 @@ export default function HrPeoplePage() {
         key: 'department',
         header: 'Department',
         render: (employee: HrEmployee) => (
-          <span className="text-slate-600">{employee.department?.name ?? '—'}</span>
+          <span className="text-slate-600">{employee.department?.name ?? '-'}</span>
         ),
       },
       {
@@ -141,7 +141,7 @@ export default function HrPeoplePage() {
       <HrPageHeader
         icon={Users}
         title="People"
-        description="Edit HR profiles anytime (name, role, status, phone). Email and passwords stay locked after create — use Detach to remove org access without deleting the login."
+        description="Edit HR profiles anytime (name, role, status, phone). Email and passwords stay locked after create - use Detach to remove org access without deleting the login."
         actions={
           <Button onClick={() => setOpen(true)} className="inline-flex items-center gap-2">
             <Plus className="h-4 w-4" />

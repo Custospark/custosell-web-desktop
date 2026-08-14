@@ -1,5 +1,5 @@
 /**
- * Custosell service worker — offline-first caching
+ * Custosell service worker - offline-first caching
  *
  * | Request type   | Online                         | Offline              |
  * |----------------|--------------------------------|----------------------|
@@ -139,7 +139,7 @@ function toApiCacheRequest(request) {
 /**
  * Network-first with cache fallback for static assets.
  *
- * Previously cache-first — a stale service worker would keep serving OLD chunk
+ * Previously cache-first - a stale service worker would keep serving OLD chunk
  * files (e.g. user-plus-ed_YL5Ph.js) even when a new build was deployed,
  * causing "does not provide an export named 't'". Network-first means online
  * users ALWAYS get the current build's chunks; the cache is only an offline

@@ -237,7 +237,7 @@ export default function ForecastingOverviewPage() {
       <ForecastingPageHeader
         icon={LineChart}
         title="Forecasting overview"
-        description="Cash runway, burn, and budget vs actual — one pulse for the selected horizon."
+        description="Cash runway, burn, and budget vs actual - one pulse for the selected horizon."
         actions={(
           <div className="flex flex-wrap items-center gap-2">
             <label className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-sm text-gray-600">

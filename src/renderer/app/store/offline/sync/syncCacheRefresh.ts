@@ -11,7 +11,7 @@ import { orderKeys } from '../../../../modules/sales/api/orders/orderQueryKeys';
 import { refreshAllServerCatalogSnapshots } from '../catalogs/catalogSnapshotRefresh';
 import { refreshSalesCatalogSnapshotsForSession } from '../catalogs/salesCatalogSnapshot';
 
-/** After a sale commits — drop local rows, refresh server snapshots, refetch sales UI. */
+/** After a sale commits - drop local rows, refresh server snapshots, refetch sales UI. */
 export async function refreshSalesUiAfterCommit(): Promise<void> {
   await notifyItemCommitted();
   await refreshSalesCatalogSnapshotsForSession();
@@ -22,7 +22,7 @@ export async function refreshSalesUiAfterCommit(): Promise<void> {
   await queryClient.invalidateQueries({ queryKey: shiftKeys.all, refetchType: 'active' });
 }
 
-/** After each committed item — purge stale badges and refresh active list queries. */
+/** After each committed item - purge stale badges and refresh active list queries. */
 export async function invalidateAfterItemCommitted(): Promise<void> {
   await notifyItemCommitted();
   await Promise.all([
@@ -40,17 +40,17 @@ export async function invalidateAfterItemCommitted(): Promise<void> {
   ]);
 }
 
-/** @deprecated Use invalidateAfterItemCommitted — kept for sales batch call sites. */
+/** @deprecated Use invalidateAfterItemCommitted - kept for sales batch call sites. */
 export async function invalidateAfterSalesChunk(): Promise<void> {
   await refreshSalesUiAfterCommit();
 }
 
-/** @deprecated Use invalidateAfterItemCommitted — kept for expense sync call sites. */
+/** @deprecated Use invalidateAfterItemCommitted - kept for expense sync call sites. */
 export async function invalidateAfterExpenseChunk(): Promise<void> {
   await invalidateAfterItemCommitted();
 }
 
-/** After tier 2 completes — dashboard + inventory. */
+/** After tier 2 completes - dashboard + inventory. */
 export async function invalidateAfterTransactionsTier(): Promise<void> {
   await queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
   await queryClient.invalidateQueries({ queryKey: inventoryKeys.all });

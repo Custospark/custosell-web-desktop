@@ -168,7 +168,7 @@ export default function EstimateDetailPage() {
                 size="sm"
                 onClick={() => sendEstimate.mutate(estimate.id)}
                 loading={sendEstimate.isPending}
-                title="Mark as sent — no email is sent. Use 'Send by email' to send an actual email."
+                title="Mark as sent - no email is sent. Use 'Send by email' to send an actual email."
               >
                 <Send className="h-4 w-4" />
                 Mark as sent

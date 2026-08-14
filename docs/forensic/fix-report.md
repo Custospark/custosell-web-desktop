@@ -1,4 +1,4 @@
-# Forensic Audit Fix Report — Subscription, Payment & Onboarding
+# Forensic Audit Fix Report - Subscription, Payment & Onboarding
 
 **Date:** 2026-07-26
 **Gaps Identified:** 16 (3 Critical, 5 High, 6 Medium, 2 operational)
@@ -8,7 +8,7 @@
 
 ## 🔴 Critical Fixes
 
-### C1 — Trial-plan users blocked after paying onboarding fee
+### C1 - Trial-plan users blocked after paying onboarding fee
 
 **Problem:** `activateAfterOnboarding()` only accepted `PAST_DUE` status. When a trial-plan user (status `TRIAL`) paid the onboarding fee, the webhook handler threw `RuntimeException: Cannot activate after onboarding with status 'trial'`. The subscription stayed in `TRIAL` with `onboarding_fee_paid` still `false`, locking the user out.
 
@@ -18,7 +18,7 @@
 
 ---
 
-### C2 — Users lost remaining trial days after paying onboarding fee
+### C2 - Users lost remaining trial days after paying onboarding fee
 
 **Problem:** `subscribe()` set `trial_used = true` immediately when creating the subscription, before the user had even paid the onboarding fee. When `activateAfterOnboarding()` later checked `!$subscription->trial_used` to decide whether to start a trial, it found it already `true` and skipped the trial, transitioning the subscription straight to `ACTIVE`. Users lost their remaining trial days.
 
@@ -28,11 +28,11 @@
 
 ---
 
-### C3 — Dev bypass mode called `activateAfterOnboarding` for ALL payment types
+### C3 - Dev bypass mode called `activateAfterOnboarding` for ALL payment types
 
-**Problem:** In bypass (development) mode, `GatewayService::initiatePayment()` unconditionally called `activateAfterOnboarding($payment->subscription)` regardless of the payment's `payment_type`. This caused renewal payments, subscription payments, and upgrade payments to all be treated as onboarding — failing or incorrectly activating subscriptions.
+**Problem:** In bypass (development) mode, `GatewayService::initiatePayment()` unconditionally called `activateAfterOnboarding($payment->subscription)` regardless of the payment's `payment_type`. This caused renewal payments, subscription payments, and upgrade payments to all be treated as onboarding - failing or incorrectly activating subscriptions.
 
-**Fix:** The bypass flow now calls `handlePaymentType($payment)` — the same dispatcher used by `autoApprove()` for real webhook/callback payments. It matches on `payment_type` (`onboarding`, `subscription`, `renewal`, `upgrade_proration`) and calls the correct service method.
+**Fix:** The bypass flow now calls `handlePaymentType($payment)` - the same dispatcher used by `autoApprove()` for real webhook/callback payments. It matches on `payment_type` (`onboarding`, `subscription`, `renewal`, `upgrade_proration`) and calls the correct service method.
 
 **New experience:** Development bypass mode correctly simulates real gateway behavior. Each payment type triggers the appropriate subscription state transition.
 
@@ -40,9 +40,9 @@
 
 ## 🟠 High Fixes
 
-### H1 — Auto-approved upgrade payments never upgraded the plan
+### H1 - Auto-approved upgrade payments never upgraded the plan
 
-**Problem:** `GatewayService::autoApprove()` had a `match` statement covering `onboarding`, `subscription`, and `renewal` — but `upgrade_proration` fell through to `default => null`. When a webhook or callback confirmed an upgrade payment, the payment was marked completed but the subscription's `plan_id` never changed.
+**Problem:** `GatewayService::autoApprove()` had a `match` statement covering `onboarding`, `subscription`, and `renewal` - but `upgrade_proration` fell through to `default => null`. When a webhook or callback confirmed an upgrade payment, the payment was marked completed but the subscription's `plan_id` never changed.
 
 **Fix:** A new `handleUpgradeProration()` method reads `to_plan_id` from the payment's `metadata`. A new `changePlan()` method on `SubscriptionService` updates the subscription's `plan_id` and pricing snapshot. The `handlePaymentType()` dispatcher now routes `upgrade_proration` to `handleUpgradeProration()`.
 
@@ -50,9 +50,9 @@
 
 ---
 
-### H2 — Trial expiration went to EXPIRED (terminal) instead of PAST_DUE
+### H2 - Trial expiration went to EXPIRED (terminal) instead of PAST_DUE
 
-**Problem:** When a trial period ended without payment, `processDueTransitions()` and `processExpiredTrials()` transitioned to `EXPIRED` — a terminal state with no recovery path. Users had to create an entirely new subscription, losing all data context.
+**Problem:** When a trial period ended without payment, `processDueTransitions()` and `processExpiredTrials()` transitioned to `EXPIRED` - a terminal state with no recovery path. Users had to create an entirely new subscription, losing all data context.
 
 **Fix:** Both `processDueTransitions()` and `processExpiredTrials()` now transition expired trials to `PAST_DUE` with a 7-day grace period. The user retains access during the grace period. If they pay within those 7 days, the subscription activates normally. If the grace period expires, it transitions to `SUSPENDED` (which has a recovery path via `reactivate`).
 
@@ -60,9 +60,9 @@
 
 ---
 
-### H3 — Grace period used twice silently kept subscription ACTIVE forever
+### H3 - Grace period used twice silently kept subscription ACTIVE forever
 
-**Problem:** When an `ACTIVE` subscription missed a second billing date after already using its grace period (`grace_used = true`), `markPastDue()` threw `RuntimeException`. The catch block in `processDueTransitions()` was empty, so the subscription stayed `ACTIVE` forever — never transitioning to `PAST_DUE` or `SUSPENDED`.
+**Problem:** When an `ACTIVE` subscription missed a second billing date after already using its grace period (`grace_used = true`), `markPastDue()` threw `RuntimeException`. The catch block in `processDueTransitions()` was empty, so the subscription stayed `ACTIVE` forever - never transitioning to `PAST_DUE` or `SUSPENDED`.
 
 **Fix:** `processDueTransitions()` now checks `grace_used` before attempting `markPastDue()`. If `grace_used` is already `true` and the billing date is past, the subscription transitions directly to `SUSPENDED`.
 
@@ -70,7 +70,7 @@
 
 ---
 
-### H4 — Payment intent not stored in metadata; race condition on frontend crash
+### H4 - Payment intent not stored in metadata; race condition on frontend crash
 
 **Problem:** The frontend payment-first flow fires the subscription mutation (subscribe/upgrade/reactivate) AFTER payment completes. If the browser tab closes or the app crashes between payment confirmation and the mutation call, the payment is recorded but no subscription change occurs.
 
@@ -80,7 +80,7 @@
 
 ---
 
-### H5 — No idempotency on payment initiation (double-charge risk)
+### H5 - No idempotency on payment initiation (double-charge risk)
 
 **Problem:** Each call to `initiatePayment()` created a new `BillingPayment` record with no check for duplicate requests. Double-clicking "Pay Now" could initiate two payments and charge the user twice.
 
@@ -92,7 +92,7 @@
 
 ## 🟡 Medium Fixes
 
-### M1 — SubscriptionGuard had no offline fallback
+### M1 - SubscriptionGuard had no offline fallback
 
 **Problem:** When offline, the access-check API call failed and `SubscriptionGuard` showed a permanent loading spinner. Users with a valid subscription couldn't access their business routes.
 
@@ -102,7 +102,7 @@
 
 ---
 
-### M2 — `getByBusiness` double-fetched on every route request
+### M2 - `getByBusiness` double-fetched on every route request
 
 **Problem:** `getByBusiness()` called `processDueTransitions()` which updated the subscription, then called `findByBusiness()` again to re-fetch from the database. This added an unnecessary query.
 
@@ -112,7 +112,7 @@
 
 ---
 
-### M4 — Upgrade payment metadata missing `to_plan_id`
+### M4 - Upgrade payment metadata missing `to_plan_id`
 
 **Problem:** The frontend initiated upgrade payments without passing `{ action: 'upgrade', to_plan_id }` in the metadata. The payment record included no information about the target plan, making it impossible to reconcile upgrades from the payment record alone.
 
@@ -122,7 +122,7 @@
 
 ---
 
-### M6 — Stale pending payments had no timeout
+### M6 - Stale pending payments had no timeout
 
 **Problem:** Payments initiated but never completed stayed `PENDING` forever with no cleanup mechanism.
 
@@ -138,7 +138,7 @@
 
 **Problem:** Subscriptions that were already in `EXPIRED` status (from before the H2 fix) could not be activated by paying the onboarding fee or a subscription payment. Both `activateSubscription()` and `activateAfterOnboarding()` rejected `EXPIRED`.
 
-**Fix:** Both methods now accept `EXPIRED` in addition to `TRIAL` and `PAST_DUE`. An expired subscription is treated like a past-due one — it transitions to `ACTIVE` (or a new `TRIAL`) when payment is confirmed.
+**Fix:** Both methods now accept `EXPIRED` in addition to `TRIAL` and `PAST_DUE`. An expired subscription is treated like a past-due one - it transitions to `ACTIVE` (or a new `TRIAL`) when payment is confirmed.
 
 **New experience:** Legacy EXPIRED subscriptions are recoverable via payment. No subscription is stuck in a terminal state.
 
@@ -151,34 +151,34 @@
 |------|--------|
 | `app/Services/SubscriptionService.php` | C1, C2, H2, H3, M2, EXPIRED acceptance |
 | `app/Services/Payment/GatewayService.php` | C3, H1, H4, H5 |
-| `app/Services/Contracts/SubscriptionServiceInterface.php` | H1 — added `changePlan()` |
-| `app/Http/Controllers/Api/Billing/PaymentController.php` | H5 — pass idempotency_key |
-| `app/Http/Requests/Billing/InitiatePaymentRequest.php` | H5 — accept idempotency_key |
-| `app/Models/BillingPayment.php` | H5 — fillable idempotency_key |
-| `app/Repositories/Contracts/PaymentRepositoryInterface.php` | H5 — findByIdempotencyKey |
-| `app/Repositories/Eloquent/PaymentRepository.php` | H5 — findByIdempotencyKey |
-| `app/Console/Commands/SubscriptionsExpirePendingPayments.php` | M6 — new command |
-| `database/migrations/2026_07_26_000002_add_idempotency_key_to_billing_payments.php` | H5 — new migration |
+| `app/Services/Contracts/SubscriptionServiceInterface.php` | H1 - added `changePlan()` |
+| `app/Http/Controllers/Api/Billing/PaymentController.php` | H5 - pass idempotency_key |
+| `app/Http/Requests/Billing/InitiatePaymentRequest.php` | H5 - accept idempotency_key |
+| `app/Models/BillingPayment.php` | H5 - fillable idempotency_key |
+| `app/Repositories/Contracts/PaymentRepositoryInterface.php` | H5 - findByIdempotencyKey |
+| `app/Repositories/Eloquent/PaymentRepository.php` | H5 - findByIdempotencyKey |
+| `app/Console/Commands/SubscriptionsExpirePendingPayments.php` | M6 - new command |
+| `database/migrations/2026_07_26_000002_add_idempotency_key_to_billing_payments.php` | H5 - new migration |
 | `tests/Unit/Billing/BillingLifecycleTest.php` | Updated for H2 behavior |
 | `tests/Unit/Billing/ForensicGapFixTest.php` | 19 new tests covering all fixes |
 
 ### Frontend (6 files)
 | File | Change |
 |------|--------|
-| `src/renderer/app/routes/middleware/SubscriptionGuard.tsx` | M1 — offline fallback |
-| `src/renderer/modules/settings/PlansTab.tsx` | M4 — payment metadata |
-| `src/renderer/modules/settings/SubscriptionPaymentModal.tsx` | M4 — metadata prop |
-| `src/renderer/modules/settings/planConstants.ts` | New — constants extracted |
+| `src/renderer/app/routes/middleware/SubscriptionGuard.tsx` | M1 - offline fallback |
+| `src/renderer/modules/settings/PlansTab.tsx` | M4 - payment metadata |
+| `src/renderer/modules/settings/SubscriptionPaymentModal.tsx` | M4 - metadata prop |
+| `src/renderer/modules/settings/planConstants.ts` | New - constants extracted |
 | `src/renderer/modules/settings/planActionMatrix.ts` | No changes needed |
-| `src/renderer/shared/api/account/SubscriptionQueries.ts` | H5 — idempotency key generation |
+| `src/renderer/shared/api/account/SubscriptionQueries.ts` | H5 - idempotency key generation |
 
 ---
 
 ## Verification Results
 
 - **Backend billing tests:** 131 pass (1 skipped pre-existing), 345 assertions
-- **Frontend TypeScript:** `tsc --noEmit` — 0 errors
-- **Vera fast:** eslint + logic — pass
-- **Code audit:** 14/14 gap checks — PASS
+- **Frontend TypeScript:** `tsc --noEmit` - 0 errors
+- **Vera fast:** eslint + logic - pass
+- **Code audit:** 14/14 gap checks - PASS
 
 

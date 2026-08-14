@@ -81,7 +81,7 @@ const ReceiptContent = forwardRef<HTMLDivElement, ReceiptContentProps>(({ sale }
           </div>
           <div className="flex justify-between">
             <span>Sales Person</span>
-            <span>{cashierName || '—'}</span>
+            <span>{cashierName || '-'}</span>
           </div>
           {customer && (
             <div className="flex justify-between">

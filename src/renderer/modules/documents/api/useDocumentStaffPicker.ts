@@ -17,7 +17,7 @@ function mapStaffToDocumentRefs(staff: { id: number; name: string; avatar?: stri
     }));
 }
 
-/** Loads business staff for document access pickers — mirrors Settings staff list when available. */
+/** Loads business staff for document access pickers - mirrors Settings staff list when available. */
 export function useDocumentStaffPicker(enabled = true) {
   const user = useSelector((state: RootState) => state.auth.user);
   const hasSettingsAccess = canAccessModule(user, 'settings');

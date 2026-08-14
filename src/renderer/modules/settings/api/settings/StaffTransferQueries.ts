@@ -99,7 +99,7 @@ export function useTransferStaff() {
           location: toBranch,
           locations: [toBranch, ...(currentUser.locations ?? []).filter((l) => l.id !== toId)],
         }));
-        // The signed-in operator moved branches — refetch products so New Sale / invoice
+        // The signed-in operator moved branches - refetch products so New Sale / invoice
         // searches show the destination branch's stock.
         void qc.invalidateQueries({ queryKey: ['inventory', 'products'] });
       }

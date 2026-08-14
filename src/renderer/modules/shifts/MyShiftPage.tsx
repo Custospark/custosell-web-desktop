@@ -225,7 +225,7 @@ export default function MyShiftPage() {
           title="No Active Shift"
           description={
             isOffline
-              ? "You haven't started a shift yet. Clock in offline — your shift will sync when connected."
+              ? "You haven't started a shift yet. Clock in offline - your shift will sync when connected."
               : "You haven't started a shift yet. Clock in to begin."
           }
           actionLabel={clockIn.isPending ? 'Starting…' : 'Start Shift'}

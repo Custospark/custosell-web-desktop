@@ -164,7 +164,7 @@ export default function LeadDetailModal({
       <div className="space-y-5 pb-2">
         {!canEditCard && (
           <p className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-900">
-            You have viewer access on this board — you can browse cards but cannot edit them.
+            You have viewer access on this board - you can browse cards but cannot edit them.
           </p>
         )}
         {/* Hero strip */}

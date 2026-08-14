@@ -12,8 +12,8 @@ interface StickyMobileSummaryProps {
 
 /**
  * Mobile-only sticky bottom bar (hidden on lg+). The running total sits above
- * and the two end-of-flow actions — Back to Items (with the item count) and
- * Complete Sale — sit below in a full-width row, all within thumb reach while
+ * and the two end-of-flow actions - Back to Items (with the item count) and
+ * Complete Sale - sit below in a full-width row, all within thumb reach while
  * the customer/payment form scrolls. It is the canonical summary/action control
  * on mobile; the in-layout Total card and Back/Complete row are desktop-only so
  * the amount is never shown twice on small screens.

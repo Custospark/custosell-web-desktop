@@ -26,7 +26,7 @@ Previously, business deletion was only available via platform admin (`DELETE /ap
 - Route under `auth:sanctum + business.active + module:settings` middleware
 
 **Self-Deletion API** (`DELETE /api/v1/businesses/account`)
-- Body: `{ "password": "..." }` — verifies owner's password via `Hash::check()`
+- Body: `{ "password": "..." }` - verifies owner's password via `Hash::check()`
 - Calls `PlatformBusinessService::resetBusinessData()` to hard-delete all transactional data
 - Then `$business->delete()` (soft-delete)
 - Then `$user->currentAccessToken()->delete()` (revokes session)
@@ -42,7 +42,7 @@ Previously, business deletion was only available via platform admin (`DELETE /ap
 - Two-step flow: select format → confirm → download triggers automatically
 - Shows what's included (20 entity types)
 - Owner-only warning banner
-- Online-only (blocked when offline — shows disabled button)
+- Online-only (blocked when offline - shows disabled button)
 - Sidebar nav item under Settings (auto-picked by tour + mobile nav)
 
 **Danger Zone** (`/settings/business`)

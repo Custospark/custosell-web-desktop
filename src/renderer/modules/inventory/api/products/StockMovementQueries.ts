@@ -93,7 +93,7 @@ export function useCreateStockMovement() {
       void refreshProductCatalogSnapshot();
 
       if ((movement?.id ?? 0) < 0) {
-        showToast('success', 'Stock adjusted — will sync when online');
+        showToast('success', 'Stock adjusted - will sync when online');
       }
     },
     onError: (error, _payload, ctx) => {

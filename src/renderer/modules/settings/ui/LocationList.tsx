@@ -116,12 +116,12 @@ export default function LocationList() {
                 </div>
               ),
             },
-            { key: 'code', header: 'Code', render: (item) => item.code || <span className="text-gray-400">—</span> },
+            { key: 'code', header: 'Code', render: (item) => item.code || <span className="text-gray-400">-</span> },
             { key: 'location', header: 'Location', render: (item) => {
                 const place = [item.city, item.state, item.country].filter(Boolean).join(', ');
-                return place || <span className="text-gray-400">—</span>;
+                return place || <span className="text-gray-400">-</span>;
               } },
-            { key: 'phone', header: 'Phone', render: (item) => item.phone || <span className="text-gray-400">—</span> },
+            { key: 'phone', header: 'Phone', render: (item) => item.phone || <span className="text-gray-400">-</span> },
             { key: 'actions', header: 'Actions', align: 'center', render: (item) => (
                 <div className="flex items-center justify-center gap-1">
                   {!item.is_default && (

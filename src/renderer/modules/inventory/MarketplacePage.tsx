@@ -254,7 +254,7 @@ export default function MarketplacePage() {
                 Start with a supplier
               </h2>
               <p className="mt-2 max-w-md text-sm leading-relaxed text-slate-600">
-                Open My suppliers for your shortlist, or browse every business open for supply — then add items to a purchase order.
+                Open My suppliers for your shortlist, or browse every business open for supply - then add items to a purchase order.
               </p>
               <div className="mt-5 flex w-full max-w-sm flex-col gap-2.5 sm:mt-6 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center sm:justify-center sm:gap-3">
                 <Button
@@ -311,7 +311,7 @@ export default function MarketplacePage() {
         />
       </div>
 
-      {/* Desktop dock — outside marketplace chrome, with outer padding / gap for breathing room */}
+      {/* Desktop dock - outside marketplace chrome, with outer padding / gap for breathing room */}
       {cartDocked ? (
         <div className="hidden min-h-0 w-[min(100%,22rem)] shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm lg:flex xl:w-[26rem] 2xl:w-[28rem]">
           <MarketplaceCartSheet

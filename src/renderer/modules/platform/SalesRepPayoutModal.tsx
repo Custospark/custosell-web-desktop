@@ -110,7 +110,7 @@ export function SalesRepPayoutModal({ rep, onClose }: { rep: PlatformSalesRep | 
       <div className="space-y-5">
         <PipelineModalHero
           icon={DollarSign}
-          title={`Payouts — ${rep?.user?.name ?? 'Sales Rep'}`}
+          title={`Payouts - ${rep?.user?.name ?? 'Sales Rep'}`}
           description={`${rep?.user?.email} · ${rep?.referral_code?.code ?? 'No code'}`}
           tone="emerald"
         />
@@ -155,10 +155,10 @@ export function SalesRepPayoutModal({ rep, onClose }: { rep: PlatformSalesRep | 
                 <p><span className="text-gray-400">Payout Method:</span> {rep.payment_method === 'mobile_money' ? 'Mobile Money' : rep.payment_method === 'bank' ? 'Bank Transfer' : rep.payment_method}</p>
               )}
               {rep?.mobile_money_provider && rep?.mobile_money_number && (
-                <p><span className="text-gray-400">Mobile Money:</span> {rep.mobile_money_provider} — {rep.mobile_money_number}{rep.mobile_money_name ? ` (${rep.mobile_money_name})` : ''}</p>
+                <p><span className="text-gray-400">Mobile Money:</span> {rep.mobile_money_provider} - {rep.mobile_money_number}{rep.mobile_money_name ? ` (${rep.mobile_money_name})` : ''}</p>
               )}
               {(rep?.bank_name && rep?.bank_account_name) && (
-                <p><span className="text-gray-400">Bank:</span> {rep.bank_name} — {rep.bank_account_name}{rep.bank_account_number ? ` · ${rep.bank_account_number}` : ''}</p>
+                <p><span className="text-gray-400">Bank:</span> {rep.bank_name} - {rep.bank_account_name}{rep.bank_account_number ? ` · ${rep.bank_account_number}` : ''}</p>
               )}
             </div>
           </div>

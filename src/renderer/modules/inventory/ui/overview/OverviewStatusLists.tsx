@@ -57,7 +57,7 @@ function deadRows(items: InventoryDeadStockItem[]) {
   return items.slice(0, 6).map((i) => ({
     name: i.name,
     sku: i.sku,
-    meta: i.dead_days === null ? 'no activity recorded' : `last activity ${i.last_activity ?? '—'} · ${i.dead_days}d`,
+    meta: i.dead_days === null ? 'no activity recorded' : `last activity ${i.last_activity ?? '-'} · ${i.dead_days}d`,
     right: formatCurrency(i.value_cost),
     tone: 'stone' as const,
   }));
@@ -72,7 +72,7 @@ interface OverviewStatusListsProps {
   deadCount: number;
 }
 
-/** Alert lists — low stock, out of stock, and dead stock. */
+/** Alert lists - low stock, out of stock, and dead stock. */
 export function OverviewStatusLists({ low, out, dead, lowCount, outCount, deadCount }: OverviewStatusListsProps) {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">

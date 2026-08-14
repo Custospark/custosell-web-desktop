@@ -228,7 +228,7 @@ export function useCreateExpense() {
       }
       if (expense._pendingSync) {
         applyExpenseOptimisticUpdates(qc, expense, 'create');
-        showToast('success', 'Expense saved — will sync when online');
+        showToast('success', 'Expense saved - will sync when online');
       } else {
         invalidateAll(qc);
       }
@@ -281,7 +281,7 @@ export function useUpdateExpense() {
       const previousShiftId = findCachedExpense(id)?.shift_id;
       if (expense._pendingSync) {
         applyExpenseOptimisticUpdates(qc, expense, 'update', previousShiftId);
-        showToast('success', 'Changes saved — will sync when online');
+        showToast('success', 'Changes saved - will sync when online');
       } else {
         invalidateAll(qc);
       }
@@ -376,7 +376,7 @@ export function useCreateExpenseCategory() {
           if (list.some((item) => item.id === category.id || item.name === category.name)) return list;
           return [category, ...list];
         });
-        showToast('success', 'Category saved — will sync when online');
+        showToast('success', 'Category saved - will sync when online');
       } else {
         void refreshExpenseCategoriesSnapshot();
         invalidateAll(qc);
@@ -431,7 +431,7 @@ export function useUpdateExpenseCategory() {
         qc.setQueryData<ExpenseCategoryWithSyncMeta[]>(expenseKeys.categories(), (old) =>
           sanitizeExpenseCategoryList(old ?? []).map((item) => item.id === id ? category : item),
         );
-        showToast('success', 'Changes saved — will sync when online');
+        showToast('success', 'Changes saved - will sync when online');
       } else {
         void refreshExpenseCategoriesSnapshot();
         invalidateAll(qc);

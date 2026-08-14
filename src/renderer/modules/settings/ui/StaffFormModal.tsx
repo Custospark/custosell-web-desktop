@@ -27,10 +27,10 @@ export default function StaffFormModal({ open, onClose, staff }: StaffFormModalP
   const title = f.isEditing ? 'Edit staff' : f.isAttachMode ? 'Attach staff' : 'Add staff';
   const subtitle = f.isEditing
     ? (f.emailLocked
-      ? `Update ${staff?.name ?? 'staff member'} — owner email stays fixed`
-      : `Update ${staff?.name ?? 'staff member'} — email and details can be changed`)
+      ? `Update ${staff?.name ?? 'staff member'} - owner email stays fixed`
+      : `Update ${staff?.name ?? 'staff member'} - email and details can be changed`)
     : f.isAttachMode
-      ? 'Existing account — will attach to this organization'
+      ? 'Existing account - will attach to this organization'
       : 'Create a new staff login for your business';
 
   const heroIcon = f.isEditing ? UserCog : f.isAttachMode ? Link2 : UserPlus;

@@ -31,7 +31,7 @@ export function ReferralsContent() {
   const { data: earnings, isLoading: earningsLoading } = useReferralEarnings();
   const generateCode = useGenerateReferralCode();
   const user = useAppSelector((s) => s.auth.user);
-  // Shopping accounts stay inside Discover — Help & Contact links into the main
+  // Shopping accounts stay inside Discover - Help & Contact links into the main
   // shell sidebar, so it is hidden for them (Wins/Policy remain).
   const tabs = isStorefrontBuyer(user) ? TABS.filter((t) => t.id !== 'help') : TABS;
 

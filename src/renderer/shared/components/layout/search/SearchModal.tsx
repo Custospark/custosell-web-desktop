@@ -99,7 +99,7 @@ function SearchModalInner({ isOpen, onClose }: SearchModalProps) {
     inputRef.current?.focus();
   }, []);
 
-  // ── Query change — reset index ────────────────────────────────────────────
+  // ── Query change - reset index ────────────────────────────────────────────
   const handleQueryChange = useCallback((val: string) => {
     setQuery(val);
     setActiveIndex(-1);
@@ -254,7 +254,7 @@ function SearchModalInner({ isOpen, onClose }: SearchModalProps) {
   );
 }
 
-/** Thin portal wrapper — renders the palette at document root regardless of
+/** Thin portal wrapper - renders the palette at document root regardless of
  *  where it sits in the DOM tree. */
 export const SearchModal: React.FC<SearchModalProps> = (props) =>
   createPortal(<SearchModalInner {...props} />, document.body);

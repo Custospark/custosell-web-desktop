@@ -1,6 +1,6 @@
-# Accounting Module — Implementation Summary
+# Accounting Module - Implementation Summary
 
-Full double-entry accounting system built for UGA/URA compliance, audit trail integrity, and professional financial reporting. Covers Chart of Accounts, Journal Entries, General Ledger, Trial Balance, Financial Statements, Ratios, Fixed Assets, and Period Closing — with auto-accounting from Sales, Expenses, and **HR Payroll**.
+Full double-entry accounting system built for UGA/URA compliance, audit trail integrity, and professional financial reporting. Covers Chart of Accounts, Journal Entries, General Ledger, Trial Balance, Financial Statements, Ratios, Fixed Assets, and Period Closing - with auto-accounting from Sales, Expenses, and **HR Payroll**.
 
 ## Implementation Summary
 
@@ -15,8 +15,8 @@ The accounting module introduces a complete double-entry bookkeeping backbone to
 | **Start fresh from activation** | No retroactive conversion from pre-accounting data. Accounting begins when the business activates the module. Historical POS transactions before activation are not converted. |
 | **Auto-generate entries from POS events** | Sales and expenses automatically create journal entries via `AutomationService`. This ensures no transaction is missed and maintains data integrity. |
 | **Product vs service revenue** | Catalog `type` splits sale/invoice revenue: products → 4100 (`sales_revenue`), services → 4200 (`service_revenue`). Services skip stock and COGS. See [ADR: product vs service](./adr/2026-07-10-product-vs-service-sales.md). |
-| **HR payroll journals** | Pay-run Post / Settle / Remit / Void create or reverse journals (`hr_pay_run*`). Liabilities use 2110–2112. See [ADR: payroll accounting bridge](./adr/2026-07-10-hr-payroll-accounting-bridge.md). |
-| **Payroll liabilities in ratios/CFS** | Liquidity current liabilities and Cash Flow WC changes include 2110–2112 (not only 2101–2104). |
+| **HR payroll journals** | Pay-run Post / Settle / Remit / Void create or reverse journals (`hr_pay_run*`). Liabilities use 2110-2112. See [ADR: payroll accounting bridge](./adr/2026-07-10-hr-payroll-accounting-bridge.md). |
+| **Payroll liabilities in ratios/CFS** | Liquidity current liabilities and Cash Flow WC changes include 2110-2112 (not only 2101-2104). |
 | **Payroll cash runway** | HR Reports affordability uses GL **closing** cash (1101/1102) vs unpaid payroll vs live compensation burn. See [ADR: cash runway](./adr/2026-07-10-payroll-affordability-cash-runway.md). |
 | **Straight-line depreciation only** | Simplest method, most predictable, URA-accepted. Accelerated/mileage methods can be added later. |
 | **Company Assets (HR) ↔ Fixed Assets** | One `fixed_assets` register: HR owns custody (assign/transfer/return); Accounting owns cost, depreciation, schedule. Sidebar: Accounting → Fixed Assets; HR → Company Assets. See [ADR](./adr/2026-07-11-company-assets-hr-accounting.md). |
@@ -27,12 +27,12 @@ The accounting module introduces a complete double-entry bookkeeping backbone to
 
 ## Files Created
 
-### Frontend — Pages (9 files)
+### Frontend - Pages (9 files)
 | File | Purpose |
 |------|---------|
 | `src/renderer/modules/accounting/pages/ChartOfAccountsPage.tsx` | COA flat/tree view, add account form |
 | `src/renderer/modules/accounting/pages/JournalEntriesPage.tsx` | Entry list; opens new-entry modal |
-| `src/renderer/modules/accounting/pages/NewJournalEntryForm.tsx` | New journal entry modal — columnar lines with **one Amount + Debit/Credit side** (defaults: line 1 debit, line 2 credit); balance checked in minor units; Create enabled when header, accounts, amounts, and balance are ready |
+| `src/renderer/modules/accounting/pages/NewJournalEntryForm.tsx` | New journal entry modal - columnar lines with **one Amount + Debit/Credit side** (defaults: line 1 debit, line 2 credit); balance checked in minor units; Create enabled when header, accounts, amounts, and balance are ready |
 | `src/renderer/modules/accounting/pages/TrialBalancePage.tsx` | Trial balance report with period filter |
 | `src/renderer/modules/accounting/pages/IncomeStatementPage.tsx` | P&L statement with section drill-down |
 | `src/renderer/modules/accounting/pages/BalanceSheetPage.tsx` | Balance sheet with assets = liabilities + equity check |
@@ -42,13 +42,13 @@ The accounting module introduces a complete double-entry bookkeeping backbone to
 | `src/renderer/modules/accounting/pages/FixedAssetDepreciationPanels.tsx` | Run depreciation modal, schedule panel, add-asset form |
 | `src/renderer/modules/accounting/pages/AccountingSettingsPage.tsx` | Module settings |
 
-### Frontend — API Layer (2 files)
+### Frontend - API Layer (2 files)
 | File | Purpose |
 |------|---------|
 | `src/renderer/modules/accounting/api/AccountingTypes.ts` | All TypeScript interfaces (COA, periods, entries, statements, ratios, assets) |
-| `src/renderer/modules/accounting/api/AccountingQueries.ts` | React Query hooks — 10 queries + 6 mutations |
+| `src/renderer/modules/accounting/api/AccountingQueries.ts` | React Query hooks - 10 queries + 6 mutations |
 
-### Backend — Controllers (6 files)
+### Backend - Controllers (6 files)
 | File | Purpose |
 |------|---------|
 | `app/Http/Controllers/Api/V1/Accounting/ChartOfAccountController.php` | COA CRUD + tree endpoint |
@@ -58,7 +58,7 @@ The accounting module introduces a complete double-entry bookkeeping backbone to
 | `app/Http/Controllers/Api/V1/Accounting/RatioController.php` | Financial ratio calculations |
 | `app/Http/Controllers/Api/V1/Accounting/FixedAssetController.php` | Asset CRUD + depreciation |
 
-### Backend — Services (7 files)
+### Backend - Services (7 files)
 | File | Purpose |
 |------|---------|
 | `app/Services/Accounting/ChartOfAccountService.php` | Business logic for COA management |
@@ -69,7 +69,7 @@ The accounting module introduces a complete double-entry bookkeeping backbone to
 | `app/Services/Accounting/FixedAssetService.php` | Asset management, depreciation engine |
 | `app/Services/Accounting/AutoAccountingService.php` | Auto-generate entries from POS events |
 
-### Backend — Models (6 files)
+### Backend - Models (6 files)
 | File | Purpose |
 |------|---------|
 | `app/Models/AccountingPeriod.php` | Period model with `is_closed` scope |
@@ -80,7 +80,7 @@ The accounting module introduces a complete double-entry bookkeeping backbone to
 | `app/Models/FixedAsset.php` | Asset with depreciation entries |
 | `app/Models/DepreciationEntry.php` | Depreciation run record |
 
-### Backend — Database (8 migrations + 2 seeders)
+### Backend - Database (8 migrations + 2 seeders)
 | File | Purpose |
 |------|---------|
 | `database/migrations/*_create_account_types_table.php` | Account types reference |
@@ -118,7 +118,7 @@ The accounting module introduces a complete double-entry bookkeeping backbone to
 ## Integration Points
 
 ### Event System
-`AutoAccountingService` listens to `SaleCompleted` and `ExpenseRecorded` events to auto-generate journal entries. These entries are created as **drafts** and automatically **posted** — no manual intervention needed for basic POS transactions.
+`AutoAccountingService` listens to `SaleCompleted` and `ExpenseRecorded` events to auto-generate journal entries. These entries are created as **drafts** and automatically **posted** - no manual intervention needed for basic POS transactions.
 
 ### Sync / Offline
 Accounting operates primarily online due to the immutability constraint. Draft entries can be created offline and synced, but posting (the lock step) requires server confirmation. The mutation queue handles deferred posting.
@@ -169,6 +169,6 @@ npx tsc --noEmit        # Full type surface check
 | **Stale cache after period close** | Low | React Query invalidation on period close mutation. Period list refetches automatically. |
 | **Depreciation rounding errors** | Low | Monetary amounts stored as integers (cents). Depreciation uses ceiling on final period to absorb remainder. |
 | **Reopening closed period** | High | Reopen is `admin`-only, logged, and cascades to re-enable draft creation. Existing posted entries remain immutable. |
-| **Accidental COA deactivation** | Medium | Accounts with journal entry history cannot be deleted — only deactivated (`is_active = false`). |
+| **Accidental COA deactivation** | Medium | Accounts with journal entry history cannot be deleted - only deactivated (`is_active = false`). |
 | **Sync conflicts on posted entries** | High | Posted entries are server-authoritative. Offline draft entries that reference closed periods are rejected on sync. |
 | **Missing COA template for new businesses** | Low | `AccountingSeeder` runs on business registration hook. Default template always available. |

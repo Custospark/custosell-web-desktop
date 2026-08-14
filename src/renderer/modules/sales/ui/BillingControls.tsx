@@ -298,7 +298,7 @@ export function BillingControls({ onBack, itemCount, onSaleCompleted }: BillingC
                 </p>
               )}
               {!installmentMode && amountTendered > 0 && amountTendered < total && (
-                <p className="text-xs text-amber-600 mt-1.5">Short by {formatCurrency(total - amountTendered)} — enable installments to accept partial pay</p>
+                <p className="text-xs text-amber-600 mt-1.5">Short by {formatCurrency(total - amountTendered)} - enable installments to accept partial pay</p>
               )}
             </div>
           )}

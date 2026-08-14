@@ -1,6 +1,6 @@
 export type ReportDatePreset = 'today' | 'week' | 'month' | 'year' | 'custom';
 
-/** Calendar day key in UTC — sale_date/expense_date are stored in UTC. */
+/** Calendar day key in UTC - sale_date/expense_date are stored in UTC. */
 function toDateKey(date: Date): string {
   const year = date.getUTCFullYear();
   const month = String(date.getUTCMonth() + 1).padStart(2, '0');

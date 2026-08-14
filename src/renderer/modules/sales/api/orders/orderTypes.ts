@@ -9,7 +9,7 @@ export interface PosOrderItem {
   product_id: number | null;
   product_name: string;
   product_price: number | string;
-  /** Product's wholesale price when the line was sold at wholesale — persists the price tier across a hold. */
+  /** Product's wholesale price when the line was sold at wholesale - persists the price tier across a hold. */
   wholesale_price?: number | string | null;
   quantity: number;
   unit_price: number | string;
@@ -77,7 +77,7 @@ export function orderItemsToCartItems(items: PosOrderItem[] | undefined): CartIt
   return (items ?? []).map((item) => {
     const unit_price = Number(item.unit_price);
     // Persisted wholesale price (backend-order_items.wholesale_price) wins over
-    // price comparison — it records the tier at the moment the order was held.
+    // price comparison - it records the tier at the moment the order was held.
     const wholesale = item.wholesale_price != null && Number(item.wholesale_price) > 0
       ? Number(item.wholesale_price)
       : null;

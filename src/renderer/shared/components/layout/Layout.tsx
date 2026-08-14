@@ -27,7 +27,7 @@ export function Layout() {
   }, [isAuthenticated, subscription, location.pathname, navigate]);
 
   // Immersive content mode is scoped to the cashier page, pipeline/estimates
-  // board detail pages, and the documents cabinet — leaving those routes exits
+  // board detail pages, and the documents cabinet - leaving those routes exits
   // fullscreen.
   useEffect(() => {
     const onImmersiveRoute =

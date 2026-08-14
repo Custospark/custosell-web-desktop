@@ -15,7 +15,7 @@ import { HrPageHeader, HrSectionCard } from '../ui/HrSurface';
 import { HR_SURFACE } from '../ui/hrSurfaceStyles';
 
 function personName(p?: { first_name: string; last_name: string } | null) {
-  return p ? `${p.first_name} ${p.last_name}` : '—';
+  return p ? `${p.first_name} ${p.last_name}` : '-';
 }
 
 export default function HrCompanyAssetDetailPage() {
@@ -80,11 +80,11 @@ export default function HrCompanyAssetDetailPage() {
         </div>
         <div className={cn(HR_SURFACE.panel, 'p-4')}>
           <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Serial / Location</p>
-          <p className="mt-1 text-sm text-gray-800">{asset.serial_number || '—'} · {asset.location || '—'}</p>
+          <p className="mt-1 text-sm text-gray-800">{asset.serial_number || '-'} · {asset.location || '-'}</p>
         </div>
         <div className={cn(HR_SURFACE.panel, 'p-4')}>
           <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Book status</p>
-          <p className="mt-1 text-sm capitalize text-gray-800">{asset.status ? asset.status.replace('_', ' ') : '—'}</p>
+          <p className="mt-1 text-sm capitalize text-gray-800">{asset.status ? asset.status.replace('_', ' ') : '-'}</p>
           <p className="text-xs text-gray-500">Cost {asset.cost.toLocaleString()} · Book {asset.book_value.toLocaleString()}</p>
         </div>
       </div>
@@ -113,7 +113,7 @@ export default function HrCompanyAssetDetailPage() {
                     <td className="px-4 py-2.5 capitalize">{row.action}</td>
                     <td className="px-4 py-2.5">{personName(row.from_employee)}</td>
                     <td className="px-4 py-2.5">{personName(row.to_employee)}</td>
-                    <td className="px-4 py-2.5 text-gray-500">{row.notes ?? '—'}</td>
+                    <td className="px-4 py-2.5 text-gray-500">{row.notes ?? '-'}</td>
                   </tr>
                 ))}
               </tbody>

@@ -1,4 +1,4 @@
-# ADR — Business-scope all offline local stores & stock ledger (DB v15)
+# ADR - Business-scope all offline local stores & stock ledger (DB v15)
 
 - **Date:** 2026-08-13
 - **Status:** Accepted
@@ -11,7 +11,7 @@ The offline store (`CustosellOffline`, IndexedDB) lives in a **single shared dat
 However, an audit found the **local record stores and the stock ledger were not business-scoped**:
 
 - Every per-domain local store (`localProducts`, `localSales`, `localCustomers`, `localExpenses`, `localOrders`, `localRefunds`, `localShifts`, `localCategories`, `localRoles`, `localStaff`, `localExpenseCategories`, `localGuideFeedback`, `localBusinessSettings`) persisted **no `businessId`** and its `getAll`/`getPending` returned **every business's** records. The UI read/overlay paths merged these unscoped pending sets, so a user in business B could see business A's pending offline creates/updates.
-- The **stock ledger** was the worst: the `stock` store was keyed by `productId` only (no businessId), `adjustments` had no businessId, `getPendingAdjustments()` returned all businesses' adjustments, and `syncStock.processStockAdjustments()` posted them under the **currently active session** — a real "stock syncs to the wrong business" risk when users of different businesses share a machine.
+- The **stock ledger** was the worst: the `stock` store was keyed by `productId` only (no businessId), `adjustments` had no businessId, `getPendingAdjustments()` returned all businesses' adjustments, and `syncStock.processStockAdjustments()` posted them under the **currently active session** - a real "stock syncs to the wrong business" risk when users of different businesses share a machine.
 
 ## Decision
 

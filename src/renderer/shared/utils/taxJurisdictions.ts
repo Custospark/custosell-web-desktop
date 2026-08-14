@@ -2,7 +2,7 @@ import { findCountryByCode } from './countryCodes';
 
 export interface TaxJurisdictionMetadata {
   defaultVatRate: number;
-  /** Display name for filing portal hints (e.g. URA, KRA) — jurisdiction-specific, not hardcoded in UI copy. */
+  /** Display name for filing portal hints (e.g. URA, KRA) - jurisdiction-specific, not hardcoded in UI copy. */
   filingAuthority?: string;
 }
 

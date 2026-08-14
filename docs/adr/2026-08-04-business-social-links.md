@@ -5,14 +5,14 @@ Status: Accepted · 2026-08-04 · Cross-stack (frontend + backend)
 ## Context
 
 Businesses need to expose their external profiles (Facebook, YouTube, Instagram, X,
-TikTok, LinkedIn, WhatsApp — or any future platform) on their public `/@slug` shop.
+TikTok, LinkedIn, WhatsApp - or any future platform) on their public `/@slug` shop.
 Backend stores them in a dedicated `business_social_links` table with a **free-text**
 `platform` (no enum), exposed on `GET /storefront/{slug}` as `social_links`.
 
 ## Decisions
 
 ### Server-only CRUD in Settings → Business
-A new self-contained **"Social links"** card in `BusinessSettingsForm` — deliberately
+A new self-contained **"Social links"** card in `BusinessSettingsForm` - deliberately
 **not** part of the parent form's draft/save/cancel. Each row can be **added**, **edited
 (platform name + URL both editable)**, or **removed (confirm dialog)**; each call uses its
 own mutations (`useUpsertBusinessSocialLink`, `useDeleteBusinessSocialLink`)
@@ -36,7 +36,7 @@ a child resource (the existing offline path is for `UpdateBusinessData` fields).
 - URL input normalizes `https://` prefix if omitted; backend still validates `url`.
 - Adding an existing platform **upserts** (updates its URL) rather than duplicating.
 
-### Public shop page — links left of the QR, no download
+### Public shop page - links left of the QR, no download
 `ShopPage.tsx` now wraps social links + QR in a responsive row: links sit **to the left
 of the QR** on `sm+`, stacking above it on mobile. The **Download PNG** control was
 removed from the public shop page (kept in shop settings via `StorefrontQrDownloadButton`),
@@ -51,13 +51,13 @@ the 7 known platforms plus a `hasBrandIcon()` helper (eslint-disable for
 
 ## Files
 
-- `src/renderer/modules/settings/api/settings/BusinessTypes.ts` — `BusinessSocialLink`,
-  `UpsertBusinessSocialLinkData`; `storefrontTypes.ts` — `StorefrontSocialLink` +
+- `src/renderer/modules/settings/api/settings/BusinessTypes.ts` - `BusinessSocialLink`,
+  `UpsertBusinessSocialLinkData`; `storefrontTypes.ts` - `StorefrontSocialLink` +
   `StorefrontShop.social_links`.
-- `src/renderer/modules/settings/api/settings/BusinessQueries.ts` — `socialLinksKeys`,
+- `src/renderer/modules/settings/api/settings/BusinessQueries.ts` - `socialLinksKeys`,
   `useBusinessSocialLinks`, `useUpsertBusinessSocialLink`, `useDeleteBusinessSocialLink`.
-- `src/renderer/modules/settings/ui/BusinessSocialSection.tsx` — the settings card.
-- `src/renderer/modules/storefront/ShopPage.tsx` — links left of QR; removed `showDownload`.
+- `src/renderer/modules/settings/ui/BusinessSocialSection.tsx` - the settings card.
+- `src/renderer/modules/storefront/ShopPage.tsx` - links left of QR; removed `showDownload`.
 - `src/renderer/modules/storefront/ui/StorefrontSocialLinks.tsx` + `brandIcons.tsx`.
 
 ## Failure states
@@ -67,20 +67,20 @@ the 7 known platforms plus a `hasBrandIcon()` helper (eslint-disable for
 - Invalid URL → backend 422 → toast (field error not inline since sections are separate).
 - Duplicate platform → backend upserts; list refresh shows one row.
 
-## UX pass — standard platform select (2026-08-05)
+## UX pass - standard platform select (2026-08-05)
 
 The **add-link** form now offers the standard platforms with configured brand icons
 (Facebook, Instagram, WhatsApp, Twitter/LinkedIn, YouTube, TikTok) in a `<select>`,
-plus a **"Custom platform…"** option that reveals a free-text platform input — keeping
+plus a **"Custom platform…"** option that reveals a free-text platform input - keeping
 custom names supported (the stored `platform` stays free-text, no enum change). Platform
 is still editable on existing rows; adding the same platform again updates its URL.
 
 - `STANDARD_PLATFORMS` constant + `CUSTOM_OPTION` sentinel in `BusinessSocialSection.tsx`.
 - `resolveChosenPlatform(selectValue, customValue)` picks the standard choice or falls
   back to the custom text; empty `custom` keeps the Add button disabled.
-- UI-only change — data model and accessors unchanged.
+- UI-only change - data model and accessors unchanged.
 
-## Also in this pass — shop loading state
+## Also in this pass - shop loading state
 
 Clicking any **"Explore Offers"** action (`DiscoverShopsBrowse`, `BusinessStorefrontCard`,
 `StorefrontProductDetailModal` → `ROUTES.SHOP`) mounts `ShopPage`. Its earlier guard

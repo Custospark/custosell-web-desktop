@@ -90,7 +90,7 @@ export default function DashboardPage() {
 
       {/* Main Content: Left Column + Right Column */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* Left Column — Sales Trend + Low Stock + Recent Activity */}
+        {/* Left Column - Sales Trend + Low Stock + Recent Activity */}
         <div className="lg:col-span-3 space-y-6">
           <SalesTrendChart data={summary?.sales_trend ?? []} />
 
@@ -147,7 +147,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Right Column — Reports + VAT + Expenses */}
+        {/* Right Column - Reports + VAT + Expenses */}
         <div className="lg:col-span-2 space-y-6">
           <BranchPerformanceCard />
 

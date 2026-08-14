@@ -1,6 +1,6 @@
 # Estimates & Projects module
 
-Enterprise project estimates, costing, proposals, job delivery, and profitability — online-only, internal staff use.
+Enterprise project estimates, costing, proposals, job delivery, and profitability - online-only, internal staff use.
 
 ## Scope
 
@@ -51,7 +51,7 @@ Permission keys (mapped to module): `estimates.view`, `estimates.create`, `estim
 
 ## Offline
 
-Online-only — no IndexedDB queue or sync replay for estimates/projects.
+Online-only - no IndexedDB queue or sync replay for estimates/projects.
 
 ## Key backend files
 

@@ -81,7 +81,7 @@ export function SearchResults({
   const hasQuery = query.trim().length > 0;
   const hasHistory = recentSearches.length > 0 || frequentItems.length > 0;
 
-  // ── A: No query — show history / tips ─────────────────────────────────────
+  // ── A: No query - show history / tips ─────────────────────────────────────
   if (!hasQuery) {
     if (!hasHistory) {
       return (
@@ -214,7 +214,7 @@ export function SearchResults({
   // ── C: Results list ──────────────────────────────────────────────────────────
   return (
     <div className="py-2">
-      <div className={sectionTitle}>Results — {results.length} found</div>
+      <div className={sectionTitle}>Results - {results.length} found</div>
       <AnimatePresence>
         {results.map((m, i) => {
           const isActive = activeIndex === i;

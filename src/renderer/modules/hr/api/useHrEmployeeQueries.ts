@@ -158,7 +158,7 @@ export function useUnlinkHrEmployeeUser() {
       void qc.invalidateQueries({ queryKey: hrKeys.employee(id) });
       void qc.invalidateQueries({ queryKey: [...hrKeys.all, 'employees'] });
       void qc.invalidateQueries({ queryKey: hrKeys.accountOptions() });
-      showToast('success', 'Login disconnected — staff account kept');
+      showToast('success', 'Login disconnected - staff account kept');
     },
     onError: (err: AxiosError<{ message?: string }>) => onError(err, 'Could not unlink staff user'),
   });

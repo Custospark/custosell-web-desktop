@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom';
 import { cn } from '../../../shared/utils/cn';
 import { LANDING_MOBILE_TABS, scrollLandingToTop } from './landingMobileNav';
 
-/** Fixed bottom tab bar — marketing shell, mobile only. Labels always visible. */
+/** Fixed bottom tab bar - marketing shell, mobile only. Labels always visible. */
 export function LandingMobileTabBar() {
   return (
     <nav

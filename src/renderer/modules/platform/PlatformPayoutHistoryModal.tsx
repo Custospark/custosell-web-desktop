@@ -37,7 +37,7 @@ export default function PlatformPayoutHistoryModal({ entity, onClose }: Props) {
 
   const formatWhen = (p: { paid_at: string | null; scheduled_at: string | null }): string => {
     const raw = p.paid_at ?? p.scheduled_at;
-    if (!raw) return '—';
+    if (!raw) return '-';
     const d = new Date(raw);
     return format(d, 'MMM d, yyyy · h:mm a');
   };
@@ -79,13 +79,13 @@ export default function PlatformPayoutHistoryModal({ entity, onClose }: Props) {
           {entity.mobile_money_provider && entity.mobile_money_number && (
             <div className="flex items-center gap-1.5 text-xs text-gray-400 mt-2">
               <Smartphone className="w-3 h-3" />
-              <span>{entity.mobile_money_provider} — {entity.mobile_money_number}{entity.mobile_money_name ? ` (${entity.mobile_money_name})` : ''}</span>
+              <span>{entity.mobile_money_provider} - {entity.mobile_money_number}{entity.mobile_money_name ? ` (${entity.mobile_money_name})` : ''}</span>
             </div>
           )}
           {(entity.bank_name && entity.bank_account_name) && (
             <div className="flex items-center gap-1.5 text-xs text-gray-400 mt-1">
               <Building2 className="w-3 h-3" />
-              <span>{entity.bank_name} — {entity.bank_account_name}</span>
+              <span>{entity.bank_name} - {entity.bank_account_name}</span>
             </div>
           )}
         </div>

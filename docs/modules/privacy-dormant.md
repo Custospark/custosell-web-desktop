@@ -4,8 +4,8 @@
 
 Two features for data privacy compliance and account lifecycle management:
 
-1. **Privacy consent at registration** — users must agree to the Data & Privacy Policy before creating an account.
-2. **Dormant account flagging** — businesses inactive for 120+ days are flagged, owner is notified, and the business is marked for platform admin review.
+1. **Privacy consent at registration** - users must agree to the Data & Privacy Policy before creating an account.
+2. **Dormant account flagging** - businesses inactive for 120+ days are flagged, owner is notified, and the business is marked for platform admin review.
 
 ---
 
@@ -58,7 +58,7 @@ Logic:
 1. Finds active businesses with `last_activity_at IS NULL OR last_activity_at < 120 days ago` AND `created_at < 120 days ago`.
 2. For each dormant business:
    - If `dormant_notified_at` is **null**: sends `DormantAccountWarning` email to owner, sets `dormant_notified_at = now()`.
-   - If `dormant_notified_at` is **older than 7 days**: logs `business.dormant_ready_for_deletion` to `PlatformAuditLog` — flags it for platform admin to review and action.
+   - If `dormant_notified_at` is **older than 7 days**: logs `business.dormant_ready_for_deletion` to `PlatformAuditLog` - flags it for platform admin to review and action.
 
 ### Notification
 
@@ -106,8 +106,8 @@ Schedule::command('businesses:flag-dormant')->dailyAt('03:00');
 
 ### Pre-existing Audit Logs
 
-- `business.data_reset` — `PlatformBusinessService::resetBusinessData()` (data wipe before deletion)
-- `business.deleted` — `PlatformBusinessService::delete()` (platform admin action)
+- `business.data_reset` - `PlatformBusinessService::resetBusinessData()` (data wipe before deletion)
+- `business.deleted` - `PlatformBusinessService::delete()` (platform admin action)
 
 ---
 
@@ -115,14 +115,14 @@ Schedule::command('businesses:flag-dormant')->dailyAt('03:00');
 
 **File:** `src/renderer/modules/landing/PrivacyPage.tsx`
 
-- New section: **Account Dormancy & Cleanup** — explains 120-day flagging, periodic admin review, no deletion without warning
-- Updated FAQ: "What happens to dormant accounts?" — explains the full lifecycle
+- New section: **Account Dormancy & Cleanup** - explains 120-day flagging, periodic admin review, no deletion without warning
+- Updated FAQ: "What happens to dormant accounts?" - explains the full lifecycle
 - Updated Data Export section: mentions export reminder on dormancy
 - Last updated: July 2026
 
 ---
 
-## 5. Booking Time Slot Management (Pre-existing — Verified)
+## 5. Booking Time Slot Management (Pre-existing - Verified)
 
 ### Completed Booking Frees Slot
 

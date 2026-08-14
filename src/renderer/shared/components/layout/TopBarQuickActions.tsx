@@ -11,7 +11,7 @@ const iconBtn =
   'inline-flex items-center justify-center shrink-0 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40';
 
 /**
- * TopBarQuickActions — the right cluster of the global search top bar.
+ * TopBarQuickActions - the right cluster of the global search top bar.
  * Open Orders + Products (with live badges) and Notifications live here so the
  * Navbar has room for business name, referral, plan, and profile. Apps,
  * Tutorials, and Feedback are surfaced from the profile menu as lg+ shortcuts,

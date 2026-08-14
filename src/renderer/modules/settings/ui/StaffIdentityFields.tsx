@@ -161,7 +161,7 @@ export function StaffIdentityFields({
           {roleHelperText ? (
             <p className="text-xs text-gray-500 mt-1">{roleHelperText}</p>
           ) : (
-            <p className="text-xs text-gray-500 mt-1">Job title only — what they can open is set under Module access below.</p>
+            <p className="text-xs text-gray-500 mt-1">Job title only - what they can open is set under Module access below.</p>
           )}
           <button type="button" onClick={onAddRole}
             className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors">

@@ -9,7 +9,7 @@ export interface ParsedLeadSearch {
   priority: PipelinePriority | null;
   /** Due-date filter from # tokens */
   dueFilter: 'overdue' | 'today' | 'week' | string | null;
-  /** Assigned-to filter — 'me' means current user */
+  /** Assigned-to filter - 'me' means current user */
   assignedTo: 'me' | null;
 }
 
@@ -28,7 +28,7 @@ function parseIsoDateToken(raw: string): string | null {
   return Number.isNaN(d.getTime()) ? null : raw;
 }
 
-/** Parse board card search — @label, !priority, #due-date, @me */
+/** Parse board card search - @label, !priority, #due-date, @me */
 export function parseLeadSearchQuery(raw: string): ParsedLeadSearch {
   const labels: string[] = [];
   let priority: PipelinePriority | null = null;

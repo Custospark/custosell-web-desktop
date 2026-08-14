@@ -32,7 +32,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 function formatDate(iso?: string | null): string {
-  if (!iso) return '—';
+  if (!iso) return '-';
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
@@ -148,7 +148,7 @@ export default function PlatformManageSubscriptionsPage() {
             )},
             { key: 'price_yearly_usd', header: 'Yearly (USD)', align: 'right', render: (s) => (
               <>
-                <span className="text-sm font-medium text-gray-900">{s.price_yearly_usd ?? s.plan?.price_yearly_usd ? `$${Number(s.price_yearly_usd ?? s.plan?.price_yearly_usd ?? 0).toFixed(2)}` : '—'}</span>
+                <span className="text-sm font-medium text-gray-900">{s.price_yearly_usd ?? s.plan?.price_yearly_usd ? `$${Number(s.price_yearly_usd ?? s.plan?.price_yearly_usd ?? 0).toFixed(2)}` : '-'}</span>
               </>
             )},
             { key: 'status', header: 'Status', align: 'center', render: (s) => (
@@ -157,7 +157,7 @@ export default function PlatformManageSubscriptionsPage() {
               </span>
             )},
             { key: 'billing_cycle', header: 'Cycle', align: 'center', render: (s) => (
-              <span className="text-sm text-gray-600 capitalize">{s.billing_cycle ?? '—'}</span>
+              <span className="text-sm text-gray-600 capitalize">{s.billing_cycle ?? '-'}</span>
             )},
             { key: 'onboarding', header: 'Onboarding (USD)', align: 'right', render: (s) => {
               const fee = s.onboarding_fee_usd;
@@ -170,7 +170,7 @@ export default function PlatformManageSubscriptionsPage() {
                     ? <span className="inline-flex items-center gap-1 text-xs text-green-600 font-medium"><Check className="w-3 h-3" /> Paid</span>
                     : fee != null && fee > 0
                       ? <span className="inline-flex items-center gap-1 text-xs text-amber-600 font-medium"><X className="w-3 h-3" /> Unpaid</span>
-                      : <span className="text-xs text-gray-400">—</span>}
+                      : <span className="text-xs text-gray-400">-</span>}
                 </div>
               );
             }},

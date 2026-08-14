@@ -36,7 +36,7 @@ export default function WishlistPage() {
     return () => setHeader(null);
   }, [token, data, setHeader]);
 
-  /** Add to cart only — wishlist clears after a successful place-order on the server. */
+  /** Add to cart only - wishlist clears after a successful place-order on the server. */
   const addToCart = useCallback((product: StorefrontProduct) => {
     const biz = product.business;
     if (!biz?.slug) {

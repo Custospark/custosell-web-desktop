@@ -8,7 +8,7 @@ export function getSystemStatus(): SystemStatus {
   return (state as { network?: { systemStatus?: SystemStatus } }).network?.systemStatus ?? 'online';
 }
 
-/** Completely offline only. `slow` is reachable — not offline. */
+/** Completely offline only. `slow` is reachable - not offline. */
 export function isOfflineMode(): boolean {
   return getSystemStatus() === 'offline';
 }
@@ -35,7 +35,7 @@ export function isBrowserOffline(): boolean {
 }
 
 /**
- * True when completely offline — queue locally instead of waiting on the API.
+ * True when completely offline - queue locally instead of waiting on the API.
  * Never use `isNetworkFailure` alone for write fallback: timeouts on slow/flaky links
  * often mean the server already processed the request, which duplicates rows if we also persist locally.
  */
@@ -43,7 +43,7 @@ export function shouldCompleteMutationLocally(): boolean {
   return isCompletelyOffline();
 }
 
-/** Alias for mutation catch blocks — same rule as {@link shouldCompleteMutationLocally}. */
+/** Alias for mutation catch blocks - same rule as {@link shouldCompleteMutationLocally}. */
 export function shouldFallbackMutationToLocal(): boolean {
   return shouldCompleteMutationLocally();
 }
@@ -85,7 +85,7 @@ export function sanitizeErrorMessage(err: unknown, fallback: string): string {
   const serverMessage = data?.message;
   if (serverMessage && serverMessage !== 'Server Error') return serverMessage;
   if (isMutationTimeout(err) && !isCompletelyOffline()) {
-    return 'Request timed out. Your action may still be processing — wait and refresh before trying again.';
+    return 'Request timed out. Your action may still be processing - wait and refresh before trying again.';
   }
   if (err instanceof Error && err.message && err.message !== 'Request failed with status code 422') {
     return err.message;

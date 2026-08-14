@@ -14,7 +14,7 @@ import {
 
 type DetailRow = { icon: typeof MapPin; value: string };
 
-/** Business context trigger — the Custosell equivalent of Custocare's context switcher. */
+/** Business context trigger - the Custosell equivalent of Custocare's context switcher. */
 export default function BusinessDropdown() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -104,7 +104,7 @@ export default function BusinessDropdown() {
           open ? 'bg-blue-50 ring-blue-300' : 'bg-white ring-blue-200 hover:bg-blue-50/60 hover:ring-blue-300',
         )}
         title={businessName}
-        aria-label={`${businessName} — business menu`}
+        aria-label={`${businessName} - business menu`}
         aria-expanded={open}
       >
         <div className="w-7 h-7 rounded-full flex items-center justify-center ring-1 ring-blue-200 bg-blue-50 shrink-0 overflow-hidden">

@@ -1,4 +1,4 @@
-/** Frosted Talent canvas — mirrors Pipeline/Projects Progress (My progress) surfaces. */
+/** Frosted Talent canvas - mirrors Pipeline/Projects Progress (My progress) surfaces. */
 export const TALENT_SURFACE = {
   canvas:
     'relative -mx-4 min-h-full overflow-hidden px-3 pb-16 pt-4 sm:-mx-6 sm:px-4 sm:pb-20 sm:pt-6',
@@ -9,7 +9,7 @@ export const TALENT_SURFACE = {
   content: 'relative z-[1] mx-auto max-w-7xl space-y-5',
   hero: 'rounded-2xl border border-white/60 bg-white/70 p-4 shadow-[0_8px_32px_rgba(15,23,42,0.06)] backdrop-blur-xl sm:p-5',
   panel: 'rounded-xl border border-white/60 bg-white/65 p-4 shadow-[0_4px_24px_rgba(15,23,42,0.05)] backdrop-blur-xl sm:p-5',
-  /** Extra-clear glass well for charts — keeps series readable on the canvas. */
+  /** Extra-clear glass well for charts - keeps series readable on the canvas. */
   chartPanel:
     'rounded-2xl border border-white/70 bg-gradient-to-br from-white/80 via-white/55 to-white/40 p-4 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur-2xl sm:p-5',
   chartWell:

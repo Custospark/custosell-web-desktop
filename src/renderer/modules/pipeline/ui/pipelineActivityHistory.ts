@@ -3,7 +3,7 @@ import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { formatShiftDate } from '../../../shared/utils/formatDateTime';
 import { activityTypeLabel, USER_COMMENT_TYPES } from './pipelineActivityMeta';
 
-/** Full card timeline — every activity on the lead (comments, moves, attachments, reactions, etc.). */
+/** Full card timeline - every activity on the lead (comments, moves, attachments, reactions, etc.). */
 export function buildHistoryTimeline(activities: PipelineLeadActivity[] = []): PipelineLeadActivity[] {
   return [...activities].sort((a, b) => {
     const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
@@ -13,7 +13,7 @@ export function buildHistoryTimeline(activities: PipelineLeadActivity[] = []): P
 }
 
 function formatFieldValue(field: string | undefined, value: unknown, currency = 'UGX'): string {
-  if (value == null || value === '') return '—';
+  if (value == null || value === '') return '-';
   if (field === 'due_date' || field === 'expected_close_date' || field === 'start_date') {
     return formatShiftDate(String(value));
   }

@@ -221,7 +221,7 @@ export default function ForecastingBudgetDetailPage() {
                           <ZbbStatusBadge status={line.zbb_status} />
                         </td>
                         <td className="max-w-xs px-3 py-2 text-xs text-gray-600">
-                          {line.justification || <span className="text-gray-400">—</span>}
+                          {line.justification || <span className="text-gray-400">-</span>}
                         </td>
                         <td className="px-3 py-2">
                           <div className="flex flex-wrap gap-1.5">
@@ -276,7 +276,7 @@ export default function ForecastingBudgetDetailPage() {
                         <td className="px-3 py-2 font-medium text-gray-900">{snap.label}</td>
                         <td className="px-3 py-2 font-mono text-xs">{snap.as_of_date}</td>
                         <td className="px-3 py-2 text-xs text-gray-500">
-                          {snap.created_at ? new Date(snap.created_at).toLocaleString() : '—'}
+                          {snap.created_at ? new Date(snap.created_at).toLocaleString() : '-'}
                         </td>
                       </tr>
                     ))}

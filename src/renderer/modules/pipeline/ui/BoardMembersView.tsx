@@ -133,7 +133,7 @@ export default function BoardMembersView({ board, boardId, workspace, canManage 
             <p className="mt-1.5 text-xs text-gray-500">
               {isShared
                 ? 'Invited collaborators can view and contribute to this board based on their role.'
-                : `This board is ${VISIBILITY_LABELS[visibility] ?? visibility}. Invited members only apply to shared boards — change visibility from Board settings to invite people.`}
+                : `This board is ${VISIBILITY_LABELS[visibility] ?? visibility}. Invited members only apply to shared boards - change visibility from Board settings to invite people.`}
             </p>
           </div>
 

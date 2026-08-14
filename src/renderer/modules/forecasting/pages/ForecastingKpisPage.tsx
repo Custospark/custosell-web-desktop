@@ -77,7 +77,7 @@ export default function ForecastingKpisPage() {
               />
               <ForecastMetric
                 label="CAC"
-                value={data.retail.cac == null ? '—' : formatForecastMoney(data.retail.cac)}
+                value={data.retail.cac == null ? '-' : formatForecastMoney(data.retail.cac)}
                 hint={`${formatForecastMoney(data.retail.acquisition_spend_30d)} spend / ${data.retail.new_customers_30d} new customers`}
               />
               <ForecastMetric label="LTV" value={formatForecastMoney(data.retail.ltv)} />

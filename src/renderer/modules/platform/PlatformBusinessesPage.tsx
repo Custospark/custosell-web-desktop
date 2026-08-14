@@ -410,7 +410,7 @@ export default function PlatformBusinessesPage() {
                 { key: 'name', header: 'Business', render: (b) => (
                   <div>
                     <p className="font-medium text-gray-900">{b.name}</p>
-                    <p className="text-xs text-gray-500">{b.owner_email ?? b.email ?? '—'}</p>
+                    <p className="text-xs text-gray-500">{b.owner_email ?? b.email ?? '-'}</p>
                     {b.owner_phone && (
                       <a href={`tel:${b.owner_phone}`} className="text-xs text-blue-600 hover:underline block">
                         {b.owner_phone}
@@ -459,7 +459,7 @@ export default function PlatformBusinessesPage() {
                 { key: 'transactions_30d', header: 'Sales (30d)', render: (b) => (
                   <span title="Count of sale records in the last 30 days">{b.transactions_30d.toLocaleString()}</span>
                 )},
-                { key: 'plan', header: 'Plan', render: (b) => b.plan_name ?? '—' },
+                { key: 'plan', header: 'Plan', render: (b) => b.plan_name ?? '-' },
                 { key: 'actions', header: 'Actions', align: 'center', render: (b) => (
                   <PlatformBusinessRowActions
                     business={b}

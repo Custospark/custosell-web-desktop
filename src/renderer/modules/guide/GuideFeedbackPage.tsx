@@ -119,9 +119,9 @@ export default function GuideFeedbackPage() {
     try {
       const saved = await createMut.mutateAsync({ category, subject: s, body: b });
       if (saved._pendingSync) {
-        imperativeToast.show('success', 'Message saved — it will send when you are back online.');
+        imperativeToast.show('success', 'Message saved - it will send when you are back online.');
       } else {
-        imperativeToast.show('success', 'Thanks — your message was sent to the Custosell team.');
+        imperativeToast.show('success', 'Thanks - your message was sent to the Custosell team.');
       }
       setSubject('');
       setBody('');
@@ -148,7 +148,7 @@ export default function GuideFeedbackPage() {
           <h1 className="text-2xl font-bold text-gray-900">Feedback</h1>
           <p className="mt-1 max-w-2xl text-sm text-gray-600">
             Share feedback or request a feature. The Custosell team reads every submission and may reply here.
-            {isOffline && ' You can still compose messages offline — they will send automatically when you reconnect.'}
+            {isOffline && ' You can still compose messages offline - they will send automatically when you reconnect.'}
           </p>
         </div>
       </div>

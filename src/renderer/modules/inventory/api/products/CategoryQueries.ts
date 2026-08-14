@@ -42,7 +42,7 @@ async function loadLocalPendingCategories(): Promise<CategoryWithSyncMeta[]> {
     .map(toCategoryWithSyncMeta);
 }
 
-/** Merge server categories with local pending creates — local wins by id/name. */
+/** Merge server categories with local pending creates - local wins by id/name. */
 function mergeCategoryLists(base: Category[], local: CategoryWithSyncMeta[]): CategoryWithSyncMeta[] {
   const safeBase = base.filter(Boolean) as Category[];
   const safeLocal = local.filter(Boolean) as CategoryWithSyncMeta[];
@@ -134,7 +134,7 @@ export function useCreateCategory() {
           if (list.some((c) => c.id === category.id || c.name === category.name)) return list;
           return [category, ...list];
         });
-        showToast('success', 'Category saved — will sync when online');
+        showToast('success', 'Category saved - will sync when online');
       } else {
         void refreshCategoryCatalogSnapshot();
         qc.invalidateQueries({ queryKey: inventoryKeys.categories() });
@@ -190,7 +190,7 @@ export function useUpdateCategory() {
         qc.setQueryData<CategoryWithSyncMeta[]>(inventoryKeys.categories(), (old) =>
           sanitizeCategoryList(old ?? []).map((c) => c.id === id ? category : c),
         );
-        showToast('success', 'Changes saved — will sync when online');
+        showToast('success', 'Changes saved - will sync when online');
       } else {
         void refreshCategoryCatalogSnapshot();
         qc.invalidateQueries({ queryKey: inventoryKeys.categories() });

@@ -15,7 +15,7 @@ function isFreshFinancialReportQuery(key: readonly unknown[]): boolean {
     && ACCOUNTING_FRESH_REPORT_KINDS.has(key[1]);
 }
 
-/** Platform admin + live financial reports + subscription access should always be fetched fresh — never written to localStorage. */
+/** Platform admin + live financial reports + subscription access should always be fetched fresh - never written to localStorage. */
 export function shouldPersistQuery(query: Query): boolean {
   const root = query.queryKey[0];
   if (root === 'platform') {

@@ -9,7 +9,7 @@ interface PaymentHistoryProps {
   className?: string;
   /**
    * 'pending-only' (Plans tab): show just the payments that need syncing and
-   * render nothing when there are none — avoids duplicating the full history
+   * render nothing when there are none - avoids duplicating the full history
    * that lives on the History tab.
    * 'full' (default): show the complete billing activity feed.
    */
@@ -19,7 +19,7 @@ interface PaymentHistoryProps {
 /**
  * Self-serve billing history. If a payment was collected (e.g. PesaPal) but our
  * system didn't update because the webhook/IPN failed, the payment stays
- * 'pending' here and the user can tap "Sync payment" — which asks the gateway
+ * 'pending' here and the user can tap "Sync payment" - which asks the gateway
  * for the real status and auto-approves it. This reduces support tickets for
  * "I paid but my plan didn't update".
  */
@@ -82,7 +82,7 @@ export default function PaymentHistory({ className, mode = 'full' }: PaymentHist
       </ul>
       <p className="mt-3 text-[11px] leading-relaxed text-gray-400">
         Paid but your plan still shows pending? Tap <span className="font-medium">Sync payment</span> to re-check with the
-        payment provider — no support ticket needed.
+        payment provider - no support ticket needed.
       </p>
     </div>
   );

@@ -26,7 +26,7 @@ function initials(name: string | undefined): string {
 }
 
 /**
- * Discover header account chip — name, email, dashboard/orders, logout.
+ * Discover header account chip - name, email, dashboard/orders, logout.
  */
 export function DiscoverAccountMenu({ user, className, compact = false }: DiscoverAccountMenuProps) {
   const navigate = useNavigate();

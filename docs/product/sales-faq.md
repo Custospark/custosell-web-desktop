@@ -1,4 +1,4 @@
-# Sales FAQ — Closing the Deal
+# Sales FAQ - Closing the Deal
 
 **Audience:** Sales reps pitching Custosell to Ugandan SMEs  
 **Tone:** Direct, confident, no fluff. You're a business person talking to a business person.
@@ -7,9 +7,9 @@
 
 ## What exactly is Custosell?
 
-Custosell is an all-in-one business operating system for Ugandan SMEs. It replaces your cash register, receipt book, customer ledger, stock book, expense notebook, invoice book, and payroll sheets — all in one app that works with or without internet.
+Custosell is an all-in-one business operating system for Ugandan SMEs. It replaces your cash register, receipt book, customer ledger, stock book, expense notebook, invoice book, and payroll sheets - all in one app that works with or without internet.
 
-It's not "just a POS." It's POS + inventory + accounting + HR + e-commerce + CRM, running offline-first on a laptop or tablet. You ring up sales in your shop, and everything — stock deductions, customer history, profit calculations — happens automatically. When you get internet, it syncs.
+It's not "just a POS." It's POS + inventory + accounting + HR + e-commerce + CRM, running offline-first on a laptop or tablet. You ring up sales in your shop, and everything - stock deductions, customer history, profit calculations - happens automatically. When you get internet, it syncs.
 
 ---
 
@@ -28,7 +28,7 @@ It's not "just a POS." It's POS + inventory + accounting + HR + e-commerce + CRM
 
 ## I don't have internet all the time. Does that matter?
 
-No. Custosell is offline-first. You ring up sales, add customers, record expenses — everything works without internet. When you connect, it syncs automatically. You never lose data.
+No. Custosell is offline-first. You ring up sales, add customers, record expenses - everything works without internet. When you connect, it syncs automatically. You never lose data.
 
 ---
 
@@ -38,11 +38,11 @@ Three plans:
 
 | Plan | Monthly (UGX) | Who it's for |
 |------|--------------|--------------|
-| **Essential** | 75,000 | Single-shop retail — POS, inventory, customers, expenses, dashboard, public storefront |
-| **Professional** | 200,000 | Growing business — adds pipeline, estimates, documents, marketplace, full invoicing |
-| **Enterprise** | 500,000 | Multi-branch — adds accounting, HR & payroll, forecasting, unlimited staff/products |
+| **Essential** | 75,000 | Single-shop retail - POS, inventory, customers, expenses, dashboard, public storefront |
+| **Professional** | 200,000 | Growing business - adds pipeline, estimates, documents, marketplace, full invoicing |
+| **Enterprise** | 500,000 | Multi-branch - adds accounting, HR & payroll, forecasting, unlimited staff/products |
 
-All plans include a 30-day trial after setup. One-time onboarding fee applies (150k–750k depending on plan).
+All plans include a 30-day trial after setup. One-time onboarding fee applies (150k-750k depending on plan).
 
 ---
 
@@ -66,7 +66,7 @@ No. There's no free tier. But you get a 30-day free trial to test everything bef
 
 ## What if I sign up and it doesn't work for my business?
 
-You have 14 days to test it. If it's not right, cancel before the trial ends and you pay nothing. After that, month-to-month — cancel anytime, no lock-in contracts.
+You have 14 days to test it. If it's not right, cancel before the trial ends and you pay nothing. After that, month-to-month - cancel anytime, no lock-in contracts.
 
 ---
 
@@ -76,15 +76,15 @@ Yes. You control which modules each staff member can access. A cashier sees only
 
 ---
 
-## What about receipts — are they EFRIS-compliant?
+## What about receipts - are they EFRIS-compliant?
 
-Yes. Custosell generates URA-compliant fiscal receipts. Works offline too — receipts are queued and synced when you reconnect.
+Yes. Custosell generates URA-compliant fiscal receipts. Works offline too - receipts are queued and synced when you reconnect.
 
 ---
 
 ## I sell on WhatsApp and TikTok. Can Custosell help with that?
 
-Yes — the built-in storefront gives you a public shop link you can share anywhere. Customers browse products, place orders, and you fulfil from your POS. No website needed.
+Yes - the built-in storefront gives you a public shop link you can share anywhere. Customers browse products, place orders, and you fulfil from your POS. No website needed.
 
 ---
 

@@ -109,12 +109,12 @@ export default function PlatformManagePlansPage() {
             )},
             { key: 'price_yearly_usd', header: 'Yearly (USD)', align: 'right', render: (p) => (
               <span className="text-sm font-medium text-gray-900">
-                {p.price_yearly_usd ? `$${Number(p.price_yearly_usd).toFixed(2)}` : '—'}
+                {p.price_yearly_usd ? `$${Number(p.price_yearly_usd).toFixed(2)}` : '-'}
               </span>
             )},
             { key: 'onboarding_fee_usd', header: 'Onboarding (USD)', align: 'right', render: (p) => (
               <span className="text-sm font-medium text-gray-900">
-                {p.onboarding_fee_usd ? `$${Number(p.onboarding_fee_usd).toFixed(2)}` : '—'}
+                {p.onboarding_fee_usd ? `$${Number(p.onboarding_fee_usd).toFixed(2)}` : '-'}
               </span>
             )},
             { key: 'trial_days', header: 'Trial', align: 'center', render: (p) => (

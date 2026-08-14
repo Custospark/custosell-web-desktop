@@ -226,7 +226,7 @@ export default function BoardCollaborationDrawer({
 
       {!canContribute && (
         <p className="mb-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-900">
-          You have viewer access — notices and polls are read-only. You can still mark notices as read to track what is new.
+          You have viewer access - notices and polls are read-only. You can still mark notices as read to track what is new.
         </p>
       )}
 
@@ -360,7 +360,7 @@ export default function BoardCollaborationDrawer({
                             className="min-h-10 flex-1 bg-emerald-600 hover:bg-emerald-700 sm:flex-none"
                           >
                             <CheckCircle2 className="mr-1.5 h-4 w-4" />
-                            Got it — mark as read
+                            Got it - mark as read
                           </Button>
                         ) : (
                           <button
@@ -427,7 +427,7 @@ export default function BoardCollaborationDrawer({
               )}
               <div className="rounded-lg border border-violet-200 bg-white/80 p-3">
                 <p className="text-xs font-semibold text-violet-900">Voting deadline</p>
-                <p className="mt-1 text-xs text-violet-700">Optional — voting closes automatically after this date and time.</p>
+                <p className="mt-1 text-xs text-violet-700">Optional - voting closes automatically after this date and time.</p>
                 <input
                   type="datetime-local"
                   value={pollClosesAt}
@@ -746,7 +746,7 @@ export default function BoardCollaborationDrawer({
 
                       {needsVote && canVote && (
                         <p className="mt-2 text-sm font-medium text-violet-800">
-                          Choose one option — your vote saves immediately.
+                          Choose one option - your vote saves immediately.
                         </p>
                       )}
 

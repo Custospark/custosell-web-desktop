@@ -24,12 +24,12 @@ New platform subnav **Conversions** (`/platform/conversions`) wired end-to-end:
   paths), backfilled for existing active subscriptions from `COALESCE(approved_at,
   updated_at)`.
 - `PlatformConversionMetricsService::conversionDashboard(?from, ?to)` returns:
-  - **summary** — trials started / converted (today, this week, this month, in range),
+  - **summary** - trials started / converted (today, this week, this month, in range),
     conversion rate, and current status distribution (active / on trial / past due /
     cancelled / suspended).
-  - **monthly** — last 12 months of trials started, converted, and per-month rate.
-  - **by_plan** — trials started vs converted grouped by plan slug over the range.
-  - **decisions** — human-readable insight strings.
+  - **monthly** - last 12 months of trials started, converted, and per-month rate.
+  - **by_plan** - trials started vs converted grouped by plan slug over the range.
+  - **decisions** - human-readable insight strings.
 - New permission **`platform.conversions.view`** granted to `platform-admin` and
   `platform-analyst` (migration `2026_08_13_000004_add_conversions_platform_permission.php`).
 - Conversion semantics: a subscription "converts" when it first reaches paid/`ACTIVE`

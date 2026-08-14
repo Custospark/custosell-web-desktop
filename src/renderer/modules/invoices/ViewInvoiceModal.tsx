@@ -102,10 +102,10 @@ export function ViewInvoiceModal({
         title={invoice?.invoice_number ?? 'Invoice'}
         subtitle={
           isStorefrontBuyer
-            ? `Your purchase from ${invoice?.seller_business?.name ?? 'this shop'} — view only.`
+            ? `Your purchase from ${invoice?.seller_business?.name ?? 'this shop'} - view only.`
             : received
-              ? 'Supplier invoice — view only. The seller records payments.'
-              : 'Sales invoice — you can record payments when balance remains.'
+              ? 'Supplier invoice - view only. The seller records payments.'
+              : 'Sales invoice - you can record payments when balance remains.'
         }
         size="xl"
         panelClassName="h-[min(92vh,880px)]"

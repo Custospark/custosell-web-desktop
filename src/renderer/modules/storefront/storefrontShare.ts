@@ -1,7 +1,7 @@
 /**
  * Absolute customer-facing share URL for a business shop (`/@slug`) or a single
  * product (`/@slug/p/<productSlug>`).
- * Always path-based (BrowserRouter) — never HashRouter `#/@slug`.
+ * Always path-based (BrowserRouter) - never HashRouter `#/@slug`.
  * Marketing / QR / WhatsApp links must work on phones and the public web.
  * Priority: VITE_APP_URL > browser origin (http/https only) > hardcoded fallback.
  */

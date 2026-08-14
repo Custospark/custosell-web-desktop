@@ -131,7 +131,7 @@ export async function prefetchStorefrontCatalogs(queryClient: QueryClient): Prom
   ]);
 }
 
-/** Progressive shops — optional server `q` (name, city, @slug) + filters. */
+/** Progressive shops - optional server `q` (name, city, @slug) + filters. */
 export function useStorefrontShopsInfinite(q = '', filters: StorefrontShopFilters = {}) {
   const query = q.trim();
   return useInfiniteQuery({
@@ -149,7 +149,7 @@ export function useStorefrontShopsInfinite(q = '', filters: StorefrontShopFilter
   });
 }
 
-/** Progressive cross-shop products — optional category + server `q` + filters; text search is server-side. */
+/** Progressive cross-shop products - optional category + server `q` + filters; text search is server-side. */
 export function useStorefrontDiscoverInfinite(category = '', q = '', filters: StorefrontProductFilters = {}) {
   return useInfiniteQuery({
     queryKey: storefrontKeys.discoverPages(category, q, filters),
@@ -200,7 +200,7 @@ export function useMyStorefrontOrdersInfinite() {
 }
 
 /**
- * Buyer orders + total — single source for My Orders page and strip badge.
+ * Buyer orders + total - single source for My Orders page and strip badge.
  * (Avoids optimistic count bumps that disagree with an empty list.)
  */
 export function useMyStorefrontOrdersList(enabled = true, options?: { poll?: boolean }) {
@@ -223,7 +223,7 @@ export function useMyStorefrontOrdersList(enabled = true, options?: { poll?: boo
   });
 }
 
-/** Strip badge — open orders only, so the count reflects what still needs attention. */
+/** Strip badge - open orders only, so the count reflects what still needs attention. */
 export function useMyStorefrontOrdersCount(enabled = true) {
   return useQuery({
     queryKey: [storefrontKeys.myOrdersCount()],
@@ -323,7 +323,7 @@ export function useStorefrontShopProducts(slug: string, category = '') {
   });
 }
 
-/** Progressive per-shop products — page on scroll instead of one giant catalog fetch. */
+/** Progressive per-shop products - page on scroll instead of one giant catalog fetch. */
 export function useStorefrontShopProductsInfinite(slug: string, category = '', q = '', filters: StorefrontProductFilters = {}) {
   return useInfiniteQuery({
     queryKey: storefrontKeys.productsPages(slug, category, q, filters),
@@ -401,7 +401,7 @@ export function usePlaceStorefrontOrder() {
       }
     },
     onSuccess: async (_data, vars) => {
-      // Backend already removed ordered products from wishlist — sync UI now.
+      // Backend already removed ordered products from wishlist - sync UI now.
       const productIds = vars.items.map((i) => i.product_id);
       optimisticallyRemoveWishlistProducts(queryClient, productIds);
       await Promise.all([

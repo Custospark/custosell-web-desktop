@@ -14,7 +14,7 @@ export function DeliveryPopover({ address, city, open, onToggle, onClose }: Deli
 
   if (!hasDelivery) {
     return (
-      <span className="text-xs text-gray-400">—</span>
+      <span className="text-xs text-gray-400">-</span>
     );
   }
 

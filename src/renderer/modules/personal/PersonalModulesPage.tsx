@@ -145,15 +145,15 @@ export default function YourToolsPage() {
   const renderStatusLine = () => {
     if (!subscription || !config) return null;
     if (status === 'trial' && subscription.trial_ends_at) {
-      return `Free trial until ${new Date(subscription.trial_ends_at).toLocaleDateString()} — subscribe now to keep your tools`;
+      return `Free trial until ${new Date(subscription.trial_ends_at).toLocaleDateString()} - subscribe now to keep your tools`;
     }
-    if (status === 'active') return 'Your Personal plan is active — all tools unlocked.';
+    if (status === 'active') return 'Your Personal plan is active - all tools unlocked.';
     if (status === 'past_due' && activeAccess && subscription.grace_period_ends_at) {
-      return `Payment overdue — access continues until ${new Date(subscription.grace_period_ends_at).toLocaleDateString()}. Subscribe to keep your tools.`;
+      return `Payment overdue - access continues until ${new Date(subscription.grace_period_ends_at).toLocaleDateString()}. Subscribe to keep your tools.`;
     }
-    if (status === 'past_due') return 'Payment overdue — restore access to unlock your tools.';
-    if (status === 'suspended') return `Access suspended${priceLabel ? ` — restore at just ${priceLabel}/month` : ''}.`;
-    if (status === 'cancelled') return 'Plan cancelled — choose a plan to continue.';
+    if (status === 'past_due') return 'Payment overdue - restore access to unlock your tools.';
+    if (status === 'suspended') return `Access suspended${priceLabel ? ` - restore at just ${priceLabel}/month` : ''}.`;
+    if (status === 'cancelled') return 'Plan cancelled - choose a plan to continue.';
     if (status === 'expired') return 'Your trial has expired. Restore access to continue.';
     return `Plan is ${status}.`;
   };
@@ -265,7 +265,7 @@ export default function YourToolsPage() {
                     <Lock className="h-3.5 w-3.5" />
                   </span>
                   <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-                    Locked tools — reactivate to unlock
+                    Locked tools - reactivate to unlock
                   </h2>
                 </div>
                 <button
@@ -281,7 +281,7 @@ export default function YourToolsPage() {
                 {lockedTools.map((t) => (
                   <div
                     key={t.key}
-                    aria-label={`${t.label} — locked`}
+                    aria-label={`${t.label} - locked`}
                     className="flex cursor-not-allowed select-none flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm"
                   >
                     <div className="flex items-center gap-2.5">
@@ -340,7 +340,7 @@ export default function YourToolsPage() {
                     <Rocket className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-slate-900">Go Unlimited — Upgrade to Business</h3>
+                    <h3 className="text-base font-bold text-slate-900">Go Unlimited - Upgrade to Business</h3>
                     <p className="mt-0.5 text-sm leading-relaxed text-slate-500">
                       Get sales, inventory, HR, forecasting, and more. Start your free trial today.
                     </p>

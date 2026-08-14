@@ -114,7 +114,7 @@ export function AppMobileMoreSheet({ remainingLeaves, pathname }: AppMobileMoreS
 
           {grouped.length === 0 ? (
             <p className="px-1 py-8 text-center text-sm text-slate-500">
-              No extra shortcuts here — use Browse Custosell, or open Menu for the full list.
+              No extra shortcuts here - use Browse Custosell, or open Menu for the full list.
             </p>
           ) : (
             <div className="space-y-4">

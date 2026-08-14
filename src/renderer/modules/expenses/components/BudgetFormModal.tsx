@@ -117,8 +117,8 @@ export default function BudgetFormModal({ open, onClose, budget }: BudgetFormMod
             </p>
             <p className="text-xs text-blue-700 mt-0.5">
               {isEditing
-                ? 'Update the name, target, or dates — linked income and expenses stay attached.'
-                : 'Budgets are like named piggy banks — e.g. "Groceries", "June holiday", or "House savings". Track how much you plan vs what you actually spend.'}
+                ? 'Update the name, target, or dates - linked income and expenses stay attached.'
+                : 'Budgets are like named piggy banks - e.g. "Groceries", "June holiday", or "House savings". Track how much you plan vs what you actually spend.'}
             </p>
           </div>
         </div>
@@ -159,7 +159,7 @@ export default function BudgetFormModal({ open, onClose, budget }: BudgetFormMod
                 />
               </div>
               {lines.length > 0 && (
-                <p className="text-xs text-blue-600 mt-1">Set your target here — your shopping list below is tracked separately and doesn't change it.</p>
+                <p className="text-xs text-blue-600 mt-1">Set your target here - your shopping list below is tracked separately and doesn't change it.</p>
               )}
             </div>
 
@@ -198,7 +198,7 @@ export default function BudgetFormModal({ open, onClose, budget }: BudgetFormMod
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm min-h-[70px] focus:border-blue-400 focus:outline-none resize-none"
-                  placeholder="A short note about this budget — e.g. save for a new phone"
+                  placeholder="A short note about this budget - e.g. save for a new phone"
                 />
               </div>
             </div>

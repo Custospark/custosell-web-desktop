@@ -180,7 +180,7 @@ export default function IncomeForm({ open, onClose, income }: IncomeFormProps) {
   const isPending = createMutation.isPending || updateMutation.isPending || fileUploading;
   const hasPendingLink = pendingLink !== null;
   const title = isEditing ? 'Edit Income' : 'Record Income';
-  const subtitle = isEditing ? 'Update the income details below.' : 'Add money you received — from salary, freelance, sales, or any other source.';
+  const subtitle = isEditing ? 'Update the income details below.' : 'Add money you received - from salary, freelance, sales, or any other source.';
 
   const attachments = displayIncome?.attachments;
 
@@ -200,7 +200,7 @@ export default function IncomeForm({ open, onClose, income }: IncomeFormProps) {
             <p className="text-xs text-blue-700 mt-0.5">
               {isEditing
                 ? 'Update the source, amount, or date below.'
-                : 'Record any money coming in — track where your income comes from.'}
+                : 'Record any money coming in - track where your income comes from.'}
             </p>
           </div>
         </div>
@@ -323,7 +323,7 @@ export default function IncomeForm({ open, onClose, income }: IncomeFormProps) {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm min-h-[80px] focus:border-blue-400 focus:outline-none resize-none"
-              placeholder="Add a note about this income — client name, project reference, payment method…"
+              placeholder="Add a note about this income - client name, project reference, payment method…"
             />
           </div>
         </div>
@@ -336,7 +336,7 @@ export default function IncomeForm({ open, onClose, income }: IncomeFormProps) {
             </h3>
           </div>
           <div className="p-4 space-y-4">
-            <p className="text-xs text-gray-400">Upload receipts, contracts, or invoices — or add a reference link.</p>
+            <p className="text-xs text-gray-400">Upload receipts, contracts, or invoices - or add a reference link.</p>
 
             <AttachmentList incomeId={savedIncomeId ?? 0} attachments={attachments} />
 

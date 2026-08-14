@@ -104,8 +104,8 @@ export default function InvoiceSuccessPanel({
                     <span className="font-mono font-semibold text-gray-900">{invoice.invoice_number}</span>
                     {' '}
                     {linkedToSale
-                      ? 'is live — billing document posted without duplicating sale revenue.'
-                      : 'is live — revenue and receivables are on the books.'}
+                      ? 'is live - billing document posted without duplicating sale revenue.'
+                      : 'is live - revenue and receivables are on the books.'}
                     {due > 0.009 && (
                       <span className="block mt-1 text-gray-500">
                         {formatCurrency(due)} outstanding until payment is recorded.
@@ -168,7 +168,7 @@ export default function InvoiceSuccessPanel({
                     {formatCurrency(due)}
                   </span>
                 ) : (
-                  <>{invoice.items?.length ?? '—'} item{(invoice.items?.length ?? 0) !== 1 ? 's' : ''}</>
+                  <>{invoice.items?.length ?? '-'} item{(invoice.items?.length ?? 0) !== 1 ? 's' : ''}</>
                 )}
               </p>
             </div>
@@ -199,7 +199,7 @@ export default function InvoiceSuccessPanel({
             <BookOpen className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600" />
             <span>
               {linkedToSale
-                ? `Linked to sale ${linkedReceipt} — revenue was already posted on the sale, so accounting was not duplicated.`
+                ? `Linked to sale ${linkedReceipt} - revenue was already posted on the sale, so accounting was not duplicated.`
                 : 'Accounts receivable and revenue are recorded. Record payment on the Invoices page when the customer pays.'}
             </span>
           </>
@@ -218,7 +218,7 @@ export default function InvoiceSuccessPanel({
                 </>
               ) : (
                 <>
-                  Drafts are editable from Invoices. <strong className="font-semibold">Send &amp; post</strong> posts revenue and receivables to accounting — same as the Send action on the Invoices page.
+                  Drafts are editable from Invoices. <strong className="font-semibold">Send &amp; post</strong> posts revenue and receivables to accounting - same as the Send action on the Invoices page.
                 </>
               )}
             </span>

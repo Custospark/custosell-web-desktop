@@ -4,7 +4,7 @@ import { cn } from '../../../utils/cn';
 import { useSearchKeyboard } from './useSearchKeyboard';
 
 /**
- * SearchBar — top-bar trigger styled as a search field.
+ * SearchBar - top-bar trigger styled as a search field.
  *
  * Intentionally a thin trigger. The <SearchModal> itself is rendered once from
  * AppChrome.tsx (always mounted) so ⌘K keeps working even when this button is

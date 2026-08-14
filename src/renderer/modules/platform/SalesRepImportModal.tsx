@@ -61,7 +61,7 @@ export default function SalesRepImportModal({ open, onClose, onImported }: Sales
     } catch (err: unknown) {
       const axiosErr = err as { code?: string; response?: { data?: { message?: string } } };
       const message = axiosErr.code === 'ECONNABORTED'
-        ? 'Import timed out — try a smaller file'
+        ? 'Import timed out - try a smaller file'
         : axiosErr.response?.data?.message || 'Import failed';
       showToast('error', message);
     } finally {
@@ -134,7 +134,7 @@ export default function SalesRepImportModal({ open, onClose, onImported }: Sales
                 />
               </div>
               {uploadProgress >= 100 && (
-                <p className="text-xs text-gray-500">Importing sales reps — this can take a few minutes for large files.</p>
+                <p className="text-xs text-gray-500">Importing sales reps - this can take a few minutes for large files.</p>
               )}
             </div>
           )}

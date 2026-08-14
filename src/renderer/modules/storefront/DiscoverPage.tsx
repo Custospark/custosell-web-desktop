@@ -11,7 +11,7 @@ import { DiscoverProductsBrowse } from './ui/DiscoverProductsBrowse';
 import { DiscoverShopsBrowse } from './ui/DiscoverShopsBrowse';
 
 /**
- * Shops / Products — both panels stay mounted; tab click only toggles visibility (instant).
+ * Shops / Products - both panels stay mounted; tab click only toggles visibility (instant).
  * Rendered as the `/discover` route element (Outlet), not dual-mounted by the layout.
  */
 export default function DiscoverPage() {

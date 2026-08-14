@@ -1,7 +1,7 @@
 # ADR: URA EFRIS fiscalization (v1)
 
 **Date:** 2026-07-12  
-**Status:** Accepted (implemented — gated by `EFRIS_ENABLED`)  
+**Status:** Accepted (implemented - gated by `EFRIS_ENABLED`)  
 **Scope:** Backend fiscal client/queue + Frontend status UX + docs  
 **Country:** Uganda first; other jurisdictions configurable later
 
@@ -15,7 +15,7 @@ VAT-registered Ugandan businesses need electronic fiscal receipts/invoices via *
    - v1 provider is **UG EFRIS** only.  
    - Config retains `EFRIS_COUNTRY` (default `UG`) so future e-invoicing regimes can plug in behind the same feature surface.
 
-2. **Direct URA EFRIS API — not a hardware fiscal device**  
+2. **Direct URA EFRIS API - not a hardware fiscal device**  
    - `EFRIS_MODE=api`.  
    - No EFD / Rank-style device path in v1.
 
@@ -30,7 +30,7 @@ VAT-registered Ugandan businesses need electronic fiscal receipts/invoices via *
 
 5. **Master switch**  
    - `EFRIS_ENABLED=false` by default.  
-   - When false, **no** URA calls and **no** fiscal queue behaviour — Custosell sells as today.  
+   - When false, **no** URA calls and **no** fiscal queue behaviour - Custosell sells as today.  
    - Credentials live in Backend `.env` (pilot / sandbox values supplied by Oscar).
 
 6. **Credentials & procedures**  
@@ -53,7 +53,7 @@ VAT-registered Ugandan businesses need electronic fiscal receipts/invoices via *
 | Procedures | [../compliance/efris-setup.md](../compliance/efris-setup.md) |
 | Persistence | `sales` / `invoices` `fiscal_*` columns |
 | Client + service | `Backend/app/Services/Efris/` (gated on `config('efris.enabled')`) |
-| Queue jobs | `FiscalizeSaleJob`, `FiscalizeInvoiceJob` — run `php artisan queue:work` |
+| Queue jobs | `FiscalizeSaleJob`, `FiscalizeInvoiceJob` - run `php artisan queue:work` |
 | Safe status API | `GET /api/v1/efris/status` (no credentials) |
 | FE status UX | Sale/invoice chips, receipt FDN/QR, Tax → EFRIS panel |
 

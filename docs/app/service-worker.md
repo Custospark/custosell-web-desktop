@@ -6,9 +6,9 @@ For durable offline data (mutations, catalog snapshots, auth), see [../offline/a
 
 | Request type | Online | Offline |
 |--------------|--------|---------|
-| Image / JS / CSS | **Cache-first** — serve from CacheStorage when available | **Cache-first** — serve from CacheStorage |
-| API GET (`/api/v1/*`) | **Network-first** — fetch server, save response to CacheStorage | **Stale cache** — serve last cached GET response |
-| API mutations (POST/PUT/PATCH/DELETE) | **Network pass-through** — go to server immediately | **Fails at network** — app saves to IndexedDB via `mutationQueue` |
+| Image / JS / CSS | **Cache-first** - serve from CacheStorage when available | **Cache-first** - serve from CacheStorage |
+| API GET (`/api/v1/*`) | **Network-first** - fetch server, save response to CacheStorage | **Stale cache** - serve last cached GET response |
+| API mutations (POST/PUT/PATCH/DELETE) | **Network pass-through** - go to server immediately | **Fails at network** - app saves to IndexedDB via `mutationQueue` |
 
 ## Caches
 
@@ -21,14 +21,14 @@ For durable offline data (mutations, catalog snapshots, auth), see [../offline/a
 
 The service worker does **not** queue mutations. Offline writes are handled in the renderer:
 
-- `mutationQueue` (IndexedDB) — outbound POST/PUT/PATCH/DELETE
-- `localSalesStore` — offline sale records
-- `syncEngine` — batch sync on reconnect
+- `mutationQueue` (IndexedDB) - outbound POST/PUT/PATCH/DELETE
+- `localSalesStore` - offline sale records
+- `syncEngine` - batch sync on reconnect
 
 ## Registration
 
 - **Production web:** `registerServiceWorker()` in `main.tsx`
-- **Electron:** skipped (`file://` — uses bundled assets + IndexedDB)
+- **Electron:** skipped (`file://` - uses bundled assets + IndexedDB)
 - **Vite dev:** skipped (assets served from memory)
 
 ## Logout

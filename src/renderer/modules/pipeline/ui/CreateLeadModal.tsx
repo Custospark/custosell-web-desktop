@@ -192,7 +192,7 @@ export default function CreateLeadModal({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className={pipelineInputClass}
-              placeholder="e.g. Acme Corp — annual contract"
+              placeholder="e.g. Acme Corp - annual contract"
               required
               autoFocus
             />

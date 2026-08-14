@@ -34,7 +34,7 @@ function shopLocationLine(shop: StorefrontShop): string {
   return [shop.address, shop.city, shop.state, shop.country].filter(Boolean).join(', ');
 }
 
-/** Shop catalog — compact product grid; checkout in cart hub. Route: /discover/shop/:slug */
+/** Shop catalog - compact product grid; checkout in cart hub. Route: /discover/shop/:slug */
 export default function ShopPage() {
   const { slug: slugParam } = useParams<{ slug: string }>();
   const slug = slugParam?.trim().toLowerCase() || null;
@@ -210,10 +210,10 @@ export default function ShopPage() {
   };
 
   if (shopQuery.isLoading) {
-    return <CustosellLoader message="Loading this shop — pulling the catalog so you can browse and add to cart." />;
+    return <CustosellLoader message="Loading this shop - pulling the catalog so you can browse and add to cart." />;
   }
 
-  // Enabled shop with zero listings is a valid shop — only fail when the shop API itself fails.
+  // Enabled shop with zero listings is a valid shop - only fail when the shop API itself fails.
   if (shopQuery.isError || (shopQuery.isFetched && !shop)) {
     return (
       <div className={cn(marketplaceGlassPanel, 'mx-auto max-w-md px-5 py-12 text-center', 'rounded-none sm:rounded-2xl')}>
@@ -223,7 +223,7 @@ export default function ShopPage() {
         </p>
         <p className="mt-1 text-xs text-slate-500">
           If you own this shop, open Settings → Sales channels, check your username, enable the public shop, and Save.
-          An enabled shop with no products still opens — it shows an empty catalog, not this message.
+          An enabled shop with no products still opens - it shows an empty catalog, not this message.
         </p>
         <Link
           to={`${ROUTES.DISCOVER}?focus=shops`}
@@ -236,7 +236,7 @@ export default function ShopPage() {
   }
 
   if (!shop) {
-    return <CustosellLoader message="Loading this shop — pulling the catalog so you can browse and add to cart." />;
+    return <CustosellLoader message="Loading this shop - pulling the catalog so you can browse and add to cart." />;
   }
 
   return (
@@ -312,7 +312,7 @@ export default function ShopPage() {
       <StorefrontFilterBar scope="shop" filters={filters} onChange={(next) => setFilters(next as StorefrontProductFilters)} currency={currency} />
 
       {productsQuery.isLoading ? (
-        <CustosellLoader message="Loading products — fetching what this shop has listed." />
+        <CustosellLoader message="Loading products - fetching what this shop has listed." />
       ) : productsQuery.isError ? (
         <div className={cn(marketplaceGlassPanel, 'px-5 py-10 text-center text-sm text-slate-600', 'rounded-none sm:rounded-2xl')}>
           Could not load products for this shop. Try refreshing.

@@ -1,4 +1,4 @@
-# ADR — Offline sync: durable id maps, dependency guard, and business scoping
+# ADR - Offline sync: durable id maps, dependency guard, and business scoping
 
 - **Date:** 2026-08-11
 - **Status:** Accepted
@@ -38,16 +38,16 @@ A secondary finding: the single shared IndexedDB (`CustosellOffline`) hosts one 
 - **No cross-account replay/remap**: queued work and id remaps are confined to the active business.
 - **Trade-offs**:
   - `getPending()` does extra IndexedDB reads (local records + id map lookups) whenever pending work exists. Acceptable for the offline-first volume; not run when the queue is empty.
-  - Legacy mutations created before `businessId` existed are treated as current-business (status quo behaviour — no regression, new rows are scoped).
+  - Legacy mutations created before `businessId` existed are treated as current-business (status quo behaviour - no regression, new rows are scoped).
   - Failed dependents stop retrying automatically; a future "retry all failed" UI action can call `requeue`.
 - Durable maps are append-only with TTL pruning; a mapping could in theory resolve an old temp id to an unrelated order after the app is reinstalled, but the 30-day TTL and business-id check bound this to zero practical risk.
 
 ## References
 
-- `src/renderer/app/store/offline/sync/mutationQueue.ts` — `businessId`, `getPending()` scoping, `requeueKeepRetries`, remap helpers.
-- `src/renderer/app/store/offline/sync/syncDependencyGuard.ts` / `syncDependencyDecider.ts` — resolution logic.
-- `src/renderer/app/store/offline/sync/entityIdMapper.ts` — durable id maps.
-- `src/renderer/app/store/offline/core/offlineDb.ts` — DB v14 `entityIdMappings`.
-- `src/renderer/app/store/offline/sales/syncSalesBatch.ts` — sale id map on commit.
-- `src/renderer/app/store/offline/core/remapBusinessContext.ts` — business-id rewrite on registration promote.
-- `src/renderer/shared/utils/__tests__/orderDependencyDecider.test.ts` — regression tests.
+- `src/renderer/app/store/offline/sync/mutationQueue.ts` - `businessId`, `getPending()` scoping, `requeueKeepRetries`, remap helpers.
+- `src/renderer/app/store/offline/sync/syncDependencyGuard.ts` / `syncDependencyDecider.ts` - resolution logic.
+- `src/renderer/app/store/offline/sync/entityIdMapper.ts` - durable id maps.
+- `src/renderer/app/store/offline/core/offlineDb.ts` - DB v14 `entityIdMappings`.
+- `src/renderer/app/store/offline/sales/syncSalesBatch.ts` - sale id map on commit.
+- `src/renderer/app/store/offline/core/remapBusinessContext.ts` - business-id rewrite on registration promote.
+- `src/renderer/shared/utils/__tests__/orderDependencyDecider.test.ts` - regression tests.

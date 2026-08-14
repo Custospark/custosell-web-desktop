@@ -218,7 +218,7 @@ export default function HrTalentPage() {
               </div>
               <p className={cn('mt-1 max-w-2xl text-sm', TALENT_SURFACE.textBody)}>
                 {isFullHr
-                  ? 'Evaluate goal pace from Pipeline & Projects, guide onboarding, and run performance reviews — the same frosted Progress experience, for people.'
+                  ? 'Evaluate goal pace from Pipeline & Projects, guide onboarding, and run performance reviews - the same frosted Progress experience, for people.'
                   : 'Your onboarding checklist and personal work progress from boards and projects.'}
               </p>
             </div>
@@ -378,7 +378,7 @@ export default function HrTalentPage() {
                 </div>
                 {templates.length === 0 ? (
                   <p className={cn('text-sm', TALENT_SURFACE.textMuted)}>
-                    No templates yet — create a reusable checklist so every new hire gets the same warm welcome.
+                    No templates yet - create a reusable checklist so every new hire gets the same warm welcome.
                   </p>
                 ) : (
                   <div className="grid gap-2 sm:grid-cols-2">
@@ -421,7 +421,7 @@ export default function HrTalentPage() {
                     <h3 className={cn('text-base font-semibold', TALENT_SURFACE.textTitle)}>No onboarding tasks yet</h3>
                     <p className={cn('mt-1.5 max-w-md text-sm', TALENT_SURFACE.textMuted)}>
                       {isFullHr
-                        ? 'Assign tasks to employees in onboarding — mark them done as each step is completed.'
+                        ? 'Assign tasks to employees in onboarding - mark them done as each step is completed.'
                         : 'When HR assigns onboarding tasks, they will show up here.'}
                     </p>
                   </div>
@@ -504,7 +504,7 @@ export default function HrTalentPage() {
                 <div>
                   <h3 className={cn('text-base font-semibold', TALENT_SURFACE.textTitle)}>No reviews yet</h3>
                   <p className={cn('mt-1.5 max-w-md text-sm', TALENT_SURFACE.textMuted)}>
-                    Start with a draft — or seed one from Work performance after evaluating Pipeline/Projects goals.
+                    Start with a draft - or seed one from Work performance after evaluating Pipeline/Projects goals.
                   </p>
                 </div>
                 <Button size="sm" onClick={() => setReviewOpen(true)}>
@@ -573,7 +573,7 @@ export default function HrTalentPage() {
           <HrModalHero
             icon={ClipboardList}
             title="New onboarding template"
-            description="List each task on its own line — you can apply this template when assigning tasks to someone."
+            description="List each task on its own line - you can apply this template when assigning tasks to someone."
             tone="blue"
           />
           <HrFormSection title="Checklist" icon={ListChecks} description="Keep tasks short and actionable.">
@@ -614,7 +614,7 @@ export default function HrTalentPage() {
           <HrModalHero
             icon={ClipboardCheck}
             title="New onboarding task"
-            description="Great for one-off steps — or pick a template to stay consistent across hires."
+            description="Great for one-off steps - or pick a template to stay consistent across hires."
             tone="emerald"
           />
           <HrFormSection title="Assignment" icon={User}>
@@ -672,14 +672,14 @@ export default function HrTalentPage() {
         isOpen={reviewOpen}
         onClose={() => setReviewOpen(false)}
         title="Performance review"
-        subtitle="Start as a draft — submit when you're ready to share."
+        subtitle="Start as a draft - submit when you're ready to share."
         size="lg"
       >
         <form onSubmit={handleReview} className="space-y-5">
           <HrModalHero
             icon={Star}
             title="New performance review"
-            description="Capture what went well and where to grow — ratings are optional but helpful for trends."
+            description="Capture what went well and where to grow - ratings are optional but helpful for trends."
             tone="indigo"
           />
           <HrFormSection title="Review period" icon={User}>
@@ -706,7 +706,7 @@ export default function HrTalentPage() {
                   className={hrInputClass}
                 />
               </HrIconField>
-              <HrIconField label="Rating (1–5)" icon={Star}>
+              <HrIconField label="Rating (1-5)" icon={Star}>
                 <input
                   type="number"
                   min={1}
@@ -718,7 +718,7 @@ export default function HrTalentPage() {
               </HrIconField>
             </div>
           </HrFormSection>
-          <HrFormSection title="Feedback" icon={MessageSquare} description="Be specific — it helps the conversation feel constructive.">
+          <HrFormSection title="Feedback" icon={MessageSquare} description="Be specific - it helps the conversation feel constructive.">
             <HrIconField label="Strengths" icon={ThumbsUp}>
               <textarea
                 rows={2}

@@ -1,7 +1,7 @@
 /** Sales per POST /sales/batch request. */
 export const SALES_BATCH_SIZE = 25;
 
-/** Pause between sales batches (ms) — keeps UI responsive and avoids server spikes. */
+/** Pause between sales batches (ms) - keeps UI responsive and avoids server spikes. */
 export const BATCH_PAUSE_MS = 400;
 
 /** Network / 5xx retries before falling back to per-item sync. */

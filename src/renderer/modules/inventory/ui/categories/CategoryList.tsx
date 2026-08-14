@@ -63,7 +63,7 @@ export default function CategoryList() {
                 {item._pendingSync && <Badge variant="warning">Pending sync</Badge>}
               </div>
             )},
-            { key: 'description', header: 'Description', render: (item) => item.description || <span className="text-gray-400">—</span> },
+            { key: 'description', header: 'Description', render: (item) => item.description || <span className="text-gray-400">-</span> },
             { key: 'sort_order', header: 'Sort Order' },
             {
               key: 'actions', header: 'Actions',

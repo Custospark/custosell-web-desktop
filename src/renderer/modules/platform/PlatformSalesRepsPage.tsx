@@ -54,7 +54,7 @@ export default function PlatformSalesRepsPage() {
 
   const handleRemove = async (r: PlatformSalesRep) => {
     if ((r.pending_commission ?? 0) > 0) {
-      showToast('error', 'Cannot remove — this rep still has unpaid commission');
+      showToast('error', 'Cannot remove - this rep still has unpaid commission');
       return;
     }
     const confirmed = await confirm({
@@ -115,7 +115,7 @@ export default function PlatformSalesRepsPage() {
               </div>
             )},
             { key: 'code', header: 'Referral Code', render: (r: PlatformSalesRep) => (
-              <span className="font-mono text-sm font-medium text-blue-700">{r.referral_code?.code ?? '—'}</span>
+              <span className="font-mono text-sm font-medium text-blue-700">{r.referral_code?.code ?? '-'}</span>
             )},
             { key: 'rate', header: 'Commission', align: 'center', render: (r: PlatformSalesRep) => (
               <span className="text-sm text-gray-900">
@@ -130,12 +130,12 @@ export default function PlatformSalesRepsPage() {
             )},
             { key: 'pending', header: 'Due', align: 'right', render: (r: PlatformSalesRep) => (
               <span className="text-sm font-medium text-amber-700">
-                {(r.pending_commission ?? 0) > 0 ? formatUSD(r.pending_commission ?? 0) : '—'}
+                {(r.pending_commission ?? 0) > 0 ? formatUSD(r.pending_commission ?? 0) : '-'}
               </span>
             )},
             { key: 'paid', header: 'Paid Out', align: 'right', render: (r: PlatformSalesRep) => (
               <span className="text-sm text-green-700">
-                {(r.paid_commission ?? 0) > 0 ? formatUSD(r.paid_commission ?? 0) : '—'}
+                {(r.paid_commission ?? 0) > 0 ? formatUSD(r.paid_commission ?? 0) : '-'}
               </span>
             )},
             { key: 'status', header: 'Active', align: 'center', render: (r: PlatformSalesRep) => (
@@ -148,7 +148,7 @@ export default function PlatformSalesRepsPage() {
                 <button onClick={() => { setEditing(r); setShowFormModal(true); }} className="text-sm font-medium text-blue-600 hover:text-blue-800" title="Edit sales rep">
                   <Pencil className="h-4 w-4" />
                 </button>
-                <button onClick={() => handleRemove(r)} disabled={deleteMutation.isPending || (r.pending_commission ?? 0) > 0} className="text-sm font-medium text-red-600 hover:text-red-800 disabled:opacity-35 disabled:cursor-not-allowed" title={(r.pending_commission ?? 0) > 0 ? 'Cannot remove — rep still has unpaid commission' : 'Remove sales rep'}>
+                <button onClick={() => handleRemove(r)} disabled={deleteMutation.isPending || (r.pending_commission ?? 0) > 0} className="text-sm font-medium text-red-600 hover:text-red-800 disabled:opacity-35 disabled:cursor-not-allowed" title={(r.pending_commission ?? 0) > 0 ? 'Cannot remove - rep still has unpaid commission' : 'Remove sales rep'}>
                   <UserMinus className="h-4 w-4" />
                 </button>
               </div>

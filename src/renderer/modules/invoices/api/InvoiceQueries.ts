@@ -169,7 +169,7 @@ export function useCreateInvoice() {
     onSuccess: (invoice) => {
       prependInvoiceToCache(qc, invoice);
       void qc.invalidateQueries({ queryKey: invoiceKeys.all });
-      showToast('success', 'Invoice created as draft — send it when ready');
+      showToast('success', 'Invoice created as draft - send it when ready');
     },
     onError: (e) => showToast('error', sanitizeErrorMessage(e, 'Failed to create invoice')),
   });
@@ -189,9 +189,9 @@ export function useSendInvoice() {
       if (invoice.fiscal_status === 'fiscalized') {
         showToast('success', 'Invoice sent and fiscalized');
       } else if (invoice.fiscal_status === 'pending') {
-        showToast('success', 'Invoice sent — fiscalization pending');
+        showToast('success', 'Invoice sent - fiscalization pending');
       } else if (invoice.fiscal_status === 'failed') {
-        showToast('success', 'Invoice sent — fiscalization failed (will retry)');
+        showToast('success', 'Invoice sent - fiscalization failed (will retry)');
       } else {
         showToast('success', 'Invoice sent');
       }
@@ -212,7 +212,7 @@ function normalizeRecordPaymentResponse(payload: unknown): RecordPaymentResult {
   }
   return {
     invoice: normalizeInvoiceResponse(payload),
-    payment: normalizePayment({ id: 0, receipt_number: '—', amount: 0, balance_after: 0 }),
+    payment: normalizePayment({ id: 0, receipt_number: '-', amount: 0, balance_after: 0 }),
   };
 }
 

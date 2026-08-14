@@ -13,7 +13,7 @@ interface SearchInputProps {
   resultCount: number;
 }
 
-/** Search input — the centrepiece of the command palette. Deliberately has no
+/** Search input - the centrepiece of the command palette. Deliberately has no
  *  knowledge of routing or store state; purely controlled UI. The animated
  *  gradient border matches New Sale's product search bar. */
 export function SearchInput({

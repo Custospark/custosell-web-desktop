@@ -6,7 +6,7 @@
 
 ## Context
 
-When a business owner toggled modules off in Settings → Module access (their personal catalog), `clampStaffModulesAfterOwnerUpdate` rewrote every staff `users.modules` row down to the owner’s catalog. Staff lost modules the owner had previously assigned — even though create/attach already allowed granting modules the owner does not personally use.
+When a business owner toggled modules off in Settings → Module access (their personal catalog), `clampStaffModulesAfterOwnerUpdate` rewrote every staff `users.modules` row down to the owner’s catalog. Staff lost modules the owner had previously assigned - even though create/attach already allowed granting modules the owner does not personally use.
 
 ## Decision
 

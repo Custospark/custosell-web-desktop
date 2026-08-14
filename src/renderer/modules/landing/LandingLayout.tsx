@@ -109,7 +109,7 @@ export default function LandingLayout() {
               type="button"
               onClick={() => handleAction('login')}
               className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl px-2 py-2 text-sm font-semibold text-slate-700 transition-all duration-300 hover:bg-slate-100 hover:text-slate-900 sm:px-4"
-              aria-label="Account — go to sign in"
+              aria-label="Account - go to sign in"
               title="Account"
             >
               <UserRound className="h-4 w-4" />

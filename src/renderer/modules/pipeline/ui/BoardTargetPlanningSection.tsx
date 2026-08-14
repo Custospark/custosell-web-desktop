@@ -20,7 +20,7 @@ export function BoardTargetPlanningSection({ form, stages, onFormChange }: Board
       <PipelineFormSection
         title="Planning horizon"
         icon={CalendarDays}
-        description="Choose how far this target spans — expectations decompose down to daily contributions."
+        description="Choose how far this target spans - expectations decompose down to daily contributions."
       >
         <PipelineIconField label="Planning level" icon={Layers} required>
           <select
@@ -31,7 +31,7 @@ export function BoardTargetPlanningSection({ form, stages, onFormChange }: Board
           >
             {PLANNING_LEVEL_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
-                {option.label} — {option.description}
+                {option.label} - {option.description}
               </option>
             ))}
           </select>

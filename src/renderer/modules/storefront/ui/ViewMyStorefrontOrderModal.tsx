@@ -25,7 +25,7 @@ function statusLabel(status: string): { label: string; variant: 'warning' | 'suc
   }
 }
 
-/** Buyer-facing order detail — same item list pattern as PO / Incoming Orders Eye view. */
+/** Buyer-facing order detail - same item list pattern as PO / Incoming Orders Eye view. */
 export function ViewMyStorefrontOrderModal({
   order,
   isOpen,

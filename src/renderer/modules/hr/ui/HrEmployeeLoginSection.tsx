@@ -36,10 +36,10 @@ function lookupMessage(result: StaffLookupResult | null): string | null {
   if (!result) return null;
   switch (result.status) {
     case 'available':
-      return 'Email is free — a new login will be created.';
+      return 'Email is free - a new login will be created.';
     case 'unattached':
     case 'soft_deleted':
-      return `Attach existing account${result.user?.name ? ` (${result.user.name})` : ''} — password stays theirs.`;
+      return `Attach existing account${result.user?.name ? ` (${result.user.name})` : ''} - password stays theirs.`;
     case 'already_member':
       return 'This person is already on your staff list. Link them below instead.';
     case 'other_business':
@@ -116,7 +116,7 @@ export function HrEmployeeLoginSection({
   async function handleUnlink() {
     const ok = await confirm({
       title: 'Disconnect login?',
-      message: 'Their staff account stays in Settings — only the link to this HR profile is removed.',
+      message: 'Their staff account stays in Settings - only the link to this HR profile is removed.',
       confirmText: 'Disconnect',
       variant: 'warning',
     });
@@ -127,7 +127,7 @@ export function HrEmployeeLoginSection({
     const name = employee.user?.name ?? employeeDisplayName(employee);
     const ok = await confirm({
       title: 'Detach from organization?',
-      message: `Detach ${name} from this business? Their login stays — they just lose access to this organization. Their HR profile stays.`,
+      message: `Detach ${name} from this business? Their login stays - they just lose access to this organization. Their HR profile stays.`,
       confirmText: 'Detach from organization',
       variant: 'danger',
     });
@@ -170,7 +170,7 @@ export function HrEmployeeLoginSection({
     <>
       <HrSectionCard
         title="App login"
-        description="Admin or HR owns account creation and org detach. Password is set by you — share it securely."
+        description="Admin or HR owns account creation and org detach. Password is set by you - share it securely."
         actions={
           hasLogin ? (
             <div className="flex flex-wrap gap-2">
@@ -209,7 +209,7 @@ export function HrEmployeeLoginSection({
             <p className="font-medium">{employee.user.name}</p>
             <p className="mt-0.5 text-xs opacity-80">{employee.user.email}</p>
             <p className="mt-2 text-xs text-emerald-800/80">
-              Disconnect only removes the HR link (they stay on this organization). Detach from organization clears org access — their login stays.
+              Disconnect only removes the HR link (they stay on this organization). Detach from organization clears org access - their login stays.
             </p>
           </div>
         ) : (
@@ -258,7 +258,7 @@ export function HrEmployeeLoginSection({
         isOpen={accountOpen}
         onClose={() => setAccountOpen(false)}
         title={isAttachMode ? 'Attach app login' : 'Create app login'}
-        subtitle={isAttachMode ? 'Existing account — no new password.' : 'You set the password — same pattern as Settings → Staff.'}
+        subtitle={isAttachMode ? 'Existing account - no new password.' : 'You set the password - same pattern as Settings → Staff.'}
         size="lg"
       >
         <form onSubmit={(e) => void handleCreateAccount(e)} className="space-y-5">
@@ -268,7 +268,7 @@ export function HrEmployeeLoginSection({
             description={
               isAttachMode
                 ? `Attach ${employeeDisplayName(employee)} to an existing free account. Their password stays the same.`
-                : `Create a login for ${employeeDisplayName(employee)}. Share the password securely — they can change it later.`
+                : `Create a login for ${employeeDisplayName(employee)}. Share the password securely - they can change it later.`
             }
             tone="indigo"
           />

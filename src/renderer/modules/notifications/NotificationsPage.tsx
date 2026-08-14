@@ -208,7 +208,7 @@ export default function NotificationsPage() {
 
       {isCompletelyOffline && (
         <div className="text-sm text-amber-800 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
-          You are offline. Showing your saved messages — new ones will appear when you are back online.
+          You are offline. Showing your saved messages - new ones will appear when you are back online.
         </div>
       )}
 

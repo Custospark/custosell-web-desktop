@@ -103,7 +103,7 @@ export function useBoardProgressSummary(
   });
 }
 
-/** Team progress with session cache — UI never blanks while filters refetch in the background. */
+/** Team progress with session cache - UI never blanks while filters refetch in the background. */
 export function useBoardProgressSummaryDisplay(
   boardId: number,
   period: ProgressPeriod,

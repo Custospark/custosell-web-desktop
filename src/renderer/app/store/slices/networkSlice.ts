@@ -48,7 +48,7 @@ const networkSlice = createSlice({
       state.latency = null;
       state.lastCheckedAt = new Date().toISOString();
     },
-    /** Browser reported online — optimistic until probe confirms. Triggers immediate sync. */
+    /** Browser reported online - optimistic until probe confirms. Triggers immediate sync. */
     setBrowserOnline(state) {
       state.systemStatus = 'online';
       state.isOnline = true;

@@ -109,7 +109,7 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
   const navigate = useNavigate();
   const update = useUpdateOnboarding();
   const steps = useMemo(() => resolveTourSteps(user, planModules),
-    // Tour is linear — no need to recompute steps when planModules reference changes
+    // Tour is linear - no need to recompute steps when planModules reference changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [user]);
   const [index, setIndex] = useState(() => Math.min(startStep, Math.max(0, steps.length - 1)));
@@ -118,7 +118,7 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
   const [cardHeight, setCardHeight] = useState<number | undefined>(undefined);
   const [autoPlay, setAutoPlay] = useState(false);
   const [autoCountdown, setAutoCountdown] = useState(AUTO_PLAY_SECONDS);
-  /** True once the current step’s spotlight attempt finished — autoplay waits on this. */
+  /** True once the current step’s spotlight attempt finished - autoplay waits on this. */
   const [stepReady, setStepReady] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const sidebarStateRef = useRef(appState);
@@ -145,7 +145,7 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
     const isLg = window.innerWidth >= LG_BREAKPOINT;
     const { sidebarCollapsed, sidebarOpen, mobileMoreOpen } = sidebarStateRef.current;
 
-    // More sheet covers tour targets — always dismiss before measuring
+    // More sheet covers tour targets - always dismiss before measuring
     if (mobileMoreOpen) {
       appDispatch({ type: 'SET_MOBILE_MORE_OPEN', payload: false });
     }
@@ -179,7 +179,7 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
     setStepReady(false);
 
     async function focusStep() {
-      // Paint a spotlight ASAP — refine after layout settles (keeps precision, feels instant)
+      // Paint a spotlight ASAP - refine after layout settles (keeps precision, feels instant)
       const quick = measureTourTarget(step.target);
       if (quick && gen === focusGenRef.current) setSpot(quick);
 
@@ -234,7 +234,7 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
     }
   }, [open, step, index, placement.width, cardHeight, viewportTick]);
 
-  /** Navigate when step changes — kept separate from layout effect to avoid re-render cascade. */
+  /** Navigate when step changes - kept separate from layout effect to avoid re-render cascade. */
   useEffect(() => {
     if (!open || !step?.route) return;
     navigate(step.route);
@@ -243,13 +243,13 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
       expandSidebarGroup(step.expandGroup);
     }, 150);
     return () => clearTimeout(navId);
-    // step identity is intentionally excluded — navigation should not re-trigger on step reference change
+    // step identity is intentionally excluded - navigation should not re-trigger on step reference change
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, step?.route, step?.expandGroup, step?.target]);
 
   const fireSave = useCallback((action: string, tourStep?: number) => {
     update.mutate({ action, tour_step: tourStep } as never, {
-      onError: () => { /* background save — errors are non-blocking */ },
+      onError: () => { /* background save - errors are non-blocking */ },
     });
   }, [update]);
 
@@ -288,7 +288,7 @@ export function ProductTour({ open, startStep = 0, onFinished, onSkipped }: Prod
     setAutoPlay((p) => !p);
   }
 
-  // Auto-play: after each step is ready, count down then call Next — repeats for every step
+  // Auto-play: after each step is ready, count down then call Next - repeats for every step
   useEffect(() => {
     if (!autoPlay || !open || !stepReady) return;
 

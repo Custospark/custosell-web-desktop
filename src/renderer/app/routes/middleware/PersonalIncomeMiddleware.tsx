@@ -6,7 +6,7 @@ import { ROUTES } from '../constants/shared.paths';
 /**
  * Personal-account-only gate for income & budget surfaces. Business accounts
  * don't track income (income belongs to personal/individual accounts), and
- * their budgets are handled under Forecasting — so these routes redirect to
+ * their budgets are handled under Forecasting - so these routes redirect to
  * the expenses overview.
  */
 export function PersonalIncomeMiddleware() {

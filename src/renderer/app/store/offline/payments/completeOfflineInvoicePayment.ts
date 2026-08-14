@@ -74,7 +74,7 @@ export async function completeOfflineInvoicePayment(
 
   const invoice = findInvoiceInCache(invoiceId);
   if (!invoice) {
-    throw new Error('Invoice not found offline — open Invoices while online first');
+    throw new Error('Invoice not found offline - open Invoices while online first');
   }
 
   if (!['sent', 'partially_paid'].includes(invoice.status)) {

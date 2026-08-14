@@ -68,7 +68,7 @@ export default function QuantityEditModal({ open, onClose, productId, productNam
             <p className="text-xs text-gray-400 mb-1.5">In stock: {maxQty}</p>
           )}
           {maxQty >= 9999 && (
-            <p className="text-xs text-gray-400 mb-1.5">Service — no stock limit</p>
+            <p className="text-xs text-gray-400 mb-1.5">Service - no stock limit</p>
           )}
           <div className="relative">
             <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -83,7 +83,7 @@ export default function QuantityEditModal({ open, onClose, productId, productNam
           )}
           {exceedsStock && canAccessModule(authUser, 'inventory') && (
             <p className="text-xs text-blue-600 mt-1">
-              Stock is low —{' '}
+              Stock is low -{' '}
               <Link to={ROUTES.INVENTORY.PRODUCTS} className="underline font-medium" onClick={onClose}>
                 add more stock
               </Link>{' '}

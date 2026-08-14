@@ -154,7 +154,7 @@ export function BusinessStorefrontCard() {
         <div className="min-w-0 flex-1">
           <h2 className="text-base font-semibold text-gray-900">Public shop</h2>
           <p className="mt-0.5 text-sm leading-relaxed text-gray-600">
-            Share your shop link on TikTok, WhatsApp, or Facebook. Guests browse listed products and send order requests — no online payment.
+            Share your shop link on TikTok, WhatsApp, or Facebook. Guests browse listed products and send order requests - no online payment.
           </p>
           <p className="mt-1 text-xs leading-snug text-gray-500">
             Shop logo appears in Order Online.{' '}
@@ -229,7 +229,7 @@ export function BusinessStorefrontCard() {
         ) : null}
         {dirty ? (
           <p className="mt-2 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-xs leading-snug text-amber-900">
-            Unsaved changes — Save to publish this username and shop visibility.
+            Unsaved changes - Save to publish this username and shop visibility.
           </p>
         ) : null}
       </div>
@@ -314,7 +314,7 @@ export function BusinessStorefrontCard() {
                   if (saved.storefront_enabled) {
                     showToast('success', `Public shop is live at @${live}`);
                   } else {
-                    showToast('success', 'Public shop is turned off — your link will show as closed.');
+                    showToast('success', 'Public shop is turned off - your link will show as closed.');
                   }
                 },
                 onError: (e) =>

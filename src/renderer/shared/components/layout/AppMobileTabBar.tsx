@@ -33,7 +33,7 @@ export function AppMobileTabBar() {
 
   const planModules = usePlanAccessibleModules();
   const leaves = useMemo(() => resolveAccessibleNavLeaves(user, planModules), [user, planModules]);
-  // Pin Products (Inventory) then Orders (Sales) when both are available — the two
+  // Pin Products (Inventory) then Orders (Sales) when both are available - the two
   // most-used destinations, ordered so Orders sits right after Products. Fall back
   // to the first accessible leaves otherwise.
   const pinTabs = useMemo(() => {

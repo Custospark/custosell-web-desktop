@@ -75,8 +75,8 @@ export default function RecordPaymentModal({
       title={canRecord ? 'Record payment' : 'Payment receipts'}
       subtitle={
         canRecord
-          ? `Invoice ${activeInvoice.invoice_number} — post a receipt against the open balance.`
-          : `Invoice ${activeInvoice.invoice_number} — view payment history and receipts.`
+          ? `Invoice ${activeInvoice.invoice_number} - post a receipt against the open balance.`
+          : `Invoice ${activeInvoice.invoice_number} - view payment history and receipts.`
       }
       size="xl"
       panelClassName="lg:max-w-4xl"
@@ -95,7 +95,7 @@ export default function RecordPaymentModal({
         errorMessage={recordPayment.isError ? getPaymentErrorMessage(recordPayment.error) : null}
         viewOnlyNotice={
           received && remainingBalance > 0.009
-            ? 'This is a supplier invoice. Only the seller can record payments — you can view receipts here.'
+            ? 'This is a supplier invoice. Only the seller can record payments - you can view receipts here.'
             : null
         }
         onDismissError={() => recordPayment.reset()}

@@ -44,7 +44,7 @@ export function buildInternationalPhone(
   return `${countryCode.dial_code}${digits}`;
 }
 
-/** A mobile-money number is usable for STK push when it has 6–15 digits. */
+/** A mobile-money number is usable for STK push when it has 6-15 digits. */
 export function isValidPaymentPhone(fullPhone: string | null | undefined): boolean {
   if (!fullPhone) return false;
   const digits = fullPhone.replace(/\D/g, '');
@@ -52,7 +52,7 @@ export function isValidPaymentPhone(fullPhone: string | null | undefined): boole
 }
 
 export function formatPhoneDisplay(fullPhone: string | null | undefined): string {
-  if (!fullPhone?.trim()) return '—';
+  if (!fullPhone?.trim()) return '-';
   const { countryCode, localNumber } = parseInternationalPhone(fullPhone);
   if (!localNumber.trim()) return fullPhone;
   return `${countryCode.dial_code} ${localNumber}`.trim();

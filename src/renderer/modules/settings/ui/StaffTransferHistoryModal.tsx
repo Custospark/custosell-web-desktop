@@ -13,7 +13,7 @@ interface StaffTransferHistoryModalProps {
 }
 
 function formatDate(value: string | null): string {
-  if (!value) return '—';
+  if (!value) return '-';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
@@ -46,7 +46,7 @@ export default function StaffTransferHistoryModal({ open, onClose, staff }: Staf
     <Modal
       isOpen={open}
       onClose={onClose}
-      title={staff ? `${staff.name} — transfer history` : 'Transfer history'}
+      title={staff ? `${staff.name} - transfer history` : 'Transfer history'}
       subtitle="Branch moves recorded for this staff member"
       size="lg"
     >
@@ -66,7 +66,7 @@ export default function StaffTransferHistoryModal({ open, onClose, staff }: Staf
               <div className="flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-700">
                   <GitBranch className="w-4 h-4 text-gray-400" />
-                  {t.from_location?.name ?? '—'}
+                  {t.from_location?.name ?? '-'}
                 </span>
                 <ArrowRight className="w-4 h-4 text-gray-400 shrink-0" />
                 <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-900">

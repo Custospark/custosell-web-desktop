@@ -6,7 +6,7 @@ export interface HrAppLoginFormState {
   password_confirmation: string;
   role_id: string;
   modules: BusinessModuleSlug[];
-  /** Nested under `hr` — never auto-enabled when toggling HR. */
+  /** Nested under `hr` - never auto-enabled when toggling HR. */
   hrFullAccess: boolean;
 }
 

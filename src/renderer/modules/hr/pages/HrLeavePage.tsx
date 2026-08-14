@@ -145,7 +145,7 @@ export default function HrLeavePage() {
         title="Leave"
         description={
           isFullHr
-            ? 'Set up leave types, track balances, and approve time off — so your team knows where they stand.'
+            ? 'Set up leave types, track balances, and approve time off - so your team knows where they stand.'
             : 'Request time off and track your balances. Approvals are handled by HR.'
         }
         actions={
@@ -168,7 +168,7 @@ export default function HrLeavePage() {
       />
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <HrSectionCard title="Leave types" description="Annual, sick, unpaid — whatever your policy allows.">
+        <HrSectionCard title="Leave types" description="Annual, sick, unpaid - whatever your policy allows.">
           {loadingTypes ? (
             <div className="flex justify-center py-8"><CustosellLoader /></div>
           ) : leaveTypes.length === 0 ? (
@@ -267,7 +267,7 @@ export default function HrLeavePage() {
 
       <HrSectionCard
         title="Requests"
-        description={isFullHr ? 'Pending requests need your approval — approved days sync to attendance.' : 'Your leave requests and their status.'}
+        description={isFullHr ? 'Pending requests need your approval - approved days sync to attendance.' : 'Your leave requests and their status.'}
       >
         {loadingRequests ? (
           <div className="flex justify-center py-8"><CustosellLoader /></div>

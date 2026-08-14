@@ -52,7 +52,7 @@ export default function ConvertEstimateModal({
         <PipelineModalHero
           icon={ArrowRight}
           title={`Convert "${estimateTitle}"`}
-          description="Choose how to proceed after approval — create an invoice or start a project with built-in job costing."
+          description="Choose how to proceed after approval - create an invoice or start a project with built-in job costing."
           tone="indigo"
         />
 

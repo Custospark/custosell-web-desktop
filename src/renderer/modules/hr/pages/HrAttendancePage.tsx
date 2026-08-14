@@ -292,7 +292,7 @@ export default function HrAttendancePage() {
           </div>
 
           <p className={cn('mt-3 text-xs', TALENT_SURFACE.textMuted)}>
-            Charts · {formatShiftDate(rangeFrom)} — {formatShiftDate(rangeTo)}
+            Charts · {formatShiftDate(rangeFrom)} - {formatShiftDate(rangeTo)}
             {(() => {
               if (!isFullHr) return '';
               const selected = employees.find((e) => e.id === Number(chartEmployeeId));
@@ -310,9 +310,9 @@ export default function HrAttendancePage() {
           </div>
           <p className={cn('mb-4 text-xs', TALENT_SURFACE.textMuted)}>
             {isFullHr
-              ? 'Clock someone in or out — the timestamp is captured now.'
+              ? 'Clock someone in or out - the timestamp is captured now.'
               : selfEmployee
-                ? `Punching as ${employeeDisplayName(selfEmployee)} — only you can do this for your own account.`
+                ? `Punching as ${employeeDisplayName(selfEmployee)} - only you can do this for your own account.`
                 : 'Your login is not linked to an HR profile yet. Ask an HR admin to link you.'}
           </p>
           <form onSubmit={(e) => void handleClock(e)} className="space-y-4">
@@ -412,7 +412,7 @@ export default function HrAttendancePage() {
                   </div>
                 </div>
                 {hoursTrend.every((row) => row.minutes === 0) ? (
-                  <EmptyChart message="No worked minutes in this range yet — clock in to start the trend." />
+                  <EmptyChart message="No worked minutes in this range yet - clock in to start the trend." />
                 ) : (
                   <div className={TALENT_SURFACE.chartWell}>
                     <ChartContainer className="h-72">
@@ -539,7 +539,7 @@ export default function HrAttendancePage() {
                 </div>
                 {dayDays.length === 0 ? (
                   <p className={cn('text-sm', TALENT_SURFACE.textMuted)}>
-                    No day summaries for this date yet — punch events may still appear on the right.
+                    No day summaries for this date yet - punch events may still appear on the right.
                   </p>
                 ) : (
                   <div className="space-y-2">
@@ -618,7 +618,7 @@ export default function HrAttendancePage() {
                 <div className="mb-3">
                   <h3 className={cn('text-sm font-semibold', TALENT_SURFACE.textTitle)}>POS shifts</h3>
                   <p className={cn('text-xs', TALENT_SURFACE.textMuted)}>
-                    Sales-floor clock-ins from Shifts — separate from HR attendance punches · {formatShiftDate(workDate)}
+                    Sales-floor clock-ins from Shifts - separate from HR attendance punches · {formatShiftDate(workDate)}
                   </p>
                 </div>
                 {posShifts.length === 0 ? (

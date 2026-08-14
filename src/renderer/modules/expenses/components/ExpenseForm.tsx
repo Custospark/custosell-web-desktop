@@ -210,7 +210,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
             </p>
             <p className="text-xs text-orange-700 mt-0.5">
               {isPersonal
-                ? 'Keep a record of what you spend — receipts stay attached for reference.'
+                ? 'Keep a record of what you spend - receipts stay attached for reference.'
                 : activeShiftId
                   ? 'This expense will be linked to your active shift for handover reporting.'
                   : 'Categorise your spending to track where your money goes.'}
@@ -345,7 +345,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
             )}
             placeholder={isPersonal
               ? 'What was this expense for? e.g. Groceries, transport, or utilities'
-              : 'What was this expense for? e.g. Office supplies — printer toner and paper'}
+              : 'What was this expense for? e.g. Office supplies - printer toner and paper'}
           />
           {errors.description && <p className="mt-1 text-xs font-medium text-red-600">{errors.description}</p>}
         </FormSection>

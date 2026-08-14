@@ -2,7 +2,7 @@ import { ROUTES } from '../../../../app/routes/constants/shared.paths';
 
 /**
  * Human-readable one-liners for every sidebar page, used both as the result
- * description (never the URL) and as searchable terms — mirroring Custocare's
+ * description (never the URL) and as searchable terms - mirroring Custocare's
  * `SearchableModule.description` standard.
  */
 export const NAV_ITEM_DESCRIPTIONS: Record<string, string> = {
@@ -115,5 +115,5 @@ export const NAV_ITEM_DESCRIPTIONS: Record<string, string> = {
 
 /** Resolve a page description, falling back to a derived one-line summary. */
 export function describeNavItem(route: string, label: string, group: string): string {
-  return NAV_ITEM_DESCRIPTIONS[route] ?? `${group} — ${label}`;
+  return NAV_ITEM_DESCRIPTIONS[route] ?? `${group} - ${label}`;
 }

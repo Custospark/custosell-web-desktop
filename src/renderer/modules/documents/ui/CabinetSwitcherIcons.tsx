@@ -27,23 +27,6 @@ export default function CabinetSwitcherIcons({
         className,
       )}
     >
-      {onToggleFullscreen && (
-        <button
-          type="button"
-          onClick={onToggleFullscreen}
-          className={cn(
-            'inline-flex items-center gap-2 rounded-xl border-2 px-4 py-2.5 text-sm font-semibold shadow-sm transition-all active:scale-[0.98]',
-            isFullscreen
-              ? 'border-amber-400 bg-gradient-to-r from-amber-50 via-white to-orange-50 text-amber-900 hover:border-amber-500 hover:shadow-md hover:shadow-amber-200/50'
-              : 'border-blue-300/90 bg-gradient-to-r from-blue-50 via-white to-indigo-50 text-blue-800 hover:border-blue-400 hover:shadow-md hover:shadow-blue-200/50',
-          )}
-          title={isFullscreen ? 'Exit full screen' : 'Full screen'}
-          aria-label={isFullscreen ? 'Exit full screen' : 'Full screen'}
-        >
-          {isFullscreen ? <Minimize2 className="h-4 w-4 text-amber-700" /> : <Maximize2 className="h-4 w-4 text-blue-600" />}
-          <span className="hidden sm:inline">{isFullscreen ? 'Exit full screen' : 'Full screen'}</span>
-        </button>
-      )}
       <button
         type="button"
         onClick={onOpenAll}
@@ -91,6 +74,23 @@ export default function CabinetSwitcherIcons({
         <Plus className="h-4 w-4 text-violet-600" />
         <span className="hidden sm:inline">New cabinet</span>
       </button>
+      {onToggleFullscreen && (
+        <button
+          type="button"
+          onClick={onToggleFullscreen}
+          className={cn(
+            'inline-flex items-center gap-2 rounded-xl border-2 px-4 py-2.5 text-sm font-semibold shadow-sm transition-all active:scale-[0.98]',
+            isFullscreen
+              ? 'border-amber-400 bg-gradient-to-r from-amber-50 via-white to-orange-50 text-amber-900 hover:border-amber-500 hover:shadow-md hover:shadow-amber-200/50'
+              : 'border-blue-300/90 bg-gradient-to-r from-blue-50 via-white to-indigo-50 text-blue-800 hover:border-blue-400 hover:shadow-md hover:shadow-blue-200/50',
+          )}
+          title={isFullscreen ? 'Exit full screen' : 'Full screen'}
+          aria-label={isFullscreen ? 'Exit full screen' : 'Full screen'}
+        >
+          {isFullscreen ? <Minimize2 className="h-4 w-4 text-amber-700" /> : <Maximize2 className="h-4 w-4 text-blue-600" />}
+          <span className="hidden sm:inline">{isFullscreen ? 'Exit full screen' : 'Full screen'}</span>
+        </button>
+      )}
     </div>
   );
 }

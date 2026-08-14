@@ -56,7 +56,7 @@ export default function PaymentGatewayModal({ url, onClose }: PaymentGatewayModa
           exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
           className="absolute inset-0 bg-black/60"
-          onClick={onClose}
+          aria-hidden="true"
         />
 
         <motion.div

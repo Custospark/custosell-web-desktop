@@ -102,7 +102,7 @@ export default function EstimatesInsightsPage() {
   }));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-8">
       <div>
         <h2 className="text-lg font-semibold text-gray-900">Estimate performance</h2>
         <p className="mt-1 text-sm text-gray-500">Win rate, margins, and pipeline value from your proposals.</p>

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, X } from 'lucide-react';
@@ -6,8 +6,12 @@ import { Loader2, X } from 'lucide-react';
 interface PaymentGatewayModalProps {
   url: string;
   onClose: () => void;
-  /** Mobile-money number the STK push is sent to — shown in the polling status. */
-  phone?: string;
+  /**
+   * The exact "Waiting for Payment" body this surface renders on web/mobile.
+   * Rendered below the embedded gateway so the Electron experience mirrors the
+   * web process flow exactly (status, STK info, manual Verify, Cancel).
+   */
+  children: ReactNode;
 }
 
 /**
@@ -16,9 +20,11 @@ interface PaymentGatewayModalProps {
  * BrowserWindow exists, so closing/cancelling is just unmounting a React
  * overlay. The user's app state underneath is never touched.
  *
- * Web/mobile don't render this; they use their own popup/tab flow.
+ * The same "Waiting for Payment" body the web/mobile surfaces render is passed
+ * as `children` and shown with the gateway, so the process flow is identical
+ * across web, mobile, and Electron.
  */
-export default function PaymentGatewayModal({ url, onClose, phone }: PaymentGatewayModalProps) {
+export default function PaymentGatewayModal({ url, onClose, children }: PaymentGatewayModalProps) {
   const webviewRef = useRef<HTMLWebViewElement | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
@@ -76,7 +82,7 @@ export default function PaymentGatewayModal({ url, onClose, phone }: PaymentGate
             </button>
           </div>
 
-          <div className="relative h-[78vh] min-h-[420px] w-full bg-white">
+          <div className="relative h-[52vh] min-h-[360px] w-full shrink-0 bg-white">
             {/* Loading overlay so the embedded page never flashes blank/white. */}
             {loading && (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-slate-50">
@@ -107,26 +113,8 @@ export default function PaymentGatewayModal({ url, onClose, phone }: PaymentGate
             />
           </div>
 
-          <div className="flex shrink-0 items-center justify-between gap-3 border-t border-gray-200 bg-gray-50 px-4 py-2.5">
-            <div className="flex min-w-0 items-center gap-2.5">
-              <Loader2 className="h-4 w-4 shrink-0 animate-spin text-blue-500" />
-              <p className="min-w-0 text-xs text-slate-600">
-                Waiting for payment
-                {phone ? (
-                  <>
-                    {' '}— STK push sent to <span className="font-semibold">{phone}</span>
-                  </>
-                ) : null}
-                {' '}— complete it in the window above, we'll confirm automatically.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="shrink-0 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-100 cursor-pointer"
-            >
-              Cancel
-            </button>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-white px-4 py-4 sm:px-6">
+            {children}
           </div>
         </motion.div>
       </div>

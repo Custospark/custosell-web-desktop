@@ -389,7 +389,29 @@ export default function PaymentPage() {
       </div>
 
       {initiated && !isPaymentDone && environment === 'electron' && paymentUrl && (
-        <PaymentGatewayModal url={paymentUrl} onClose={handleRetry} phone={phone} />
+        <PaymentGatewayModal url={paymentUrl} onClose={handleRetry}>
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 text-center space-y-3">
+            <Loader2 className="w-8 h-8 animate-spin text-amber-500 mx-auto" />
+            <div>
+              <p className="font-semibold text-amber-800">Check your phone</p>
+              <p className="text-sm text-amber-600 mt-1">
+                An STK push has been sent to <strong>{phone}</strong>. Enter your mobile money PIN to complete payment.
+              </p>
+            </div>
+          </div>
+          <PaymentPopupNotice popupBlocked={popupBlocked} paymentUrl={paymentUrl} openedExternally={openedExternally} environment={environment} />
+          {paymentQuery.data?.data?.status === 'failed' && (
+            <div className="space-y-3 pt-1">
+              <div className="flex items-start gap-2 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg p-3">
+                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                <span>Payment was not completed. Please try again.</span>
+              </div>
+              <Button type="button" onClick={handleRetry} variant="outline" className="w-full gap-2">
+                Try Again
+              </Button>
+            </div>
+          )}
+        </PaymentGatewayModal>
       )}
     </AuthLayout>
   );

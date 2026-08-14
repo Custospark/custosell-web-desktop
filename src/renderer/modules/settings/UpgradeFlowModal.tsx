@@ -341,29 +341,33 @@ export default function UpgradeFlowModal({
       );
     }
 
+    const waitingBody = (
+      <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-5 text-center">
+        <Loader2 className="w-10 h-10 animate-spin text-blue-500 mx-auto" />
+        <div>
+          <p className="text-lg font-bold text-gray-900">Waiting for Payment</p>
+          <p className="text-sm text-gray-500 mt-1">
+            Complete the payment of {formatDue}.
+          </p>
+          <p className="text-xs text-gray-400 mt-2">
+            Follow the prompts on your phone <span className="font-semibold">{phone}</span> to complete the payment.
+          </p>
+        </div>
+        <PaymentPopupNotice popupBlocked={popupBlocked} paymentUrl={paymentUrl} openedExternally={openedExternally} environment={environment} />
+        <button type="button" onClick={onClose}
+          className="text-sm text-gray-500 underline hover:text-gray-700 transition-colors">
+          Cancel
+        </button>
+      </div>
+    );
+
     if (environment === 'electron' && paymentUrl) {
-      return <PaymentGatewayModal url={paymentUrl} onClose={onClose} phone={phone} />;
+      return <PaymentGatewayModal url={paymentUrl} onClose={onClose}>{waitingBody}</PaymentGatewayModal>;
     }
 
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-        <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-5 text-center">
-          <Loader2 className="w-10 h-10 animate-spin text-blue-500 mx-auto" />
-          <div>
-            <p className="text-lg font-bold text-gray-900">Waiting for Payment</p>
-            <p className="text-sm text-gray-500 mt-1">
-              Complete the payment of {formatDue}.
-            </p>
-            <p className="text-xs text-gray-400 mt-2">
-              Follow the prompts on your phone <span className="font-semibold">{phone}</span> to complete the payment.
-            </p>
-          </div>
-          <PaymentPopupNotice popupBlocked={popupBlocked} paymentUrl={paymentUrl} openedExternally={openedExternally} environment={environment} />
-          <button type="button" onClick={onClose}
-            className="text-sm text-gray-500 underline hover:text-gray-700 transition-colors">
-            Cancel
-          </button>
-        </div>
+        {waitingBody}
       </div>
     );
   }

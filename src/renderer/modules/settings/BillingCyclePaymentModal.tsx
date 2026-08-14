@@ -72,7 +72,25 @@ export default function BillingCyclePaymentModal({
   const isFailed = paymentQuery.data?.data?.status === 'failed';
 
   if (step === 'polling' && !isDone && !isFailed && environment === 'electron' && paymentUrl) {
-    return <PaymentGatewayModal url={paymentUrl} onClose={onClose} phone={phone} />;
+    return (
+      <PaymentGatewayModal url={paymentUrl} onClose={onClose}>
+        <div className="text-center space-y-3">
+          <Loader2 className="w-10 h-10 animate-spin text-blue-500 mx-auto" />
+          <p className="text-lg font-bold text-gray-900">Waiting for payment...</p>
+          <p className="text-xs text-gray-400 mt-2">
+            Follow the prompts on your phone <span className="font-semibold">{phone}</span> to complete the payment.
+          </p>
+          <PaymentPopupNotice popupBlocked={popupBlocked} paymentUrl={paymentUrl} openedExternally={openedExternally} environment={environment} />
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-sm text-gray-500 underline hover:text-gray-700 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </PaymentGatewayModal>
+    );
   }
 
   return (

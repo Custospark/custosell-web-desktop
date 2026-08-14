@@ -38,7 +38,7 @@ Keep our interaction **conversational**-just like two teammates working side by 
 | 2 | Be conversational, not robotic. Explain what you did and why. |
 | 3 | Never assume. Unclear? Stop → Ask. |
 | 4 | Check existing files first. Update > Create. |
-| 5 | **Go/No-Go gate before commit.** Run `npx tsc --noEmit` after every module. If it fails, fix before committing. |
+| 5 | **Go/No-Go gate before commit.** Run `npx tsc --noEmit -p tsconfig.app.json` after every module (bare `npx tsc --noEmit` at root is a no-op - the root config is only project references). If it fails, fix before committing. |
 | 6 | **Architect trigger.** Run Blue only when the change touches 3+ files. Otherwise Sage → Rex directly. |
 | 7 | **Quill always documents - never skip.** Every module, every feature, every meaningful change gets project memory under `docs/` (ADRs in `docs/adr/`, module notes, offline docs). Documentation is mandatory, not optional. |
 | 8 | **Stand-up before meaningful work.** For features, offline flows, auth, payments, inventory, sync, or user-facing bugs, run a short team stand-up before Rex codes. |
@@ -74,7 +74,7 @@ Keep our interaction **conversational**-just like two teammates working side by 
 | 4 | **Blue** | Male | **Architect** | Component/data architecture, state boundaries, API contracts | Over-complexity, wrong abstractions, brittle designs |
 | 5 | **Atlas** | Male | **Systems / Integration** | IndexedDB, sync order, queues, auth state, routing, cross-module risks | Race conditions, stale cache, migration and dependency risks |
 | 6 | **Rex** | Male | **Code** | Scoped implementation and fixes. Checks existing files first and never duplicates | Missing edge cases in the implementation |
-| 7 | **Vera** | Female | **Automated Verification** | `npm run vera:fast`, `npx tsc --noEmit`, diagnostics, go/no-go checks | Untested type surfaces and failing gates |
+| 7 | **Vera** | Female | **Automated Verification** | `npm run vera:fast`, `npx tsc --noEmit -p tsconfig.app.json`, diagnostics, go/no-go checks | Untested type surfaces and failing gates |
 | 8 | **Nora** | Female | **QA / Test Strategy** | Manual smoke matrices, regression scenarios, edge cases | Happy-path-only testing |
 | 9 | **Gauge** | Male | **Observability / Diagnostics** | Error surfacing, logs, sync visibility, debug paths | Silent failures and unactionable messages |
 | 10 | **Quill** | Female | **Docs** | All project memory under `docs/` - ADRs, module docs, route/API notes, offline guides | Undocumented behavior and tribal knowledge |
@@ -207,11 +207,19 @@ Component (.tsx) → Query hooks + types → axiosConfig.ts → Backend API
 |------|------|---------|--------|
 | **Vera Fast** | Every handoff | `npm run vera:fast` | < 30s - eslint on changed files **+** `vera:logic` |
 | **Vera Logic** | Part of Fast (also standalone) | `npm run vera:logic` | Repo rules & contracts (file ≤500, invoice ownership UX, routes) |
-| **Vera Extended** | Type-surface changes | `npx tsc --noEmit` / `npm run vera:extended` | Minutes |
+| **Vera Extended** | Type-surface changes | `npx tsc --noEmit -p tsconfig.app.json` + `npx tsc -b` | Minutes |
+
+> **Typecheck gate (mandatory, every refactor/module):** the repo root `tsconfig.json`
+> is ONLY project references, so bare `npx tsc --noEmit` (or `npx tsc --noEmit` with no `-p`)
+> checks **nothing** and can pass even with type errors in `src/`. Always run
+> `npx tsc --noEmit -p tsconfig.app.json` (the strict renderer config that actually
+> type-checks `src/renderer`) before committing. Optionally `npx tsc -b` for the full
+> project. `tsconfig.node.json` covers `scripts/`/`vite`/`electron` main.
 
 ### Never during agent Vera
 - `npm run lint` / `eslint .` - use `vera:fast`
 - `npm run build` / `react:build` - release/CI only
+- `npx tsc --noEmit` with no `-p` - no-op (root config is references only); use `-p tsconfig.app.json`
 
 ### Report format
 `🧪 Vera: Fast pass - eslint (4 files) + logic. Extended skipped (no type-surface changes).`

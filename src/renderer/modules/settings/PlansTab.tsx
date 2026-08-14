@@ -18,6 +18,7 @@ import { FEATURE_CATALOG, LIMIT_LABELS, STATUS_STYLES } from './planConstants';
 import PlanCard from './PlanCard';
 import PlanUsageSection from './ui/PlanUsageSection';
 import BillingCycleSwitchModal from './ui/BillingCycleSwitchModal';
+import PaymentHistory from '../../shared/components/payments/PaymentHistory';
 
 interface SubscriptionPaymentState {
   planName: string;
@@ -265,6 +266,8 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
       </div>
 
       {user?.account_type !== 'personal' && <PlanUsageSection plan={currentPlan} />}
+
+      <PaymentHistory />
 
       <div className="flex flex-col items-center gap-3">
         <div className="flex items-center gap-3">

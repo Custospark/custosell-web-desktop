@@ -116,6 +116,62 @@ export function useBillingPayment(id: number | null) {
   });
 }
 
+export interface BillingHistoryItem {
+  type: 'payment' | 'change' | 'credit';
+  event: string;
+  status?: string;
+  status_override?: string | null;
+  description?: string;
+  amount?: number;
+  currency?: string | null;
+  payment_id?: number | null;
+  payment_type?: string;
+  method?: string | null;
+  transaction_reference?: string | null;
+  topup_months?: number;
+  credit_used?: number;
+  change_type?: string;
+  from_plan?: string | null;
+  to_plan?: string | null;
+  effective_at?: string | null;
+  at?: string | null;
+}
+
+export function useBillingHistory(enabled = true) {
+  return useQuery({
+    queryKey: ['billing', 'history'],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get<{ data: BillingHistoryItem[] }>(BILLING.HISTORY);
+      return data.data ?? [];
+    },
+    enabled,
+  });
+}
+
+export function useConfirmPayment(paymentId: number) {
+  const { showToast } = useToast();
+  const queryClient = useQueryClient();
+  return useMutation<{ success: boolean; message: string; payment_id?: number }, AxiosError<ApiError>, void>({
+    mutationFn: async () => {
+      const { data } = await axiosInstance.post(BILLING.CONFIRM(paymentId));
+      return data;
+    },
+    onSuccess: (data) => {
+      if (data?.success) {
+        showToast('success', data.message || 'Payment confirmed.');
+      } else {
+        showToast('error', data.message || 'Payment not yet confirmed. Please try again in a moment.');
+      }
+      queryClient.invalidateQueries({ queryKey: ['billing', 'history'] });
+      queryClient.invalidateQueries({ queryKey: ['billing', 'payment', paymentId] });
+    },
+    onError: (error) => {
+      const message = error.response?.data?.message || 'Could not verify the payment right now. Please try again.';
+      showToast('error', message);
+    },
+  });
+}
+
 export interface ProrationDetails {
   proration_due: number;
   days_remaining: number;

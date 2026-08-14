@@ -81,7 +81,13 @@ export default function SubscriptionSettingsPage() {
         ))}
       </nav>
 
-      {activeTab === 'plans' && <PlansTab subscription={subscription} onUpgradeComplete={async () => { await refetchProfile(); }} />}
+      {activeTab === 'plans' && (
+        <PlansTab
+          subscription={subscription}
+          onUpgradeComplete={async () => { await refetchProfile(); }}
+          onGoToHistory={() => setActiveTab('history')}
+        />
+      )}
 
       {activeTab === 'history' && <BillingHistoryTab />}
     </div>

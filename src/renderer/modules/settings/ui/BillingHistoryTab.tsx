@@ -6,6 +6,7 @@ import { Pagination, usePagination } from '../../../shared/components/tables/Pag
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { cn } from '../../../shared/utils/cn';
 import EmailReceiptModal from './EmailReceiptModal';
+import PaymentHistory from '../../../shared/components/payments/PaymentHistory';
 
 function formatMoney(amount: number | undefined, currency?: string | null): string {
   if (amount === undefined || amount === null) return '';
@@ -98,6 +99,8 @@ export default function HistoryTab() {
         <h3 className="text-sm font-semibold text-gray-900">Billing History</h3>
         <p className="text-xs text-gray-500 mt-0.5">Every charge, top-up, plan change, and credit application — newest first.</p>
       </div>
+
+      <PaymentHistory mode="pending-only" className="mb-5" />
 
       {isLoading ? (
         <div className="flex justify-center py-6">

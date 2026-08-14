@@ -18,7 +18,7 @@ import { FEATURE_CATALOG, LIMIT_LABELS, STATUS_STYLES } from './planConstants';
 import PlanCard from './PlanCard';
 import PlanUsageSection from './ui/PlanUsageSection';
 import BillingCycleSwitchModal from './ui/BillingCycleSwitchModal';
-import PaymentHistory from '../../shared/components/payments/PaymentHistory';
+import PendingPaymentNotice from '../../shared/components/payments/PendingPaymentNotice';
 
 interface SubscriptionPaymentState {
   planName: string;
@@ -33,6 +33,8 @@ interface SubscriptionPaymentState {
 interface PlansTabProps {
   subscription: SubscriptionInfo;
   onUpgradeComplete?: () => Promise<void>;
+  /** Switch to the History tab (pending-payment guidance). */
+  onGoToHistory?: () => void;
 }
 
 interface PendingPayment {
@@ -41,7 +43,7 @@ interface PendingPayment {
   amount: number;
 }
 
-export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabProps) {
+export default function PlansTab({ subscription, onUpgradeComplete, onGoToHistory }: PlansTabProps) {
   const userPhone = useAppSelector((s) => s.auth.user?.business?.phone || s.auth.user?.phone || '');
   const { currency, monthlyPrice, yearlyPrice, onboardingFee } = useDisplayPrices();
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
@@ -267,7 +269,7 @@ export default function PlansTab({ subscription, onUpgradeComplete }: PlansTabPr
 
       {user?.account_type !== 'personal' && <PlanUsageSection plan={currentPlan} />}
 
-      <PaymentHistory mode="pending-only" />
+      <PendingPaymentNotice onGoToHistory={onGoToHistory} />
 
       <div className="flex flex-col items-center gap-3">
         <div className="flex items-center gap-3">

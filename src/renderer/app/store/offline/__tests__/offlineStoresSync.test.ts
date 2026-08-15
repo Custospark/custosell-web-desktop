@@ -1,9 +1,9 @@
-import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import 'fake-indexeddb/auto';
 
 /**
  * Applies the offline harness (proven on quick notes) to every critical store:
- * sales, expenses, customers. Each case proves the same contract:
+ * sales, expenses, shifts, customers. Each case proves the same contract:
  *   offline write is durable -> queued -> sync commit removes queue + local row
  *   -> server received the payload -> nothing lost on a failed server call.
  */
@@ -26,18 +26,21 @@ function setAuth(): void {
   mocks.store.getState.mockReturnValue({ auth: { user: { business_id: 7, id: 1 } } });
 }
 
-async function freshDb(): Promise<void> {
-  const { resetOfflineDbState, closeOfflineDb, getOfflineDb } = await import('../core/offlineDb');
-  resetOfflineDbState();
-  await closeOfflineDb();
-  // Wipe the shared fake IndexedDB so each test file starts clean.
+/** Wipe the shared fake IndexedDB once per file (fast - no open connections yet). */
+beforeAll(async () => {
   await new Promise<void>((resolve) => {
     const req = indexedDB.deleteDatabase('CustosellOffline');
     req.onsuccess = () => resolve();
     req.onerror = () => resolve();
     req.onblocked = () => resolve();
   });
+});
+
+/** Per-test: fresh module state + wipe all store rows (fast, no deleteDatabase). */
+async function freshDb(): Promise<void> {
+  const { resetOfflineDbState, clearOfflineDbStores, getOfflineDb } = await import('../core/offlineDb');
   resetOfflineDbState();
+  await clearOfflineDbStores();
   await getOfflineDb();
 }
 

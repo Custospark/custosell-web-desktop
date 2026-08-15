@@ -34,6 +34,8 @@ export function useEndShiftAction() {
     const handoverAmount = cashAtHandover(openingBalance, cashTotal, shiftExpenseTotal);
     const expectedCash = handoverAmount;
 
+    console.log('[EndShiftAction] shiftId=', shiftId, 'sales=', shiftSales.length, 'gross=', shiftGrossTotal, 'refunds=', shiftRefundsTotal, 'expenses=', shiftExpenseTotal, 'collections=', collections, 'netSales=', netShiftTotal, 'expectedCash=', expectedCash, 'opening=', openingBalance);
+
     return {
       netShiftTotal,
       cashTotal,
@@ -46,7 +48,7 @@ export function useEndShiftAction() {
       openingBalance,
       transactionCount: shiftSales.length,
     };
-  }, [shiftSales, shiftPayments, shiftExpenses, shift?.opening_balance]);
+  }, [shiftSales, shiftPayments, shiftExpenses, shift?.opening_balance, shiftId]);
 
   const endShift = useCallback(
     async (countedCash?: number | null): Promise<boolean> => {

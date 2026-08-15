@@ -69,16 +69,20 @@ async function persistActiveShiftContext(shift: Shift): Promise<ShiftWithSyncMet
 export { persistActiveShiftContext };
 
 function mergeShiftSales(server: Sale[], shiftId: number): Promise<SaleWithSyncMeta[]> {
-  return localSalesStore.getByShiftId(shiftId).then(async (local) => {
-    const localSales = local.map(toSaleWithSyncMeta);
+  // IndexedDB may be unavailable (timed out / blocked). When that happens the
+  // online read must still return the server sales rather than dropping to [].
+  return Promise.all([
+    localSalesStore.getByShiftId(shiftId).catch(() => []),
+    localRefundsStore.getPending().catch(() => []),
+  ]).then(([localRows, pendingRefunds]) => {
+    const localSales = (localRows ?? []).map(toSaleWithSyncMeta);
     const localReceipts = new Set(localSales.map((s) => s.receipt_number));
     const filtered = server.filter(
       (s) => !localReceipts.has(s.receipt_number) && !isOptimisticSale(s as SaleWithSyncMeta),
     );
     const merged = [...localSales, ...filtered] as SaleWithSyncMeta[];
     merged.sort((a, b) => new Date(b.sale_date).getTime() - new Date(a.sale_date).getTime());
-    const pendingRefunds = await localRefundsStore.getPending();
-    return mergePendingRefunds(merged, pendingRefunds);
+    return mergePendingRefunds(merged, pendingRefunds ?? []);
   });
 }
 
@@ -318,6 +322,7 @@ export function useShiftSales(shiftId: number | null) {
           const { data } = await axiosInstance.get<{ data: Sale[] }>(`/sales/by-shift/${shiftId}`);
           const serverSales = data.data ?? [];
           const businessId = resolveAuthBusinessId();
+          // Snapshot backup is fire-and-forget (returns void) - never blocks the online read.
           if (businessId) backupShiftSalesSnapshot(businessId, shiftId, serverSales);
           return mergeShiftSales(serverSales, shiftId);
         },
@@ -354,11 +359,10 @@ export function useShiftExpenses(shiftId: number | null) {
             );
             const fromServer = (data.data ?? []).filter((e) => e.shift_id === shiftId);
             const businessId = resolveAuthBusinessId();
-            if (businessId) {
-              backupShiftExpensesSnapshot(businessId, shiftId, fromServer);
-            }
-            const local = await loadPendingShiftExpenses(shiftId);
-            return mergeShiftExpenseLists(fromServer, local);
+            // Snapshot backup is fire-and-forget (returns void) - never blocks the online read.
+            if (businessId) backupShiftExpensesSnapshot(businessId, shiftId, fromServer);
+            const local = await loadPendingShiftExpenses(shiftId).catch(() => []);
+            return mergeShiftExpenseLists(fromServer, local ?? []);
           } catch (err: unknown) {
             const status = (err as AxiosError).response?.status;
             if (isNetworkFailure(err) || status === 403 || status === 404) {

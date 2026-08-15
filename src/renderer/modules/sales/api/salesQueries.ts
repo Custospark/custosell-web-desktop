@@ -145,17 +145,23 @@ async function fetchSalesMerged(): Promise<SaleWithSyncMeta[]> {
     return await readWithOfflineStrategy({
       readFromClient: readSalesFromClient,
       fetchFromServer: async () => {
-        const local = await loadLocalPendingSales();
+        // IndexedDB may be unavailable/timed out - server data must still render.
+        const local = await loadLocalPendingSales().catch(() => []);
         const { data } = await axiosInstance.get('/sales');
         const serverSales = normalizeSalesList(data);
         const businessId = resolveAuthBusinessId();
         if (businessId) backupSalesListSnapshot(businessId, serverSales);
-        return applyPendingRefundOverlay(mergeSalesLists(serverSales, local));
+        const pendingRefunds = await localRefundsStore.getPending().catch(() => []);
+        return mergePendingRefunds(mergeSalesLists(serverSales, local ?? []), pendingRefunds ?? []);
       },
     });
   } catch (err) {
     console.warn('[Sales] Read failed - falling back to cached sales:', err);
-    return readSalesFromClient();
+    // If offline storage is unavailable, still try to render server-cached data
+    // from React Query rather than silently dropping to [].
+    const cached = queryClient.getQueryData<SaleWithSyncMeta[]>([salesKeys.all, 'list']);
+    if (cached && cached.length > 0) return cached;
+    return [];
   }
 }
 

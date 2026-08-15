@@ -22,7 +22,7 @@ import { usePagination } from '../../shared/components/tables/Pagination';
 import ReceiptPreviewModal from '../sales/ui/history/ReceiptPreviewModal';
 import ExpenseForm from '../expenses/components/ExpenseForm';
 import ShiftCloseReportContent from './ShiftCloseReportContent';
-import OpeningBalanceModal from './OpeningBalanceModal';
+import BalanceShiftModal from './BalanceShiftModal';
 import EndShiftModal from './EndShiftModal';
 import { StatCard, type StatCardDef, ShiftTransactionsTable, ShiftExpensesPanel, ShiftHistoryTable } from './shiftComponents';
 import { buildShiftCloseReportData } from './buildShiftCloseReportData';
@@ -55,6 +55,8 @@ export default function MyShiftPage() {
 
   const shiftId = shift?.id || authUser?.shift_id;
   const hasActiveShift = !!(shift?.status === 'active') || !!authUser?.shift_id;
+
+  console.log('[MyShift] shift=', shift, 'shiftId=', shiftId, 'authShiftId=', authUser?.shift_id, 'hasActiveShift=', hasActiveShift);
   const { data: shiftSales } = useShiftSales(shiftId ?? null);
   const { data: shiftPayments = [] } = useShiftPayments(shiftId ?? null);
   const { data: shiftExpenses = [] } = useShiftExpenses(shiftId ?? null);
@@ -261,7 +263,7 @@ export default function MyShiftPage() {
             <Printer className="w-4 h-4 mr-1.5" />Shift Report
           </Button>
           <Button variant="outline" onClick={() => setShowOpeningBalance(true)}>
-            <Banknote className="w-4 h-4 mr-1.5" />Opening Balance
+            <Banknote className="w-4 h-4 mr-1.5" />Balance Shift
           </Button>
           <Button variant="outline" onClick={() => setShowExpenseForm(true)}>
             <ReceiptText className="w-4 h-4 mr-1.5" />Record Expense
@@ -363,7 +365,7 @@ export default function MyShiftPage() {
                   onClick={() => setShowOpeningBalance(true)}
                   className="text-xs text-blue-600 hover:underline font-medium"
                 >
-                  Record opening balance
+                  Balance shift
                 </button>
               )}
             </div>
@@ -412,11 +414,18 @@ export default function MyShiftPage() {
         <ReceiptPreviewModal sale={selectedSale} open={!!selectedSale} onClose={() => setSelectedSale(null)} />
       )}
       <ExpenseForm open={showExpenseForm} onClose={() => setShowExpenseForm(false)} shiftId={shiftId ?? null} />
-      <OpeningBalanceModal
+      <BalanceShiftModal
         open={showOpeningBalance}
         onClose={() => setShowOpeningBalance(false)}
         shiftId={shiftId ?? null}
         shift={shift}
+        shiftSales={shiftSales ?? []}
+        shiftPayments={shiftPayments ?? []}
+        shiftExpenses={shiftExpenses}
+        onViewReport={() => {
+          setShowOpeningBalance(false);
+          setShowReceiptPreview(true);
+        }}
       />
       <EndShiftModal
         open={showEndShift}

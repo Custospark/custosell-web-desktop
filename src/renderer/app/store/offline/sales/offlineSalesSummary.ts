@@ -185,15 +185,16 @@ export async function computeOfflineSalesTrend(): Promise<Map<string, { revenue:
 export async function applyDashboardPendingOverlay(
   server: DashboardSummary,
 ): Promise<DashboardSummary> {
-  const [offline, refundAdj, expenseAdj, offlineTrend, offlineVat] = await Promise.all([
-    computeOfflineSalesSummary(),
-    computeOfflineRefundAdjustments(),
-    computeOfflineExpenseAdjustments(),
-    computeOfflineSalesTrend(),
-    computeOfflineVatAdjustments(),
-  ]);
-
-  let merged = mergeDashboardWithOffline(server, offline, offlineTrend);
+  try {
+    const [offline, refundAdj, expenseAdj, offlineTrend, offlineVat] = await Promise.all([
+      computeOfflineSalesSummary(),
+      computeOfflineRefundAdjustments(),
+      computeOfflineExpenseAdjustments(),
+      computeOfflineSalesTrend(),
+      computeOfflineVatAdjustments(),
+    ]);
+    console.log('[DashboardOverlay] offline=', offline, 'refundAdj=', refundAdj, 'expenseAdj=', expenseAdj);
+    let merged = mergeDashboardWithOffline(server, offline, offlineTrend);
 
   const todayKey = new Date().toISOString().slice(0, 10);
   const pendingTodayRefunds = refundAdj.get(todayKey) ?? 0;
@@ -238,6 +239,10 @@ export async function applyDashboardPendingOverlay(
   };
 
   return merged;
+} catch (err) {
+  console.error('[DashboardOverlay] applyDashboardPendingOverlay ERROR=', err);
+  return server;
+}
 }
 
 function mergeTrendDay(

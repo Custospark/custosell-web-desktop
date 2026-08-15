@@ -3,6 +3,7 @@ import type { AxiosError } from 'axios';
 import { axiosInstance } from '../../app/api/axiosConfig';
 import { useToast } from '../../app/contexts/useToast';
 import type { ShiftRecord, ShiftWithSyncMeta } from '../../app/store/offline/sales/localShiftsStore';
+import { localShiftsStore } from '../../app/store/offline/sales/localShiftsStore';
 import {
   completeOfflineClockIn,
   completeOfflineClockOutInstant,
@@ -96,6 +97,61 @@ export function useUpdateShiftOpeningBalance() {
     },
     onError: (err) => {
       showToast('error', sanitizeErrorMessage(err, 'Failed to save opening balance'));
+    },
+  });
+}
+
+/** Save opening balance and/or counted cash in one request (used by Balance Shift). */
+export function useUpdateShiftBalance() {
+  const qc = useQueryClient();
+  const { showToast } = useToast();
+  return useMutation<
+    ShiftWithSyncMeta,
+    AxiosError,
+    { id: number; openingBalance?: number | null; countedCash?: number | null }
+  >({
+    networkMode: 'always',
+    retry: false,
+    mutationFn: async ({ id, openingBalance, countedCash }) => {
+      const currentShift = qc.getQueryData<Shift | null>(shiftKeys.active());
+      const payload: Record<string, number | null> = {};
+      if (openingBalance !== undefined) payload.opening_balance = openingBalance;
+      if (countedCash !== undefined) payload.counted_cash = countedCash;
+
+      if (shouldUseLocalShiftActions()) {
+        const openingOnly = Object.keys(payload).join(',') === 'opening_balance';
+        if (openingOnly) {
+          return updateOfflineShiftOpeningBalance(id, openingBalance as number | null, currentShift as ShiftRecord | null);
+        }
+        // Fall back to a full local update for counted cash (queued PUT).
+        await localShiftsStore.patchShiftFields(id, payload);
+        const base = (currentShift ?? { id }) as ShiftRecord;
+        return {
+          ...base,
+          id,
+          ...payload,
+          updated_at: new Date().toISOString(),
+          _pendingSync: true,
+        } as ShiftWithSyncMeta;
+      }
+
+      const { data } = await axiosInstance.put(`/shifts/${id}`, payload);
+      const shift = extractShiftPayload(data);
+      if (!shift) throw new Error('Invalid shift response from server');
+      qc.setQueryData(shiftKeys.active(), shift);
+      return shift as ShiftWithSyncMeta;
+    },
+    onSuccess: (shift) => {
+      if (!shift) return;
+      qc.setQueryData(shiftKeys.active(), shift);
+      // Invalidate so useActiveShift refetches the authoritative server copy -
+      // keeps the dashboard + My Shift page live immediately after balancing.
+      void qc.invalidateQueries({ queryKey: shiftKeys.active() });
+      void qc.invalidateQueries({ queryKey: shiftKeys.all });
+      showToast('success', 'Shift balance saved');
+    },
+    onError: (err) => {
+      showToast('error', sanitizeErrorMessage(err, 'Failed to save shift balance'));
     },
   });
 }

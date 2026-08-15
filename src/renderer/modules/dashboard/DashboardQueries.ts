@@ -55,16 +55,22 @@ async function fetchDashboardSummary(): Promise<DashboardSummary> {
   return readWithOfflineStrategy({
     readFromClient: async () => {
       const server = await resolveDashboardServerBaseline();
-      return applyDashboardPendingOverlay(server);
+      const result = await applyDashboardPendingOverlay(server);
+      console.log('[Dashboard] readFromClient baseline=', server, 'afterOverlay=', result);
+      return result;
     },
     fetchFromServer: async () => {
       const { data } = await axiosInstance.get<DashboardSummary>('/dashboard/summary');
+      console.log('[Dashboard] fetchFromServer raw=', data);
       queryClient.setQueryData(dashboardKeys.server(), data);
       const businessId = resolveAuthBusinessId();
       if (businessId) {
+        // Snapshot backup is fire-and-forget (returns void) - never blocks the online read.
         backupDashboardSummarySnapshot(businessId, data);
       }
-      return applyDashboardPendingOverlay(data);
+      const result = await applyDashboardPendingOverlay(data);
+      console.log('[Dashboard] fetchFromServer afterOverlay=', result);
+      return result;
     },
   });
 }
@@ -72,7 +78,16 @@ async function fetchDashboardSummary(): Promise<DashboardSummary> {
 export function useDashboardSummary() {
   return useQuery<DashboardSummary>({
     queryKey: dashboardKeys.summary(),
-    queryFn: fetchDashboardSummary,
+    queryFn: async () => {
+      try {
+        const result = await fetchDashboardSummary();
+        console.log('[Dashboard] useDashboardSummary resolved=', result);
+        return result;
+      } catch (err) {
+        console.error('[Dashboard] useDashboardSummary ERROR=', err);
+        throw err;
+      }
+    },
     staleTime: 0,
     refetchOnMount: 'always',
     placeholderData: (prev) => prev,

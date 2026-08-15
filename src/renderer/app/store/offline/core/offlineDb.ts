@@ -26,6 +26,23 @@ const OPEN_TIMEOUT_MS = 8000;
 
 let dbPromise: Promise<IDBPDatabase> | null = null;
 
+/**
+ * Once IndexedDB fails to open (timed out / blocked), remember it for the rest
+ * of the session so every subsequent read fails fast instead of hanging 8s per
+ * query. Offline reads then fall back to React Query caches / empty, and online
+ * reads render server data immediately.
+ */
+let dbBroken = false;
+
+export function isOfflineDbBroken(): boolean {
+  return dbBroken;
+}
+
+export function markOfflineDbBroken(): void {
+  dbBroken = true;
+  dbPromise = null;
+}
+
 function ensureObjectStores(db: IDBPDatabase): void {
   if (!db.objectStoreNames.contains('stock')) {
     const stockStore = db.createObjectStore('stock', { keyPath: ['businessId', 'productId'] });
@@ -317,14 +334,20 @@ async function backfillBusinessIds(
 }
 
 export function getOfflineDb(): Promise<IDBPDatabase> {
+  if (dbBroken) {
+    return Promise.reject(new Error('IndexedDB unavailable for this session'));
+  }
   if (!dbPromise) {
     dbPromise = Promise.race([
       openOfflineDatabase(),
       new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('IndexedDB open timed out')), OPEN_TIMEOUT_MS);
+        setTimeout(() => {
+          markOfflineDbBroken();
+          reject(new Error('IndexedDB open timed out'));
+        }, OPEN_TIMEOUT_MS);
       }),
     ]).catch((err) => {
-      dbPromise = null;
+      markOfflineDbBroken();
       throw err;
     });
   }

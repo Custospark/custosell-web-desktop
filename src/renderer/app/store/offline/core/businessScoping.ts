@@ -1,4 +1,4 @@
-import { getOfflineDb } from './offlineDb';
+import { safeStore } from './offlineDb';
 import { store } from '../../store';
 
 /** Active business id from auth state (0 when none / not yet bound). */
@@ -16,8 +16,7 @@ export const scopedStore = {
   currentBusinessId,
 
   async getAll<T extends { businessId?: number }>(storeName: string): Promise<T[]> {
-    const db = await getOfflineDb();
-    const all = (await db.getAll(storeName)) as T[];
+    const all = await safeStore.getAll<T>(storeName);
     const bid = currentBusinessId();
     if (bid == null) return all;
     return all.filter((r) => r.businessId == null || r.businessId === bid);

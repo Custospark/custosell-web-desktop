@@ -75,7 +75,7 @@ export default function QuickNotesDropdown() {
                 <span className="text-sm font-bold block text-gray-900">Quick notes</span>
                 <span className="text-xs text-gray-500">
                   {canShare
-                    ? 'Visible to all members of this organization when shared.'
+                    ? 'Personal or team quick notes when shared.'
                     : 'Your private notes - only you can see them.'}
                 </span>
               </div>

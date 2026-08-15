@@ -1,4 +1,4 @@
-import { getOfflineDb } from '../core/offlineDb';
+import { safeStore } from '../core/offlineDb';
 
 export type EntityIdKind = 'order' | 'sale' | 'category' | 'role' | 'shift' | 'expense-category';
 
@@ -24,9 +24,7 @@ export const entityIdMapper = {
   async rememberId(entity: EntityIdKind, oldId: number, newId: number, businessId?: number): Promise<void> {
     if (!Number.isInteger(oldId) || !Number.isInteger(newId)) return;
     await this.pruneMappings();
-    const db = await getOfflineDb();
-    if (!db.objectStoreNames.contains('entityIdMappings')) return;
-    await db.put('entityIdMappings', {
+    await safeStore.put('entityIdMappings', {
       entity,
       oldId,
       newId,
@@ -37,9 +35,7 @@ export const entityIdMapper = {
 
   async resolveId(entity: EntityIdKind, oldId: number, businessId?: number): Promise<number | undefined> {
     if (!Number.isInteger(oldId)) return undefined;
-    const db = await getOfflineDb();
-    if (!db.objectStoreNames.contains('entityIdMappings')) return undefined;
-    const record = await db.get('entityIdMappings', [entity, oldId]);
+    const record = await safeStore.get<EntityIdMappingRecord>('entityIdMappings', [entity, oldId]);
     if (!record) return undefined;
     if (businessId != null && record.businessId != null && record.businessId !== businessId) {
       return undefined;
@@ -48,26 +44,22 @@ export const entityIdMapper = {
   },
 
   async remapBusinessId(oldBusinessId: number, newBusinessId: number): Promise<void> {
-    const db = await getOfflineDb();
-    if (!db.objectStoreNames.contains('entityIdMappings')) return;
-    const all = await db.getAll('entityIdMappings');
+    const all = await safeStore.getAll<EntityIdMappingRecord>('entityIdMappings');
     for (const record of all) {
       if (record.businessId === oldBusinessId) {
         record.businessId = newBusinessId;
-        await db.put('entityIdMappings', record);
+        await safeStore.put('entityIdMappings', record);
       }
     }
   },
 
   async pruneMappings(): Promise<void> {
-    const db = await getOfflineDb();
-    if (!db.objectStoreNames.contains('entityIdMappings')) return;
     const cutoff = Date.now() - MAPPING_TTL_MS;
-    const all = await db.getAll('entityIdMappings');
+    const all = await safeStore.getAll<EntityIdMappingRecord>('entityIdMappings');
     for (const record of all) {
       const createdAt = Date.parse(record.createdAt ?? '');
       if (Number.isNaN(createdAt) || createdAt < cutoff) {
-        await db.delete('entityIdMappings', [record.entity, record.oldId]);
+        await safeStore.delete('entityIdMappings', [record.entity, record.oldId]);
       }
     }
   },

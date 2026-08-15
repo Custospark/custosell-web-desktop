@@ -1,5 +1,6 @@
 import { isSyncCoordinatorRunning } from './syncCoordinator';
 import { getOfflineDb } from '../core/offlineDb';
+import type { IDBPDatabase } from 'idb';
 import { store } from '../../store';
 import { guardScopedMutations } from './syncDependencyGuard';
 import { entityIdMapper } from './entityIdMapper';
@@ -39,8 +40,15 @@ type MutableMutationPatch = Partial<Pick<QueuedMutation, 'data' | 'method' | 'ur
 
 const STALE_SYNCING_TIMEOUT_MS = 5 * 60 * 1000;
 
-function getDb() {
-  return getOfflineDb();
+/** Non-throwing DB access - a broken/unavailable DB resolves to null so the
+ *  caller can degrade (empty lists, no-op writes) instead of crashing queries. */
+async function tryGetDb(): Promise<IDBPDatabase | null> {
+  try {
+    return await getOfflineDb();
+  } catch (err) {
+    console.warn('[MutationQueue] IndexedDB unavailable, mutating in-memory only (non-fatal):', err);
+    return null;
+  }
 }
 
 function isStaleSyncingMutation(mutation: QueuedMutation, now = Date.now()): boolean {
@@ -55,7 +63,7 @@ function isStaleSyncingMutation(mutation: QueuedMutation, now = Date.now()): boo
 
 export const mutationQueue = {
   async enqueue(mutation: Omit<QueuedMutation, 'id' | 'createdAt' | 'retryCount' | 'status'>): Promise<string> {
-    const db = await getDb();
+    const db = await tryGetDb();
     const id = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
     const entry: QueuedMutation = {
       ...mutation,
@@ -66,23 +74,26 @@ export const mutationQueue = {
       businessId: getActiveBusinessId(),
     };
     console.log('[MutationQueue] enqueue:', { id, url: mutation.url, method: mutation.method, status: 'queued' });
+    if (!db) return '';
     await db.add('mutations', entry);
     return id;
   },
 
   async getAll(): Promise<QueuedMutation[]> {
-    const db = await getDb();
-    const all = await db.getAll('mutations');
-    return all;
+    const db = await tryGetDb();
+    if (!db) return [];
+    return db.getAll('mutations');
   },
 
   async getById(id: string): Promise<QueuedMutation | undefined> {
-    const db = await getDb();
+    const db = await tryGetDb();
+    if (!db) return undefined;
     return db.get('mutations', id);
   },
 
   async getPending(): Promise<QueuedMutation[]> {
-    const db = await getDb();
+    const db = await tryGetDb();
+    if (!db) return [];
     const all = await db.getAll('mutations');
     const now = Date.now();
     const coordinatorActive = isSyncCoordinatorRunning();
@@ -108,7 +119,8 @@ export const mutationQueue = {
   },
 
   async markSyncing(id: string): Promise<void> {
-    const db = await getDb();
+    const db = await tryGetDb();
+    if (!db) return;
     const entry = await db.get('mutations', id);
     if (entry) {
       entry.status = 'syncing';
@@ -118,7 +130,8 @@ export const mutationQueue = {
   },
 
   async markCompleted(id: string): Promise<void> {
-    const db = await getDb();
+    const db = await tryGetDb();
+    if (!db) return;
     const entry = await db.get('mutations', id);
     if (entry) {
       entry.status = 'completed';
@@ -127,7 +140,8 @@ export const mutationQueue = {
   },
 
   async markFailed(id: string, error: string): Promise<void> {
-    const db = await getDb();
+    const db = await tryGetDb();
+    if (!db) return;
     const entry = await db.get('mutations', id);
     if (entry) {
       entry.status = 'failed';
@@ -138,7 +152,10 @@ export const mutationQueue = {
   },
 
   async updateMutation(id: string, patch: MutableMutationPatch): Promise<QueuedMutation> {
-    const db = await getDb();
+    const db = await tryGetDb();
+    if (!db) {
+      throw new Error('Queued mutation not found');
+    }
     const entry = await db.get('mutations', id);
     if (!entry) {
       throw new Error('Queued mutation not found');
@@ -161,7 +178,10 @@ export const mutationQueue = {
   },
 
   async requeue(id: string): Promise<void> {
-    const db = await getDb();
+    const db = await tryGetDb();
+    if (!db) {
+      throw new Error('Queued mutation not found');
+    }
     const entry = await db.get('mutations', id);
     if (!entry) {
       throw new Error('Queued mutation not found');
@@ -185,7 +205,10 @@ export const mutationQueue = {
    * dependency re-drive still honors maxRetries and cannot loop forever.
    */
   async requeueKeepRetries(id: string): Promise<void> {
-    const db = await getDb();
+    const db = await tryGetDb();
+    if (!db) {
+      throw new Error('Queued mutation not found');
+    }
     const entry = await db.get('mutations', id);
     if (!entry) {
       throw new Error('Queued mutation not found');
@@ -204,12 +227,14 @@ export const mutationQueue = {
   },
 
   async remove(id: string): Promise<void> {
-    const db = await getDb();
+    const db = await tryGetDb();
+    if (!db) return;
     await db.delete('mutations', id);
   },
 
   async clearCompleted(): Promise<void> {
-    const db = await getDb();
+    const db = await tryGetDb();
+    if (!db) return;
     const all = await db.getAll('mutations');
     for (const m of all) {
       if (m.status === 'completed') {
@@ -219,19 +244,22 @@ export const mutationQueue = {
   },
 
   async count(): Promise<number> {
-    const db = await getOfflineDb();
+    const db = await tryGetDb();
+    if (!db) return 0;
     const all = await db.getAll('mutations');
     const now = Date.now();
     return all.filter((m) => m.status === 'queued' || isStaleSyncingMutation(m, now)).length;
   },
 
   async removeById(id: string): Promise<void> {
-    const db = await getOfflineDb();
+    const db = await tryGetDb();
+    if (!db) return;
     await db.delete('mutations', id);
   },
 
   async remapCategoryIdInProducts(oldCategoryId: number, newCategoryId: number): Promise<void> {
-    const db = await getOfflineDb();
+    const db = await tryGetDb();
+    if (!db) return;
     const all = await db.getAll('mutations');
 
     for (const entry of all) {
@@ -250,7 +278,8 @@ export const mutationQueue = {
   },
 
   async remapExpenseCategoryIdInExpenses(oldCategoryId: number, newCategoryId: number): Promise<void> {
-    const db = await getOfflineDb();
+    const db = await tryGetDb();
+    if (!db) return;
     const all = await db.getAll('mutations');
 
     for (const entry of all) {
@@ -269,7 +298,8 @@ export const mutationQueue = {
   },
 
   async remapRoleIdInStaff(oldRoleId: number, newRoleId: number): Promise<void> {
-    const db = await getOfflineDb();
+    const db = await tryGetDb();
+    if (!db) return;
     const all = await db.getAll('mutations');
 
     for (const entry of all) {
@@ -288,7 +318,8 @@ export const mutationQueue = {
   },
 
   async remapShiftId(oldShiftId: number, newShiftId: number): Promise<void> {
-    const db = await getOfflineDb();
+    const db = await tryGetDb();
+    if (!db) return;
     const all = await db.getAll('mutations');
 
     for (const entry of all) {
@@ -323,7 +354,8 @@ export const mutationQueue = {
   },
 
   async remapOrderId(oldOrderId: number, newOrderId: number): Promise<void> {
-    const db = await getOfflineDb();
+    const db = await tryGetDb();
+    if (!db) return;
     const all = await db.getAll('mutations');
 
     for (const entry of all) {

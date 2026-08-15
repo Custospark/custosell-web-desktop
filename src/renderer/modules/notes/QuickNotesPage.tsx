@@ -163,7 +163,7 @@ export default function QuickNotesPage() {
             </h1>
             <p className="text-sm font-medium text-slate-700 mt-1">
               {canShare
-                ? 'Your sticky notes - share them with your team, pin the important ones, or drag to reorder.'
+                ? 'Your sticky notes - you can also share them with your team, pin the important ones, or drag to reorder.'
                 : 'Your private sticky notes - pin the important ones, or drag to reorder.'}
             </p>
           </div>
@@ -274,7 +274,7 @@ export default function QuickNotesPage() {
           <StickyNote className="w-10 h-10 mx-auto mb-3 text-blue-500" />
           <p className="font-bold text-slate-900">{search || tagFilter ? 'No notes match your filters.' : 'No notes yet.'}</p>
           <p className="text-sm font-medium mt-1">
-            {search || tagFilter ? 'Try a different search or tag.' : 'Jot down reminders, ideas, or handover notes from the header.'}
+            {search || tagFilter ? 'Try a different search or tag.' : 'Capture reminders, ideas, or concepts so nothing gets lost.'}
           </p>
           {!search && !tagFilter && (
             <Button type="button" onClick={openCreate} className="mt-4">

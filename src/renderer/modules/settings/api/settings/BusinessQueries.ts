@@ -83,9 +83,13 @@ function businessFromAuth(): Business | null {
 }
 
 async function applyPendingBusiness(base: Business | null): Promise<BusinessWithSyncMeta> {
-  const pending = await localBusinessSettingsStore.getLatestPending();
-  if (pending) {
-    return toBusinessWithSyncMeta(pending);
+  try {
+    const pending = await localBusinessSettingsStore.getLatestPending();
+    if (pending) {
+      return toBusinessWithSyncMeta(pending);
+    }
+  } catch (err) {
+    console.warn('[Business] Pending overlay read skipped (non-fatal):', err);
   }
   if (base) return base as BusinessWithSyncMeta;
   throw new Error('Business settings not available offline');
@@ -95,16 +99,25 @@ export function useBusiness() {
   const dispatch = useAppDispatch();
   const query = useQuery<BusinessWithSyncMeta>({
     queryKey: businessKeys.mine(),
-    queryFn: async () => readWithOfflineStrategy({
-      readFromClient: async () => {
-        const cached = queryClient.getQueryData<Business>(businessKeys.mine()) ?? businessFromAuth();
-        return applyPendingBusiness(cached);
-      },
-      fetchFromServer: async () => {
-        const { data: response } = await axiosInstance.get<{ data: Business }>(BUSINESSES.MINE);
-        return applyPendingBusiness(response.data);
-      },
-    }),
+    queryFn: async () => {
+      try {
+        return await readWithOfflineStrategy({
+          readFromClient: async () => {
+            const cached = queryClient.getQueryData<Business>(businessKeys.mine()) ?? businessFromAuth();
+            return applyPendingBusiness(cached);
+          },
+          fetchFromServer: async () => {
+            const { data: response } = await axiosInstance.get<{ data: Business }>(BUSINESSES.MINE);
+            return applyPendingBusiness(response.data);
+          },
+        });
+      } catch (err) {
+        console.warn('[Business] Read failed - falling back to auth business:', err);
+        const fallback = queryClient.getQueryData<Business>(businessKeys.mine()) ?? businessFromAuth();
+        if (fallback) return fallback as BusinessWithSyncMeta;
+        throw err;
+      }
+    },
     staleTime: 0,
     refetchOnMount: 'always',
     placeholderData: (prev) => prev,

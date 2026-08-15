@@ -1,4 +1,4 @@
-import { getOfflineDb } from '../core/offlineDb';
+import { safeStore } from '../core/offlineDb';
 
 export type CatalogEntity =
   | 'products'
@@ -40,7 +40,6 @@ export const serverCatalogStore = {
     catalogKind = 'default',
     locationId: number | null = null,
   ): Promise<void> {
-    const db = await getOfflineDb();
     const record: ServerCatalogRecord<T> = {
       key: catalogKey(entity, businessId, catalogKind, locationId),
       businessId,
@@ -50,7 +49,7 @@ export const serverCatalogStore = {
       items,
       syncedAt: new Date().toISOString(),
     };
-    await db.put('serverCatalogs', record);
+    await safeStore.put('serverCatalogs', record);
   },
 
   async load<T>(
@@ -59,10 +58,10 @@ export const serverCatalogStore = {
     catalogKind = 'default',
     locationId: number | null = null,
   ): Promise<T[] | null> {
-    const db = await getOfflineDb();
-    const record = await db.get('serverCatalogs', catalogKey(entity, businessId, catalogKind, locationId)) as
-      | ServerCatalogRecord<T>
-      | undefined;
+    const record = await safeStore.get<ServerCatalogRecord<T>>(
+      'serverCatalogs',
+      catalogKey(entity, businessId, catalogKind, locationId),
+    );
     return record?.items ?? null;
   },
 
@@ -73,15 +72,12 @@ export const serverCatalogStore = {
   },
 
   async clearBusiness(entity: CatalogEntity, businessId: number): Promise<void> {
-    const db = await getOfflineDb();
+    const all = await safeStore.getAll<ServerCatalogRecord>('serverCatalogs');
     const prefix = `${entity}:${businessId}:`;
-    const all = await db.getAll('serverCatalogs') as ServerCatalogRecord[];
-    const tx = db.transaction('serverCatalogs', 'readwrite');
     for (const record of all) {
       if (record.key.startsWith(prefix)) {
-        await tx.store.delete(record.key);
+        await safeStore.delete('serverCatalogs', record.key);
       }
     }
-    await tx.done;
   },
 };

@@ -356,7 +356,11 @@ export default function MyShiftPage() {
                 <span className="text-gray-500">Expected cash in drawer</span>
                 <span className="font-bold text-green-700 tabular-nums">{formatCurrency(expectedCash)}</span>
               </div>
-              <p className="text-xs text-gray-400">Cash collected = cash sales after refunds − expenses. Expected drawer = opening balance + cash collected.</p>
+              <p className="text-xs text-blue-600">
+                Cash collected = cash sales minus cash refunds minus expenses paid from the drawer. Refunds are netted
+                against the method they were paid on - a mobile refund reduces mobile, not cash. Expected drawer = opening
+                balance + cash collected.
+              </p>
               {openingBalance === 0 && (
                 <button
                   type="button"

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Modal } from '../../shared/components/modals/Modal';
 import { Button } from '../../shared/components/buttons/Button';
 import PipelineColorPicker from '../pipeline/ui/PipelineColorPicker';
@@ -11,7 +11,7 @@ import {
 } from '../pipeline/ui/pipelineFormFields';
 import { cn } from '../../shared/utils/cn';
 import { Type, AlignLeft, Palette, Users, StickyNote, Tag, Pin, PinOff } from 'lucide-react';
-import { useCreateQuickNote, useUpdateQuickNote } from './api/QuickNoteQueries';
+import { useCreateQuickNote, useQuickNotes, useUpdateQuickNote } from './api/QuickNoteQueries';
 import type { QuickNotePayload } from './api/QuickNoteTypes';
 
 /** Default sticky-note color when the user has not chosen one. */
@@ -36,6 +36,7 @@ interface QuickNoteFormModalProps {
 export default function QuickNoteFormModal({ isOpen, onClose, note, canShare }: QuickNoteFormModalProps) {
   const createNote = useCreateQuickNote();
   const updateNote = useUpdateQuickNote();
+  const { data: notes = [] } = useQuickNotes();
   const isEdit = Boolean(note);
 
   const [title, setTitle] = useState(note?.title ?? '');
@@ -44,11 +45,18 @@ export default function QuickNoteFormModal({ isOpen, onClose, note, canShare }: 
   const [color, setColor] = useState<string | null>(note?.color ?? null);
   const [share, setShare] = useState(note?.is_shared ?? false);
   const [pinned, setPinned] = useState(note?.is_pinned ?? false);
-  const [saving, setSaving] = useState(false);
 
-  const handleSave = async () => {
+  const existingTags = useMemo(() => {
+    const tags = new Set<string>();
+    for (const n of notes) {
+      if (n.tag) tags.add(n.tag);
+    }
+    return Array.from(tags).sort((a, b) => a.localeCompare(b));
+  }, [notes]);
+
+  /** Fire-and-close: the mutation updates the cache optimistically, so we don't wait. */
+  const handleSave = () => {
     if (!title.trim()) return;
-    setSaving(true);
     const payload: QuickNotePayload = {
       title: title.trim(),
       body: body.trim() || null,
@@ -57,16 +65,12 @@ export default function QuickNoteFormModal({ isOpen, onClose, note, canShare }: 
       is_shared: canShare ? share : false,
       is_pinned: pinned,
     };
-    try {
-      if (note) {
-        await updateNote.mutateAsync({ id: note.id, data: payload });
-      } else {
-        await createNote.mutateAsync(payload);
-      }
-      onClose();
-    } finally {
-      setSaving(false);
+    if (note) {
+      updateNote.mutate({ id: note.id, data: payload });
+    } else {
+      createNote.mutate(payload);
     }
+    onClose();
   };
 
   return (
@@ -112,7 +116,34 @@ export default function QuickNoteFormModal({ isOpen, onClose, note, canShare }: 
               onChange={(e) => setTag(e.target.value)}
               placeholder="e.g. Ops, Handover, Idea"
               className={pipelineInputClass}
+              list="quick-note-tags"
             />
+            <datalist id="quick-note-tags">
+              {existingTags.map((t) => (
+                <option key={t} value={t} />
+              ))}
+            </datalist>
+            {existingTags.length > 0 && (
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                <span className="text-xs text-gray-500">Reuse:</span>
+                {existingTags.slice(0, 8).map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setTag(t)}
+                    className={cn(
+                      'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium transition-colors cursor-pointer',
+                      tag === t
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200',
+                    )}
+                  >
+                    <Tag className="w-2.5 h-2.5" />
+                    {t}
+                  </button>
+                ))}
+              </div>
+            )}
           </PipelineIconField>
         </PipelineFormSection>
 
@@ -202,7 +233,7 @@ export default function QuickNoteFormModal({ isOpen, onClose, note, canShare }: 
           <Button type="button" variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" loading={saving} disabled={!title.trim()}>
+          <Button type="submit" disabled={!title.trim()}>
             {isEdit ? 'Save changes' : 'Add note'}
           </Button>
         </div>

@@ -311,6 +311,18 @@ export function useDeleteQuickNote() {
   });
 }
 
+/** Apply an optimistic reorder to the list cache (pinned stay grouped on top). */
+export function applyReorderOptimistic(orderedIds: number[]): QuickNoteWithSyncMeta[] {
+  const current = sanitizeList(queryClient.getQueryData<QuickNoteWithSyncMeta[]>(quickNoteKeys.list()));
+  const indexById = new Map(orderedIds.map((id, i) => [id, i]));
+  const updated = current.map((n) => ({ ...n, sort_order: indexById.get(n.id) ?? n.sort_order }));
+  const sorted = updated.sort((a, b) =>
+    a.is_pinned === b.is_pinned ? a.sort_order - b.sort_order : a.is_pinned ? -1 : 1,
+  );
+  queryClient.setQueryData<QuickNoteWithSyncMeta[]>(quickNoteKeys.list(), sorted);
+  return sorted;
+}
+
 /** Persist a custom note order (drag-and-drop). Optimistic, rolled back on failure. */
 export function useReorderQuickNotes() {
   const qc = useQueryClient();
@@ -324,11 +336,7 @@ export function useReorderQuickNotes() {
     onMutate: async (orderedIds) => {
       await qc.cancelQueries({ queryKey: quickNoteKeys.all });
       const previous = sanitizeList(qc.getQueryData<QuickNoteWithSyncMeta[]>(quickNoteKeys.list()));
-      const indexById = new Map(orderedIds.map((id, i) => [id, i]));
-      qc.setQueryData<QuickNoteWithSyncMeta[]>(quickNoteKeys.list(), (old) => {
-        const list = sanitizeList(old).map((n) => ({ ...n, sort_order: indexById.get(n.id) ?? n.sort_order }));
-        return list.sort((a, b) => (a.is_pinned === b.is_pinned ? a.sort_order - b.sort_order : a.is_pinned ? -1 : 1));
-      });
+      applyReorderOptimistic(orderedIds);
       return { previous };
     },
     onSuccess: () => {

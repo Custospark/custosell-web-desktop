@@ -18,11 +18,12 @@ import {
 import { useSaveNotesBackground } from './api/QuickNoteBackgroundQueries';
 import type { QuickNoteWithSyncMeta } from './api/QuickNoteTypes';
 import QuickNoteFormModal, { DEFAULT_NOTE_COLOR } from './QuickNoteFormModal';
+import QuickNoteTagManagerModal from './QuickNoteTagManagerModal';
 import NotesBackgroundPicker from './NotesBackgroundPicker';
 import { resolveNotesBackground } from './notesBackground';
 import {
   StickyNote, Plus, Search, Pencil, Trash2, Share2, X, Pin, PinOff, GripVertical, Tag, ImageIcon,
-  Maximize2, Minimize2,
+  Maximize2, Minimize2, Settings2,
 } from 'lucide-react';
 
 export default function QuickNotesPage() {
@@ -46,6 +47,7 @@ export default function QuickNotesPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<QuickNoteWithSyncMeta | null>(null);
   const [bgOpen, setBgOpen] = useState(false);
+  const [tagManagerOpen, setTagManagerOpen] = useState(false);
   const dragId = useRef<number | null>(null);
 
   const toggleFullscreen = () =>
@@ -149,9 +151,14 @@ export default function QuickNotesPage() {
           <div className="flex items-center gap-2">
             <Button
               type="button"
-              variant={isFullscreen ? 'outline' : 'secondary'}
+              variant="secondary"
               onClick={toggleFullscreen}
               title={isFullscreen ? 'Exit full screen (hides navigation)' : 'Full screen (hides navigation)'}
+              className={cn(
+                isFullscreen
+                  ? 'bg-white text-slate-800 ring-2 ring-amber-400 hover:bg-gray-50'
+                  : 'bg-white text-slate-800 ring-1 ring-gray-300 hover:bg-gray-50',
+              )}
             >
               {isFullscreen ? <Minimize2 className="w-4 h-4 mr-1.5" /> : <Maximize2 className="w-4 h-4 mr-1.5" />}
               {isFullscreen ? 'Exit full screen' : 'Full screen'}
@@ -231,6 +238,15 @@ export default function QuickNotesPage() {
               {tag}
             </button>
           ))}
+          <button
+            type="button"
+            onClick={() => setTagManagerOpen(true)}
+            title="Manage tags"
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold text-slate-600 bg-white/80 hover:bg-white cursor-pointer transition-colors"
+          >
+            <Settings2 className="w-3 h-3" />
+            Manage tags
+          </button>
         </div>
       )}
 
@@ -260,6 +276,7 @@ export default function QuickNotesPage() {
                 onDragStart={(e) => handleDragStart(e, note.id)}
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, note.id)}
+                onClick={() => openEdit(note)}
                 className="group relative flex flex-col min-h-[10rem] rounded-xl border border-black/10 shadow-sm cursor-grab active:cursor-grabbing"
                 style={{ backgroundColor: accent }}
               >
@@ -388,6 +405,12 @@ export default function QuickNotesPage() {
           onChange={(bg) => saveBackground.mutate(bg)}
         />
       </Modal>
+
+      <QuickNoteTagManagerModal
+        isOpen={tagManagerOpen}
+        onClose={() => setTagManagerOpen(false)}
+        tags={allTags}
+      />
       </div>
     </div>
   );

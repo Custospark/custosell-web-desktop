@@ -46,6 +46,11 @@ interface PendingPayment {
 export default function PlansTab({ subscription, onUpgradeComplete, onGoToHistory }: PlansTabProps) {
   const userPhone = useAppSelector((s) => s.auth.user?.business?.phone || s.auth.user?.phone || '');
   const { currency, monthlyPrice, yearlyPrice, onboardingFee } = useDisplayPrices();
+
+  const scrollToUpgradeToBusiness = () => {
+    document.getElementById('upgrade-to-business')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [pendingCycle, setPendingCycle] = useState<'monthly' | 'yearly' | null>(null);
   const [downgradePlan, setDowngradePlan] = useState<Plan | null>(null);
@@ -297,10 +302,15 @@ export default function PlansTab({ subscription, onUpgradeComplete, onGoToHistor
             </button>
           </div>
           {user?.account_type === 'personal' && (
-            <span className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-200 px-2.5 py-1.5 rounded-lg">
+            <button
+              type="button"
+              onClick={scrollToUpgradeToBusiness}
+              title="Jump to the business upgrade section below"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-200 px-2.5 py-1.5 rounded-lg transition-colors hover:bg-indigo-100 cursor-pointer"
+            >
               <Rocket className="w-3.5 h-3.5" />
               Upgrade to Business
-            </span>
+            </button>
           )}
         </div>
         {subscription.billing_cycle && billingCycle !== subscription.billing_cycle && (
@@ -324,7 +334,7 @@ export default function PlansTab({ subscription, onUpgradeComplete, onGoToHistor
             ))}
           </div>
 
-          <div className="rounded-2xl border-2 border-dashed border-indigo-200 bg-gradient-to-br from-indigo-50/70 to-purple-50/70 p-6 text-center">
+          <div id="upgrade-to-business" className="rounded-2xl border-2 border-dashed border-indigo-200 bg-gradient-to-br from-indigo-50/70 to-purple-50/70 p-6 text-center scroll-mt-6">
             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-md shadow-indigo-500/20">
               <Rocket className="h-6 w-6 text-white" />
             </div>

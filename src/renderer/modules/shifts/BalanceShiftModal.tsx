@@ -119,7 +119,7 @@ export default function BalanceShiftModal({
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Cash at shift start</label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">{business?.currency || 'UGX'}</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-500">{business?.currency || 'UGX'}</span>
               <input
                 type="text"
                 inputMode="decimal"
@@ -138,7 +138,7 @@ export default function BalanceShiftModal({
                 onBlur={() => setOpeningText(null)}
                 placeholder="0"
                 autoFocus
-                className="w-full pl-14 pr-9 py-2.5 border-2 border-gray-200 rounded-lg text-sm bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none tabular-nums"
+                className="w-full pl-14 pr-9 py-2.5 border-2 border-blue-200 rounded-lg text-sm font-medium text-gray-900 bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none tabular-nums"
               />
               {(opening > 0 || (openingDraft ?? 0) > 0) && (
                 <button
@@ -160,7 +160,7 @@ export default function BalanceShiftModal({
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Cash counted at end of shift</label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">{business?.currency || 'UGX'}</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-500">{business?.currency || 'UGX'}</span>
               <input
                 type="text"
                 inputMode="decimal"
@@ -178,7 +178,7 @@ export default function BalanceShiftModal({
                 }}
                 onBlur={() => setCountedText(null)}
                 placeholder="0"
-                className="w-full pl-14 pr-9 py-2.5 border-2 border-gray-200 rounded-lg text-sm bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none tabular-nums"
+                className="w-full pl-14 pr-9 py-2.5 border-2 border-blue-200 rounded-lg text-sm font-medium text-gray-900 bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none tabular-nums"
               />
               {(counted !== null || (countedDraft ?? 0) > 0) && (
                 <button

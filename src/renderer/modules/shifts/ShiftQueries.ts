@@ -319,12 +319,17 @@ export function useShiftSales(shiftId: number | null) {
       return readWithOfflineStrategy({
         readFromClient: readClient,
         fetchFromServer: async () => {
+          // Server first: return immediately, do NOT wait for IndexedDB.
           const { data } = await axiosInstance.get<{ data: Sale[] }>(`/sales/by-shift/${shiftId}`);
           const serverSales = data.data ?? [];
           const businessId = resolveAuthBusinessId();
           // Snapshot backup is fire-and-forget (returns void) - never blocks the online read.
           if (businessId) backupShiftSalesSnapshot(businessId, shiftId, serverSales);
-          return mergeShiftSales(serverSales, shiftId);
+
+          // Merge offline pending rows in the background and refresh the cache.
+          void mergeOfflineShiftSalesInBackground(serverSales, shiftId);
+
+          return serverSales as SaleWithSyncMeta[];
         },
       });
     },
@@ -335,6 +340,16 @@ export function useShiftSales(shiftId: number | null) {
     retry: (count, err) => !isNetworkFailure(err) && count < 1,
     networkMode: 'offlineFirst',
   });
+}
+
+/** Background merge: adds local pending shift sales + refunds. Never blocks the initial render. */
+async function mergeOfflineShiftSalesInBackground(serverSales: Sale[], shiftId: number): Promise<void> {
+  try {
+    const merged = await mergeShiftSales(serverSales, shiftId);
+    queryClient.setQueryData<SaleWithSyncMeta[]>([...shiftKeys.all, 'sales', shiftId], merged);
+  } catch (err) {
+    console.warn('[ShiftSales] Offline merge skipped (non-fatal):', err);
+  }
 }
 
 /** Shift-scoped expenses - local-first; tolerates missing expenses.view permission. */
@@ -354,6 +369,7 @@ export function useShiftExpenses(shiftId: number | null) {
         readFromClient: readClient,
         fetchFromServer: async () => {
           try {
+            // Server first: return immediately, do NOT wait for IndexedDB.
             const { data } = await axiosInstance.get<{ data: ExpenseWithSyncMeta[] }>(
               `/expenses?shift_id=${shiftId}`,
             );
@@ -361,8 +377,11 @@ export function useShiftExpenses(shiftId: number | null) {
             const businessId = resolveAuthBusinessId();
             // Snapshot backup is fire-and-forget (returns void) - never blocks the online read.
             if (businessId) backupShiftExpensesSnapshot(businessId, shiftId, fromServer);
-            const local = await loadPendingShiftExpenses(shiftId).catch(() => []);
-            return mergeShiftExpenseLists(fromServer, local ?? []);
+
+            // Merge offline pending rows in the background and refresh the cache.
+            void mergeOfflineShiftExpensesInBackground(fromServer, shiftId);
+
+            return fromServer;
           } catch (err: unknown) {
             const status = (err as AxiosError).response?.status;
             if (isNetworkFailure(err) || status === 403 || status === 404) {
@@ -380,4 +399,15 @@ export function useShiftExpenses(shiftId: number | null) {
     retry: false,
     networkMode: 'offlineFirst',
   });
+}
+
+/** Background merge: adds local pending shift expenses. Never blocks the initial render. */
+async function mergeOfflineShiftExpensesInBackground(server: ExpenseWithSyncMeta[], shiftId: number): Promise<void> {
+  try {
+    const local = await loadPendingShiftExpenses(shiftId);
+    const merged = mergeShiftExpenseLists(server, local ?? []);
+    queryClient.setQueryData<ExpenseWithSyncMeta[]>([...shiftKeys.all, 'expenses', shiftId], merged);
+  } catch (err) {
+    console.warn('[ShiftExpenses] Offline merge skipped (non-fatal):', err);
+  }
 }

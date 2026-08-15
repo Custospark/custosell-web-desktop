@@ -145,14 +145,17 @@ async function fetchSalesMerged(): Promise<SaleWithSyncMeta[]> {
     return await readWithOfflineStrategy({
       readFromClient: readSalesFromClient,
       fetchFromServer: async () => {
-        // IndexedDB may be unavailable/timed out - server data must still render.
-        const local = await loadLocalPendingSales().catch(() => []);
+        // Server first: return immediately, do NOT wait for IndexedDB.
         const { data } = await axiosInstance.get('/sales');
         const serverSales = normalizeSalesList(data);
         const businessId = resolveAuthBusinessId();
         if (businessId) backupSalesListSnapshot(businessId, serverSales);
-        const pendingRefunds = await localRefundsStore.getPending().catch(() => []);
-        return mergePendingRefunds(mergeSalesLists(serverSales, local ?? []), pendingRefunds ?? []);
+
+        // Merge offline pending rows in the background and refresh the cache.
+        // IndexedDB failure here is non-fatal - server data is already showing.
+        void mergeOfflineSalesInBackground(serverSales);
+
+        return serverSales as SaleWithSyncMeta[];
       },
     });
   } catch (err) {
@@ -162,6 +165,18 @@ async function fetchSalesMerged(): Promise<SaleWithSyncMeta[]> {
     const cached = queryClient.getQueryData<SaleWithSyncMeta[]>([salesKeys.all, 'list']);
     if (cached && cached.length > 0) return cached;
     return [];
+  }
+}
+
+/** Background merge: adds local pending sales + refunds to the server list. Never blocks the initial render. */
+async function mergeOfflineSalesInBackground(serverSales: Sale[]): Promise<void> {
+  try {
+    const local = await loadLocalPendingSales();
+    const pendingRefunds = await localRefundsStore.getPending();
+    const merged = mergePendingRefunds(mergeSalesLists(serverSales, local ?? []), pendingRefunds ?? []);
+    queryClient.setQueryData<SaleWithSyncMeta[]>([salesKeys.all, 'list'], merged);
+  } catch (err) {
+    console.warn('[Sales] Offline merge skipped (non-fatal):', err);
   }
 }
 

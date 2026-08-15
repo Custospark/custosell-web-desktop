@@ -55,39 +55,37 @@ async function fetchDashboardSummary(): Promise<DashboardSummary> {
   return readWithOfflineStrategy({
     readFromClient: async () => {
       const server = await resolveDashboardServerBaseline();
-      const result = await applyDashboardPendingOverlay(server);
-      console.log('[Dashboard] readFromClient baseline=', server, 'afterOverlay=', result);
-      return result;
+      return applyDashboardPendingOverlay(server);
     },
     fetchFromServer: async () => {
       const { data } = await axiosInstance.get<DashboardSummary>('/dashboard/summary');
-      console.log('[Dashboard] fetchFromServer raw=', data);
       queryClient.setQueryData(dashboardKeys.server(), data);
       const businessId = resolveAuthBusinessId();
       if (businessId) {
         // Snapshot backup is fire-and-forget (returns void) - never blocks the online read.
         backupDashboardSummarySnapshot(businessId, data);
       }
-      const result = await applyDashboardPendingOverlay(data);
-      console.log('[Dashboard] fetchFromServer afterOverlay=', result);
-      return result;
+      // Server data returns immediately; offline overlay merges in the background.
+      void applyDashboardOverlayInBackground(data);
+      return data;
     },
   });
+}
+
+/** Server data first; offline pending overlay merges in the background. Never blocks the initial render. */
+async function applyDashboardOverlayInBackground(server: DashboardSummary): Promise<void> {
+  try {
+    const merged = await applyDashboardPendingOverlay(server);
+    queryClient.setQueryData(dashboardKeys.summary(), merged);
+  } catch (err) {
+    console.warn('[Dashboard] Offline overlay skipped (non-fatal):', err);
+  }
 }
 
 export function useDashboardSummary() {
   return useQuery<DashboardSummary>({
     queryKey: dashboardKeys.summary(),
-    queryFn: async () => {
-      try {
-        const result = await fetchDashboardSummary();
-        console.log('[Dashboard] useDashboardSummary resolved=', result);
-        return result;
-      } catch (err) {
-        console.error('[Dashboard] useDashboardSummary ERROR=', err);
-        throw err;
-      }
-    },
+    queryFn: fetchDashboardSummary,
     staleTime: 0,
     refetchOnMount: 'always',
     placeholderData: (prev) => prev,

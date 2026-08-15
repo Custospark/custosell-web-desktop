@@ -206,7 +206,7 @@ export default function BalanceShiftModal({
             <span className="text-base font-bold tabular-nums text-blue-900">{formatCurrency(expectedCash)}</span>
           </div>
           <p className="text-[11px] text-gray-500">
-            Starting cash {formatCurrency(openingDraft)} + cash collected {formatCurrency(cashCollectedTotal)}
+            Starting cash {formatCurrency(resolvedOpening)} + cash collected {formatCurrency(cashCollectedTotal)}
             {shiftExpenseTotal > 0 ? ` (after expenses ${formatCurrency(shiftExpenseTotal)})` : ''}
           </p>
           {variance !== null && (

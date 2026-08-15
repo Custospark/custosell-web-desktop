@@ -15,9 +15,9 @@ function symbolFor(code: string): string {
   return CURRENCY_SYMBOLS[code] || code;
 }
 
-export function formatCurrency(amount: string | number, currencyCode?: string): string {
+export function formatCurrency(amount: string | number | null | undefined, currencyCode?: string): string {
   const code = (currencyCode || getBusinessCurrency()).toUpperCase();
-  const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+  const numericAmount = typeof amount === 'string' ? parseFloat(amount) : (amount ?? NaN);
   if (isNaN(numericAmount)) return `${symbolFor(code)}0.00`;
 
   const formatted = numericAmount.toFixed(2);
@@ -27,8 +27,8 @@ export function formatCurrency(amount: string | number, currencyCode?: string): 
   return `${symbolFor(code)} ${parts.join('.')}`;
 }
 
-export function formatUSD(amount: string | number): string {
-  const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+export function formatUSD(amount: string | number | null | undefined): string {
+  const numericAmount = typeof amount === 'string' ? parseFloat(amount) : (amount ?? NaN);
   if (isNaN(numericAmount)) return '$0.00';
 
   const formatted = numericAmount.toFixed(2);

@@ -34,8 +34,6 @@ export function useEndShiftAction() {
     const handoverAmount = cashAtHandover(openingBalance, cashTotal, shiftExpenseTotal);
     const expectedCash = handoverAmount;
 
-    console.log('[EndShiftAction] shiftId=', shiftId, 'sales=', shiftSales.length, 'gross=', shiftGrossTotal, 'refunds=', shiftRefundsTotal, 'expenses=', shiftExpenseTotal, 'collections=', collections, 'netSales=', netShiftTotal, 'expectedCash=', expectedCash, 'opening=', openingBalance);
-
     return {
       netShiftTotal,
       cashTotal,

@@ -55,8 +55,6 @@ export default function MyShiftPage() {
 
   const shiftId = shift?.id || authUser?.shift_id;
   const hasActiveShift = !!(shift?.status === 'active') || !!authUser?.shift_id;
-
-  console.log('[MyShift] shift=', shift, 'shiftId=', shiftId, 'authShiftId=', authUser?.shift_id, 'hasActiveShift=', hasActiveShift);
   const { data: shiftSales } = useShiftSales(shiftId ?? null);
   const { data: shiftPayments = [] } = useShiftPayments(shiftId ?? null);
   const { data: shiftExpenses = [] } = useShiftExpenses(shiftId ?? null);

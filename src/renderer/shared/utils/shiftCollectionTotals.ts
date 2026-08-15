@@ -54,7 +54,5 @@ export function computeShiftCollections(
   _shiftPayments: unknown,
   sales: SaleLike[],
 ): { cash: number; mobile: number; card: number } {
-  const result = shiftCollectionTotals(sales);
-  console.log('[ShiftTotals] sales=', sales, 'collections=', result);
-  return result;
+  return shiftCollectionTotals(sales);
 }

@@ -193,7 +193,6 @@ export async function applyDashboardPendingOverlay(
       computeOfflineSalesTrend(),
       computeOfflineVatAdjustments(),
     ]);
-    console.log('[DashboardOverlay] offline=', offline, 'refundAdj=', refundAdj, 'expenseAdj=', expenseAdj);
     let merged = mergeDashboardWithOffline(server, offline, offlineTrend);
 
   const todayKey = new Date().toISOString().slice(0, 10);

@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { useAppContext } from '../../app/contexts/AppContext';
@@ -61,14 +61,18 @@ export default function QuickNotesPage() {
     return Array.from(tags).sort((a, b) => a.localeCompare(b));
   }, [notes]);
 
+  // If the active tag filter no longer exists (renamed or removed in the tag
+  // manager), fall back to All so the board never shows stale results.
+  const activeTagFilter = tagFilter && allTags.includes(tagFilter) ? tagFilter : null;
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return notes.filter((n) => {
-      if (tagFilter && n.tag !== tagFilter) return false;
+      if (activeTagFilter && n.tag !== activeTagFilter) return false;
       if (!q) return true;
       return n.title.toLowerCase().includes(q) || (n.body ?? '').toLowerCase().includes(q);
     });
-  }, [notes, search, tagFilter]);
+  }, [notes, search, activeTagFilter]);
 
   const openCreate = () => {
     setEditing(null);
@@ -123,14 +127,29 @@ export default function QuickNotesPage() {
 
   const isBgImage = background.type === 'gallery' && Boolean(background.value);
 
-  const pageBgStyle = isBgImage
+  // Preload the background image and fall back to a solid color if it can't
+  // load (e.g. offline) so the page never shows a blank/harsh backdrop.
+  const [bgImageFailed, setBgImageFailed] = useState(false);
+  useEffect(() => {
+    if (!isBgImage || !background.value) return;
+    let cancelled = false;
+    const img = new Image();
+    img.onload = () => { if (!cancelled) setBgImageFailed(false); };
+    img.onerror = () => { if (!cancelled) setBgImageFailed(true); };
+    img.src = background.value;
+    return () => { cancelled = true; };
+  }, [isBgImage, background.value, setBgImageFailed]);
+
+  const useImage = isBgImage && !bgImageFailed;
+  const pageBgStyle = useImage
     ? {
         backgroundImage: `url(${background.value})`,
         backgroundSize: 'cover' as const,
         backgroundPosition: 'center' as const,
         backgroundAttachment: 'fixed' as const,
+        backgroundColor: '#334155',
       }
-    : { backgroundColor: background.value ?? '#f8fafc' };
+    : { backgroundColor: background.value ?? '#334155' };
 
   return (
     <div className="relative w-full min-h-screen" style={pageBgStyle}>
@@ -349,7 +368,7 @@ export default function QuickNotesPage() {
                   <div className="flex items-center gap-1.5">
                     <button
                       type="button"
-                      onClick={() => togglePin(note)}
+                      onClick={(e) => { e.stopPropagation(); togglePin(note); }}
                       title={note.is_pinned ? 'Unpin note' : 'Pin to top'}
                       aria-label={note.is_pinned ? 'Unpin note' : 'Pin to top'}
                       className={cn(
@@ -361,7 +380,7 @@ export default function QuickNotesPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => openEdit(note)}
+                      onClick={(e) => { e.stopPropagation(); openEdit(note); }}
                       title="Edit note"
                       aria-label="Edit note"
                       className={cn(
@@ -373,7 +392,7 @@ export default function QuickNotesPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => void handleDelete(note)}
+                      onClick={(e) => { e.stopPropagation(); void handleDelete(note); }}
                       title="Delete note"
                       aria-label="Delete note"
                       className={cn(

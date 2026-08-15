@@ -89,7 +89,7 @@ export default function QuickNoteTagManagerModal({ isOpen, onClose, tags }: Quic
           No tags yet. Add one above, or tag a note when creating or editing it.
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
           {tags.map((tag) => (
             <div
               key={tag}

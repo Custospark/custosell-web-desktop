@@ -34,6 +34,11 @@ let activeSyncRun: Promise<PendingSyncResult> | null = null;
 let debouncedSyncHandle: ReturnType<typeof setTimeout> | null = null;
 
 export async function hasPendingSyncWork(): Promise<boolean> {
+  // On cold start, first restore any mutations that survived in the durable
+  // localStorage backup (covers the case where IndexedDB was unavailable at
+  // shutdown and the in-memory fallback had not yet flushed).
+  await mutationQueue.restoreFromBackup().catch(() => undefined);
+
   const pending = await mutationQueue.getPending();
   const hasAuth = pending.some(isAuthMutation);
   if (hasAuth) return true;

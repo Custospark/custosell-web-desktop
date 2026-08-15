@@ -91,7 +91,7 @@ function scheduleRetryOpen(): void {
   }, OPEN_RETRY_DELAY_MS);
 }
 
-async function retryOpenRealDb(): Promise<void> {
+export async function retryOpenRealDb(): Promise<void> {
   try {
     const real = await openOfflineDatabase();
     await flushMemoryDbIntoRealDb(real);
@@ -132,18 +132,31 @@ export function getOfflineDb(): Promise<OfflineDbLike> {
     return Promise.resolve(getMemoryDb());
   }
   if (!dbPromise) {
+    // Kick off the real open immediately. If it wins the race, great. If the
+    // open is slow (blocked by another tab / heavy migration), we fall back to
+    // the in-memory DB WITHOUT permanently poisoning dbBroken - the real open
+    // keeps running and wins on a later call, then flushes memory into it.
+    const real = openOfflineDatabase();
     dbPromise = Promise.race([
-      openOfflineDatabase(),
+      real,
       new Promise<never>((_, reject) => {
         setTimeout(() => {
-          markOfflineDbBroken();
-          reject(new Error('IndexedDB open timed out'));
+          reject(new Error('IndexedDB open timed out - using in-memory fallback'));
         }, OPEN_TIMEOUT_MS);
       }),
     ]).catch(() => {
-      markOfflineDbBroken();
+      // Do NOT set dbBroken permanently here. Keep the real open alive; a later
+      // call re-races and, once it resolves, flushes the memory overlay.
+      scheduleRetryOpen();
       return getMemoryDb();
     });
+    void real.then((r) => {
+      if (dbBroken) return;
+      if (dbPromise && dbPromise !== Promise.resolve(r)) {
+        void flushMemoryDbIntoRealDb(r);
+        dbPromise = Promise.resolve(r);
+      }
+    }).catch(() => undefined);
   }
   return dbPromise;
 }

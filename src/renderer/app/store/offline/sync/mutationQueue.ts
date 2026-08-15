@@ -3,6 +3,7 @@ import { getOfflineDb, type OfflineDbLike } from '../core/offlineDb';
 import { store } from '../../store';
 import { guardScopedMutations } from './syncDependencyGuard';
 import { entityIdMapper } from './entityIdMapper';
+import { mutationQueueBackup } from './mutationQueueBackup';
 
 export interface QueuedMutation {
   id: string;
@@ -75,7 +76,28 @@ export const mutationQueue = {
     console.log('[MutationQueue] enqueue:', { id, url: mutation.url, method: mutation.method, status: 'queued' });
     if (!db) return '';
     await db.add('mutations', entry);
+    await this.mirrorToBackup();
     return id;
+  },
+
+  async mirrorToBackup(): Promise<void> {
+    const all = await this.getAll();
+    mutationQueueBackup.sync(all);
+  },
+
+  /** Restore queued mutations from the durable localStorage backup into the live DB. */
+  async restoreFromBackup(): Promise<void> {
+    const db = await tryGetDb();
+    if (!db) return;
+    const existing = await this.getAll();
+    const missing = mutationQueueBackup.restoreMissing(existing);
+    for (const m of missing) {
+      try {
+        await db.add('mutations', m as never);
+      } catch {
+        /* best effort */
+      }
+    }
   },
 
   async getAll(): Promise<QueuedMutation[]> {
@@ -114,6 +136,11 @@ export const mutationQueue = {
     );
 
     const guarded = await guardScopedMutations(scoped, currentBusinessId);
+
+    // Keep the durable localStorage backup in sync so a cold start never loses
+    // queued work even if IndexedDB was unavailable at shutdown.
+    void this.mirrorToBackup();
+
     return guarded;
   },
 
@@ -229,6 +256,7 @@ export const mutationQueue = {
     const db = await tryGetDb();
     if (!db) return;
     await db.delete('mutations', id);
+    void this.mirrorToBackup();
   },
 
   async clearCompleted(): Promise<void> {
@@ -240,6 +268,7 @@ export const mutationQueue = {
         await db.delete('mutations', m.id);
       }
     }
+    void this.mirrorToBackup();
   },
 
   async count(): Promise<number> {
@@ -254,6 +283,7 @@ export const mutationQueue = {
     const db = await tryGetDb();
     if (!db) return;
     await db.delete('mutations', id);
+    void this.mirrorToBackup();
   },
 
   async remapCategoryIdInProducts(oldCategoryId: number, newCategoryId: number): Promise<void> {

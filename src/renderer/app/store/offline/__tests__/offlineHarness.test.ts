@@ -41,13 +41,22 @@ async function freshDb(): Promise<void> {
   const { resetOfflineDbState, clearOfflineDbStores, getOfflineDb } = await import('../core/offlineDb');
   resetOfflineDbState();
   await clearOfflineDbStores();
+  // Clear the durable localStorage mirror so tests don't leak across cases.
+  const { mutationQueueBackup } = await import('../sync/mutationQueueBackup');
+  mutationQueueBackup.clear();
   await getOfflineDb();
 }
 
 /** Simulate an app restart: reset module state WITHOUT wiping data, then reopen. */
 async function reopenDb(): Promise<void> {
-  const { resetOfflineDbState, getOfflineDb } = await import('../core/offlineDb');
+  const { resetOfflineDbState, getOfflineDb, isOfflineDbBroken } = await import('../core/offlineDb');
   resetOfflineDbState();
+  // Guard: if the real IndexedDB is marked broken, force a retry so reads/writes
+  // land on the durable store rather than the volatile in-memory fallback.
+  if (isOfflineDbBroken()) {
+    const { retryOpenRealDb } = await import('../core/offlineDb');
+    await retryOpenRealDb().catch(() => undefined);
+  }
   await getOfflineDb();
 }
 
@@ -210,6 +219,37 @@ describe('quick notes offline CRUD + sync (harness template)', () => {
     // Nothing lost: record + mutation remain so a later retry succeeds.
     expect(await localQuickNotesStore.getPending()).toHaveLength(1);
     expect(await mutationQueue.getAll()).toHaveLength(1);
+  });
+
+  it('queued mutations survive a cold start via the durable localStorage backup', async () => {
+    const { mutationQueue } = await import('../sync/mutationQueue');
+    const { mutationQueueBackup } = await import('../sync/mutationQueueBackup');
+
+    // Enqueue a sale mutation - it is mirrored to localStorage.
+    const mutationId = await mutationQueue.enqueue({
+      method: 'POST',
+      url: '/sales',
+      data: { receipt_number: 'COLD-1', total_amount: 5000 },
+      maxRetries: 3,
+    });
+    expect(await mutationQueue.getAll()).toHaveLength(1);
+
+    // Simulate a cold start where IndexedDB is unavailable: wipe the live DB.
+    const { resetOfflineDbState, clearOfflineDbStores } = await import('../core/offlineDb');
+    resetOfflineDbState();
+    await clearOfflineDbStores();
+    expect(await mutationQueue.getAll()).toHaveLength(0);
+
+    // restoreFromBackup reads the durable localStorage mirror and re-queues it.
+    await mutationQueue.restoreFromBackup();
+    const restored = await mutationQueue.getAll();
+    expect(restored).toHaveLength(1);
+    expect(restored[0].id).toBe(mutationId);
+    expect(restored[0].url).toBe('/sales');
+
+    // Cleanup so later tests start empty.
+    await mutationQueue.removeById(mutationId);
+    mutationQueueBackup.clear();
   });
 });
 

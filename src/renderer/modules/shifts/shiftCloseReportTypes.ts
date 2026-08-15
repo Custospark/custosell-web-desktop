@@ -18,6 +18,9 @@ export interface ShiftCloseReportData {
   mobileMoney: number;
   cardOther: number;
   shiftExpenses: number;
+  /** Net cash taken in = cash − shift_expenses (refunds already netted per sale). */
+  cashCollected?: number;
+  /** Expected cash in drawer at close = opening_balance + cash_collected. */
   cashHandover: number;
   openingBalance: number;
   expectedCash?: number;

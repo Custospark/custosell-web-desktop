@@ -125,7 +125,7 @@ export default function ShiftCloseReportContent({ data, forPrint = false }: Shif
           )}
           <Row label="Net sales" value={formatCurrency(data.netSales)} bold />
           <Row label="Opening balance" value={formatCurrency(data.openingBalance)} sub />
-          <Row label="Cash collected" value={formatCurrency(data.cash)} sub />
+          <Row label="Cash collected" value={formatCurrency(data.cashCollected ?? data.cash)} sub />
           <Row label="Mobile money" value={formatCurrency(data.mobileMoney)} sub />
           <Row label="Card / other" value={formatCurrency(data.cardOther)} sub />
           <Row label="Expected cash in drawer" value={formatCurrency(data.expectedCash ?? 0)} bold />

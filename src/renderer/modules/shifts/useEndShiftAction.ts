@@ -3,7 +3,7 @@ import { useAppSelector } from '../../app/store/hooks/useApp';
 import { useLogoutAction } from '../../app/contexts/useLogoutActions';
 import { useActiveShift, useShiftExpenses, useShiftPayments, useShiftSales } from './ShiftQueries';
 import { useClockOut } from './ShiftMutations';
-import { cashHandover, netSales } from '../../shared/utils/accounting';
+import { cashAtHandover, cashCollected, netSales } from '../../shared/utils/accounting';
 import { computeShiftCollections } from '../../shared/utils/shiftCollectionTotals';
 import { grossSaleAmount, refundedAmount, toAmount } from '../sales/utils/saleAmounts';
 
@@ -28,9 +28,11 @@ export function useEndShiftAction() {
     const cashTotal = collections.cash;
     const mobileTotal = collections.mobile;
     const cardTotal = collections.card;
-    const handoverAmount = cashHandover(cashTotal, shiftExpenseTotal);
     const openingBalance = Number(shift?.opening_balance ?? 0);
-    const expectedCash = openingBalance + cashTotal - shiftExpenseTotal;
+    // Canonical: cash_collected = cash − expenses; cash_at_handover = opening + cash_collected.
+    const cashCollectedTotal = cashCollected(cashTotal, shiftExpenseTotal);
+    const handoverAmount = cashAtHandover(openingBalance, cashTotal, shiftExpenseTotal);
+    const expectedCash = handoverAmount;
 
     return {
       netShiftTotal,
@@ -38,6 +40,7 @@ export function useEndShiftAction() {
       mobileTotal,
       cardTotal,
       shiftExpenseTotal,
+      cashCollected: cashCollectedTotal,
       handoverAmount,
       expectedCash,
       openingBalance,

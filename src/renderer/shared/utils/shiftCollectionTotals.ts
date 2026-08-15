@@ -1,5 +1,4 @@
 import type { Sale } from '../../modules/sales/api/salesTypes';
-import type { Payment } from '../../modules/payments/paymentTypes';
 import { netSaleAmount, toAmount } from '../../modules/sales/utils/saleAmounts';
 
 type SaleLike = Pick<
@@ -7,39 +6,15 @@ type SaleLike = Pick<
   'payment_method' | 'payment_status' | 'amount_paid' | 'payments' | 'total_amount' | 'sale_items' | 'refunds' | 'net_amount'
 >;
 
-function sumByMethod(payments: Payment[], method: string): number {
-  return payments
-    .filter((p) => p.payment_method === method)
-    .reduce((sum, p) => sum + toAmount(p.amount), 0);
-}
-
-function sumCardAndOther(payments: Payment[]): number {
-  return payments
-    .filter((p) => p.payment_method === 'card' || p.payment_method === 'other')
-    .reduce((sum, p) => sum + toAmount(p.amount), 0);
-}
-
-/** Mirror rows on linked sales duplicate invoice collections - skip them. */
-export function isMirrorSalePayment(payment: Payment): boolean {
-  return payment.payable_type === 'sale' && (payment.notes?.startsWith('From invoice') ?? false);
-}
-
-export function collectionsFromPayments(payments: Payment[]): { cash: number; mobile: number; card: number } {
-  const eligible = payments.filter((p) => !isMirrorSalePayment(p));
-  return {
-    cash: sumByMethod(eligible, 'cash'),
-    mobile: sumByMethod(eligible, 'mobile_money'),
-    card: sumCardAndOther(eligible),
-  };
-}
-
-/** Cash/mobile/card actually collected on a sale (payment rows, then header fallback). */
+/**
+ * Cash/mobile/card actually collected on a sale.
+ *
+ * Canonical source is the per-sale NET after its own refunds (refunds live on
+ * sale items, not payment rows), matching the backend - see
+ * docs/shift-sales-formulas.md. Payment rows are only used to decide WHICH
+ * method a sale was collected in, never to override the net amount.
+ */
 export function collectionsForSale(sale: SaleLike): { cash: number; mobile: number; card: number } {
-  const payments = sale.payments ?? [];
-  if (payments.length > 0) {
-    return collectionsFromPayments(payments);
-  }
-
   const net = netSaleAmount(sale);
   const paid = toAmount(sale.amount_paid);
   const collected = sale.payment_status === 'paid' ? net : Math.min(paid, net);
@@ -55,7 +30,7 @@ export function collectionsForSale(sale: SaleLike): { cash: number; mobile: numb
   };
 }
 
-/** Legacy: sum collections from sales in the shift (pre shift_id on payments). */
+/** Sum collections from sales in the shift (per-sale net-after-refunds). */
 export function shiftCollectionTotals(sales: SaleLike[]): { cash: number; mobile: number; card: number } {
   return sales.reduce(
     (acc, sale) => {
@@ -71,14 +46,13 @@ export function shiftCollectionTotals(sales: SaleLike[]): { cash: number; mobile
 }
 
 /**
- * Prefer shift-attributed payment rows; fall back to sale-based totals when none are available.
+ * Shift collections: always per-sale net-after-refunds (canonical).
+ * Payment rows are not summed directly because refunds live on sale items,
+ * so gross payment rows would overstate cash (docs/shift-sales-formulas.md).
  */
 export function computeShiftCollections(
-  shiftPayments: Payment[] | undefined,
+  _shiftPayments: unknown,
   sales: SaleLike[],
 ): { cash: number; mobile: number; card: number } {
-  if (shiftPayments && shiftPayments.length > 0) {
-    return collectionsFromPayments(shiftPayments);
-  }
   return shiftCollectionTotals(sales);
 }

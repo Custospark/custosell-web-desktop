@@ -31,7 +31,7 @@ import { CurrentShiftProgressChart, ShiftHistoryTrendChart } from './ShiftCharts
 import { buildCurrentShiftProgressSeries, buildShiftHistorySeries } from './shiftChartSeries';
 import { useBusinessTaxSettings } from '../settings/hooks/useBusinessTaxSettings';
 import { grossSaleAmount, netSaleTaxAmount, refundedAmount, saleTaxRefundedAmount, toAmount } from '../sales/utils/saleAmounts';
-import { netSales } from '../../shared/utils/accounting';
+import { cashAtHandover, cashCollected, netSales } from '../../shared/utils/accounting';
 import { computeShiftCollections } from '../../shared/utils/shiftCollectionTotals';
 import { useToast } from '../../app/contexts/useToast';
 
@@ -80,7 +80,8 @@ export default function MyShiftPage() {
   const mobileTotal = collections.mobile;
   const cardTotal = collections.card;
   const openingBalance = Number(shift?.opening_balance ?? 0);
-  const expectedCash = openingBalance + cashTotal - shiftExpenseTotal;
+  const expectedCash = cashAtHandover(openingBalance, cashTotal, shiftExpenseTotal);
+  const cashCollectedTotal = cashCollected(cashTotal, shiftExpenseTotal);
 
   const clockInValue = shift?.clock_in || authUser?.shift_clock_in;
 
@@ -339,23 +340,23 @@ export default function MyShiftPage() {
                 </>
               )}
               <div className="flex justify-between border-t border-gray-100 pt-2">
-                <span className="font-medium text-gray-800">Net sales (cash collected)</span>
+                <span className="font-medium text-gray-800">Net Sales</span>
                 <span className="font-bold tabular-nums">{formatCurrency(netShiftTotal)}</span>
               </div>
-              <p className="text-xs text-gray-400">Gross − refunds − shift expenses. VAT shown separately above.</p>
+              <p className="text-xs text-gray-400">Gross − refunds − shift expenses (all payment types). VAT shown separately above.</p>
               <div className="flex justify-between border-t border-gray-100 pt-2">
                 <span className="text-gray-500">Opening balance</span>
                 <span className="font-semibold tabular-nums">{formatCurrency(openingBalance)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Cash collected</span>
-                <span className="font-semibold tabular-nums">{formatCurrency(cashTotal)}</span>
+                <span className="font-semibold tabular-nums">{formatCurrency(cashCollectedTotal)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Expected cash in drawer</span>
                 <span className="font-bold text-green-700 tabular-nums">{formatCurrency(expectedCash)}</span>
               </div>
-              <p className="text-xs text-gray-400">Opening balance + cash collected − expenses paid from the drawer.</p>
+              <p className="text-xs text-gray-400">Cash collected = cash sales after refunds − expenses. Expected drawer = opening balance + cash collected.</p>
               {openingBalance === 0 && (
                 <button
                   type="button"

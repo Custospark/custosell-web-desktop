@@ -1,5 +1,5 @@
 import type { AuthUser, BusinessInfo } from '../../app/store/slices/authSlice';
-import { cashHandover, netSales } from '../../shared/utils/accounting';
+import { cashAtHandover, cashCollected, netSales } from '../../shared/utils/accounting';
 import { computeShiftCollections } from '../../shared/utils/shiftCollectionTotals';
 import type { ExpenseWithSyncMeta } from '../expenses/api/ExpenseTypes';
 import type { Payment } from '../payments/paymentTypes';
@@ -70,6 +70,9 @@ export function buildShiftCloseReportData(params: {
   const mobileMoney = collections.mobile;
   const cardOther = collections.card;
 
+  const cashCollectedTotal = cashCollected(cash, shiftExpenseTotal);
+  const cashHandoverTotal = cashAtHandover(openingBalance, cash, shiftExpenseTotal);
+
   const resolvedClockIn = clockIn ?? new Date().toISOString();
 
   return {
@@ -92,11 +95,12 @@ export function buildShiftCloseReportData(params: {
     mobileMoney,
     cardOther,
     shiftExpenses: shiftExpenseTotal,
-    cashHandover: cashHandover(cash, shiftExpenseTotal),
+    cashCollected: cashCollectedTotal,
+    cashHandover: cashHandoverTotal,
     openingBalance,
-    expectedCash: openingBalance + cash - shiftExpenseTotal,
+    expectedCash: cashHandoverTotal,
     countedCash,
-    variance: countedCash !== null ? countedCash - (openingBalance + cash - shiftExpenseTotal) : null,
+    variance: countedCash !== null ? countedCash - cashHandoverTotal : null,
     generatedAt: new Date().toISOString(),
     taxEnabled,
     outputVat,

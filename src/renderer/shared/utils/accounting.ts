@@ -29,6 +29,27 @@ export function totalDeductions(refunds: number, expenses: number): number {
   return refunds + expenses;
 }
 
-export function cashHandover(netCashCollected: number, shiftExpenses: number): number {
-  return Math.max(0, netCashCollected - shiftExpenses);
+/**
+ * Net cash taken in during a shift, after cash refunds (already netted per sale)
+ * and after expenses paid from the drawer.
+ *
+ * cash_collected = cash_receipts − shift_expenses
+ */
+export function cashCollected(cashReceipts: number, shiftExpenses: number): number {
+  return Math.max(0, cashReceipts - shiftExpenses);
+}
+
+/**
+ * Expected cash in the drawer at close.
+ *
+ * cash_at_handover = opening_balance + cash_collected
+ * (synonymous with "expected cash in drawer"; variance = counted − this)
+ */
+export function cashAtHandover(openingBalance: number, cashReceipts: number, shiftExpenses: number): number {
+  return openingBalance + cashCollected(cashReceipts, shiftExpenses);
+}
+
+/** @alias cashAtHandover - the drawer expectation used by end-shift reconciliation. */
+export function expectedCashInDrawer(openingBalance: number, cashReceipts: number, shiftExpenses: number): number {
+  return cashAtHandover(openingBalance, cashReceipts, shiftExpenses);
 }

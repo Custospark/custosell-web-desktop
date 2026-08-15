@@ -7,6 +7,7 @@ import { useConfirm } from '../Feedback/ConfirmContext';
 import { useEndShiftAction } from '../../../modules/shifts/useEndShiftAction';
 import { SyncHeaderChip } from '../Errors/SyncProgressBanner';
 import { HeaderNotifications } from './HeaderNotifications';
+import QuickNotesDropdown from './QuickNotesDropdown';
 import { HeaderQuickNav } from './HeaderQuickNav';
 import { useUpdateOnboarding } from '../../../modules/onboarding/useOnboardingQueries';
 import { SHELL_HEADER_HEIGHT_CLASS } from './layoutConstants';
@@ -300,6 +301,8 @@ export function Navbar() {
           </div>
 
           {!isWorkspace && <HeaderNotifications />}
+
+          {isWorkspace && <QuickNotesDropdown />}
 
           <div data-tour="navbar-business"><BusinessDropdown /></div>
 

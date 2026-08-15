@@ -1,7 +1,7 @@
 import { openDB, type IDBPDatabase, type IDBPTransaction } from 'idb';
 
 export const OFFLINE_DB_NAME = 'CustosellOffline';
-export const OFFLINE_DB_VERSION = 15;
+export const OFFLINE_DB_VERSION = 16;
 
 /** Stores whose records carry a businessId and get a businessId index. */
 const BUSINESS_SCOPED_STORES = [
@@ -20,6 +20,7 @@ const BUSINESS_SCOPED_STORES = [
   'localBusinessSettings',
   'localOrders',
   'localGuideFeedback',
+  'localQuickNotes',
 ];
 
 const OPEN_TIMEOUT_MS = 8000;
@@ -128,6 +129,11 @@ function ensureObjectStores(db: IDBPDatabase): void {
     const feedbackStore = db.createObjectStore('localGuideFeedback', { keyPath: 'localId' });
     feedbackStore.createIndex('syncStatus', 'syncStatus');
     feedbackStore.createIndex('mutationId', 'mutationId');
+  }
+  if (!db.objectStoreNames.contains('localQuickNotes')) {
+    const notesStore = db.createObjectStore('localQuickNotes', { keyPath: 'localId' });
+    notesStore.createIndex('syncStatus', 'syncStatus');
+    notesStore.createIndex('mutationId', 'mutationId');
   }
   if (!db.objectStoreNames.contains('localOrders')) {
     const ordersStore = db.createObjectStore('localOrders', { keyPath: 'localId' });

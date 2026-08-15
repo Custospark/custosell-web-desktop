@@ -13,6 +13,7 @@ import {
   Gift,
   GitBranch,
   ArrowRightLeft,
+  StickyNote,
 } from 'lucide-react';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 
@@ -53,6 +54,7 @@ export const baseSubRoutes = [
   ROUTES.FORECASTING.KPIS, ROUTES.FORECASTING.SCENARIOS,
   ROUTES.GUIDE.TUTORIALS, ROUTES.GUIDE.FAQS, ROUTES.GUIDE.FEEDBACK, ROUTES.GUIDE.CONTACT,
   ROUTES.ACCOUNT.NOTIFICATIONS, ROUTES.ACCOUNT.PROFILE, ROUTES.REFERRAL,
+  ROUTES.NOTES.INDEX,
   ROUTES.SETTINGS.BUSINESS, ROUTES.SETTINGS.SALES_CHANNELS, ROUTES.SETTINGS.TAX, ROUTES.SETTINGS.SUBSCRIPTION, ROUTES.SETTINGS.STAFF, ROUTES.SETTINGS.ROLES, ROUTES.SETTINGS.MODULES, ROUTES.SETTINGS.LOCATIONS, ROUTES.SETTINGS.DATA_EXPORT,
 ];
 
@@ -236,6 +238,11 @@ export const baseNavGroups: SidebarNavGroup[] = [
       { to: ROUTES.GUIDE.FEEDBACK, label: 'Feedback', icon: MessageSquareHeart },
       { to: ROUTES.GUIDE.CONTACT, label: 'Contact & Help', icon: Headset },
     ],
+  },
+  {
+    icon: StickyNote,
+    label: 'Quick Notes',
+    subItems: [{ to: ROUTES.NOTES.INDEX, label: 'All notes', icon: StickyNote }],
   },
   {
     icon: CircleUser,

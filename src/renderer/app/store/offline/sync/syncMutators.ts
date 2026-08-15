@@ -65,6 +65,10 @@ export function isGuideFeedbackMutation(m: QueuedMutation): boolean {
   return m.method === 'POST' && m.url === '/guide/feedback';
 }
 
+export function isQuickNoteMutation(m: QueuedMutation): boolean {
+  return /^\/quick-notes(\/-?\d+)?$/.test(m.url);
+}
+
 export function isCategoryCreateMutation(m: QueuedMutation): boolean {
   return m.method === 'POST' && m.url === '/categories';
 }

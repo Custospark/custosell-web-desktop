@@ -9,6 +9,7 @@ import { ModuleAccessMiddleware } from './middleware/ModuleAccessMiddleware';
 import { SubscriptionGuard } from './middleware/SubscriptionGuard';
 import { EstimatesAccessMiddleware } from './middleware/EstimatesAccessMiddleware';
 import { PersonalIncomeMiddleware } from './middleware/PersonalIncomeMiddleware';
+import { QuickNotesMiddleware } from './middleware/QuickNotesMiddleware';
 import { HrAccessMiddleware, HrIndexRedirect } from './middleware/HrAccessMiddleware';
 import { ModuleLandingRedirect } from './middleware/ModuleLandingRedirect';
 import { AppChrome } from '../../shared/components/layout/AppChrome';
@@ -147,6 +148,7 @@ const PipelineReferralsPage = lazy(() => import('../../modules/referral/pages/Pi
 const AccountReferralsPage = lazy(() => import('../../modules/account/AccountReferralsPage'));
 const AccountSecurityPage = lazy(() => import('../../modules/settings/AccountSecurityPage'));
 const YourToolsPage = lazy(() => import('../../modules/personal/PersonalModulesPage'));
+const QuickNotesPage = lazy(() => import('../../modules/notes/QuickNotesPage'));
 const IncomeListPage = lazy(() => import('../../modules/expenses/IncomeListPage'));
 const MyBudgetsPage = lazy(() => import('../../modules/expenses/MyBudgetsPage'));
 const OverviewPage = lazy(() => import('../../modules/expenses/OverviewPage'));
@@ -201,6 +203,9 @@ export function AppRoutes() {
 
           {/* Always-accessible routes - no subscription check */}
           <Route path={ROUTES.YOUR_TOOLS} element={<SuspenseWrapper><YourToolsPage /></SuspenseWrapper>} />
+          <Route element={<QuickNotesMiddleware />}>
+            <Route path={ROUTES.NOTES.INDEX} element={<SuspenseWrapper><QuickNotesPage /></SuspenseWrapper>} />
+          </Route>
           <Route element={<ModuleAccessMiddleware module="account" />}>
             <Route path={ROUTES.ACCOUNT.INDEX} element={<SuspenseWrapper><AccountPage /></SuspenseWrapper>}>
               <Route index element={<Navigate to={ROUTES.ACCOUNT.NOTIFICATIONS} replace />} />

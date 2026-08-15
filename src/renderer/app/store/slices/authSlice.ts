@@ -120,6 +120,7 @@ export interface AuthUser {
     tour_completed_at: string | null;
     tour_skipped_at: string | null;
   } | null;
+  preferences?: Record<string, unknown> | null;
   active_plans?: Plan[];
 }
 

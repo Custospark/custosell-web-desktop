@@ -98,6 +98,7 @@ export const ROUTES = {
     SECURITY: '/account/security',
   },
   YOUR_TOOLS: '/your-tools',
+  NOTES: { INDEX: '/notes' },
   NOTIFICATIONS: { INDEX: '/account/notifications' },
   GUIDE: {
     INDEX: '/guide',

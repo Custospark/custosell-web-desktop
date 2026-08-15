@@ -16,6 +16,7 @@ import { localRolesStore } from '../settings/localRolesStore';
 import { localStaffStore } from '../settings/localStaffStore';
 import { localBusinessSettingsStore } from '../settings/localBusinessSettingsStore';
 import { localGuideFeedbackStore } from '../guide/localGuideFeedbackStore';
+import { localQuickNotesStore } from '../notes/localQuickNotesStore';
 import { buildExpenseFormData } from '../expenses/completeOfflineExpense';
 import { commitMutationQueueEntry } from './syncMutationFinalize';
 import { invalidateAfterItemCommitted } from './syncCacheRefresh';
@@ -32,6 +33,7 @@ import {
   isGuideFeedbackMutation,
   isOrderMutation,
   isProductMutation,
+  isQuickNoteMutation,
   isRefundMutation,
   isRoleMutation,
   isShiftCloseMutation,
@@ -129,6 +131,10 @@ export async function processMutation(m: QueuedMutation): Promise<boolean> {
       await localGuideFeedbackStore.removeByMutationId(m.id);
     }
 
+    if (isQuickNoteMutation(m)) {
+      await localQuickNotesStore.removeByMutationId(m.id);
+    }
+
     if (isOrderMutation(m)) {
       await localOrdersStore.removeByMutationId(m.id);
     }
@@ -202,6 +208,10 @@ export async function processMutation(m: QueuedMutation): Promise<boolean> {
 
     if (isGuideFeedbackMutation(m)) {
       await localGuideFeedbackStore.markFailedByMutationId(m.id, message);
+    }
+
+    if (isQuickNoteMutation(m)) {
+      await localQuickNotesStore.markFailedByMutationId(m.id, message);
     }
 
     if (isOrderMutation(m)) {

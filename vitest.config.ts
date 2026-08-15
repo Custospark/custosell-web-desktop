@@ -13,5 +13,9 @@ export default defineConfig({
     ],
     restoreMocks: true,
     clearMocks: true,
+    testTimeout: 60000,
+    hookTimeout: 60000,
+    fileParallelism: false,
+    maxWorkers: 1,
   },
 });

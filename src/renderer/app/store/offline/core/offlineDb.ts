@@ -1,4 +1,5 @@
 import { openDB, type IDBPDatabase, type IDBPTransaction } from 'idb';
+import { getMemoryDb, type MemoryDb } from './memoryDb';
 
 export const OFFLINE_DB_NAME = 'CustosellOffline';
 export const OFFLINE_DB_VERSION = 16;
@@ -24,25 +25,168 @@ const BUSINESS_SCOPED_STORES = [
 ];
 
 const OPEN_TIMEOUT_MS = 8000;
+const OPEN_RETRY_DELAY_MS = 3000;
 
-let dbPromise: Promise<IDBPDatabase> | null = null;
+let dbPromise: Promise<IDBPDatabase | MemoryDb> | null = null;
 
 /**
- * Once IndexedDB fails to open (timed out / blocked), remember it for the rest
- * of the session so every subsequent read fails fast instead of hanging 8s per
- * query. Offline reads then fall back to React Query caches / empty, and online
- * reads render server data immediately.
+ * Tracks whether the real IndexedDB is unavailable. When true, all reads/writes
+ * route through an in-memory database so NOTHING is lost, and the real DB is
+ * retried in the background; on recovery the memory DB is flushed into it.
  */
 let dbBroken = false;
+let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
 export function isOfflineDbBroken(): boolean {
   return dbBroken;
 }
 
+/** Reset the offline DB module state (used by tests) so each case starts fresh. */
+export function resetOfflineDbState(): void {
+  dbBroken = false;
+  dbPromise = null;
+  if (retryTimer) {
+    clearTimeout(retryTimer);
+    retryTimer = null;
+  }
+  getMemoryDb().clearAll();
+}
+
+/** Close the active IndexedDB connection (used by tests before deleting the DB). */
+export async function closeOfflineDb(): Promise<void> {
+  try {
+    const db = await dbPromise;
+    if (db && 'close' in db) db.close();
+  } catch {
+    /* ignore */
+  }
+  dbPromise = null;
+}
+
+/** Wipe every row from the real IndexedDB (used by tests between cases). */
+export async function clearOfflineDbStores(): Promise<void> {
+  try {
+    const db = await getOfflineDb();
+    for (const name of Array.from(db.objectStoreNames)) {
+      await db.clear(name as never);
+    }
+  } catch (err) {
+    console.warn('[OfflineDB] clear stores skipped (non-fatal):', err);
+  }
+}
+
 export function markOfflineDbBroken(): void {
   dbBroken = true;
   dbPromise = null;
+  scheduleRetryOpen();
 }
+
+/** Try to reopen the real IndexedDB and, on success, flush memory into it. */
+function scheduleRetryOpen(): void {
+  if (retryTimer) return;
+  retryTimer = setTimeout(() => {
+    retryTimer = null;
+    void retryOpenRealDb();
+  }, OPEN_RETRY_DELAY_MS);
+}
+
+async function retryOpenRealDb(): Promise<void> {
+  try {
+    const real = await openOfflineDatabase();
+    await flushMemoryDbIntoRealDb(real);
+    dbBroken = false;
+    dbPromise = Promise.resolve(real);
+  } catch (err) {
+    console.warn('[OfflineDB] Retry open failed, staying on in-memory DB (non-fatal):', err);
+    scheduleRetryOpen();
+  }
+}
+
+/** Copy all rows held in the in-memory DB into the real IndexedDB. */
+async function flushMemoryDbIntoRealDb(real: IDBPDatabase): Promise<void> {
+  try {
+    const memory = getMemoryDb();
+    const dump = memory.dumpAll();
+    for (const [storeName, rows] of dump) {
+      if (rows.length === 0) continue;
+      if (!real.objectStoreNames.contains(storeName)) continue;
+      for (const row of rows) {
+        await real.put(storeName, row as never);
+      }
+    }
+  } catch (err) {
+    console.warn('[OfflineDB] Flush memory -> IndexedDB failed (non-fatal):', err);
+  }
+}
+
+export type OfflineDbLike = IDBPDatabase | MemoryDb;
+
+/**
+ * Resolve the active database - the real IndexedDB when available, otherwise
+ * the in-memory fallback. NEVER throws: a broken DB degrades to memory so every
+ * offline write is recorded and queued, then flushed to IDB on recovery.
+ */
+export function getOfflineDb(): Promise<OfflineDbLike> {
+  if (dbBroken) {
+    return Promise.resolve(getMemoryDb());
+  }
+  if (!dbPromise) {
+    dbPromise = Promise.race([
+      openOfflineDatabase(),
+      new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          markOfflineDbBroken();
+          reject(new Error('IndexedDB open timed out'));
+        }, OPEN_TIMEOUT_MS);
+      }),
+    ]).catch(() => {
+      markOfflineDbBroken();
+      return getMemoryDb();
+    });
+  }
+  return dbPromise;
+}
+
+/**
+ * Safe IndexedDB access layer. Every call is guarded so a broken/unavailable DB
+ * (timeout, blocked, quota, corrupted) degrades to the in-memory database -
+ * writes are recorded (never dropped) and reads return what's pending in memory.
+ * Server-first reads already render before these run; these helpers make offline
+ * overlays/pending reads non-fatal everywhere while preserving every mutation.
+ */
+export const safeStore = {
+  async getAll<T>(storeName: string): Promise<T[]> {
+    const db = await getOfflineDb();
+    return (await db.getAll(storeName)) as T[];
+  },
+
+  async getAllFromIndex<T>(storeName: string, index: string, key: unknown): Promise<T[]> {
+    const db = await getOfflineDb();
+    if ('getAllFromIndex' in db) {
+      return (await db.getAllFromIndex(storeName, index, key)) as T[];
+    }
+    const all = (await db.getAll(storeName)) as Array<Record<string, unknown>>;
+    return all.filter((r) => r[index] === key) as T[];
+  },  async get<T>(storeName: string, key: IDBValidKey | IDBKeyRange): Promise<T | undefined> {
+    const db = await getOfflineDb();
+    return (await db.get(storeName, key)) as T | undefined;
+  },
+
+  async add(storeName: string, value: unknown): Promise<void> {
+    const db = await getOfflineDb();
+    await db.add(storeName, value as never);
+  },
+
+  async put(storeName: string, value: unknown): Promise<void> {
+    const db = await getOfflineDb();
+    await db.put(storeName, value as never);
+  },
+
+  async delete(storeName: string, key: IDBValidKey | IDBKeyRange): Promise<void> {
+    const db = await getOfflineDb();
+    await db.delete(storeName, key);
+  },
+};
 
 function ensureObjectStores(db: IDBPDatabase): void {
   if (!db.objectStoreNames.contains('stock')) {
@@ -339,106 +483,3 @@ async function backfillBusinessIds(
   }
 }
 
-export function getOfflineDb(): Promise<IDBPDatabase> {
-  if (dbBroken) {
-    return Promise.resolve(makeBrokenDbStub());
-  }
-  if (!dbPromise) {
-    dbPromise = Promise.race([
-      openOfflineDatabase(),
-      new Promise<never>((_, reject) => {
-        setTimeout(() => {
-          markOfflineDbBroken();
-          reject(new Error('IndexedDB open timed out'));
-        }, OPEN_TIMEOUT_MS);
-      }),
-    ]).catch(() => {
-      markOfflineDbBroken();
-      return makeBrokenDbStub();
-    });
-  }
-  return dbPromise;
-}
-
-/**
- * A no-op database stub returned when IndexedDB is broken/unavailable. Every
- * existing store call site resolves through it to safe defaults (empty reads,
- * silent writes) instead of throwing, so queries always fall back to server
- * data and offline overlays simply show nothing pending. This is the permanent
- * fix for "IndexedDB unavailable for this session" breaking every screen.
- */
-function makeBrokenDbStub(): IDBPDatabase {
-  const noopTxn = {
-    objectStore: () => ({ get: async () => undefined, getAll: async () => [], put: async () => undefined, add: async () => undefined, delete: async () => undefined }),
-    done: Promise.resolve(),
-  };
-  return {
-    name: OFFLINE_DB_NAME,
-    version: OFFLINE_DB_VERSION,
-    objectStoreNames: { contains: () => false },
-    transaction: () => noopTxn,
-    getAll: async () => [],
-    get: async () => undefined,
-    add: async () => undefined,
-    put: async () => undefined,
-    delete: async () => undefined,
-    clear: async () => undefined,
-    count: async () => 0,
-    close: () => undefined,
-  } as unknown as IDBPDatabase;
-}
-
-/**
- * Safe IndexedDB access layer. Every call is guarded so a broken/unavailable DB
- * (timeout, blocked, quota, corrupted) degrades to a safe default instead of
- * throwing up into queries. Server-first reads already render before these run;
- * these helpers make offline overlays/pending reads non-fatal everywhere.
- */
-export const safeStore = {
-  async getAll<T>(storeName: string): Promise<T[]> {
-    try {
-      const db = await getOfflineDb();
-      return (await db.getAll(storeName)) as T[];
-    } catch (err) {
-      console.warn(`[OfflineDB] getAll(${storeName}) skipped (non-fatal):`, err);
-      return [];
-    }
-  },
-
-  async get<T>(storeName: string, key: IDBValidKey | IDBKeyRange): Promise<T | undefined> {
-    try {
-      const db = await getOfflineDb();
-      return (await db.get(storeName, key)) as T | undefined;
-    } catch (err) {
-      console.warn(`[OfflineDB] get(${storeName}) skipped (non-fatal):`, err);
-      return undefined;
-    }
-  },
-
-  async add(storeName: string, value: unknown): Promise<void> {
-    try {
-      const db = await getOfflineDb();
-      await db.add(storeName, value);
-    } catch (err) {
-      console.warn(`[OfflineDB] add(${storeName}) skipped (non-fatal):`, err);
-    }
-  },
-
-  async put(storeName: string, value: unknown): Promise<void> {
-    try {
-      const db = await getOfflineDb();
-      await db.put(storeName, value);
-    } catch (err) {
-      console.warn(`[OfflineDB] put(${storeName}) skipped (non-fatal):`, err);
-    }
-  },
-
-  async delete(storeName: string, key: IDBValidKey | IDBKeyRange): Promise<void> {
-    try {
-      const db = await getOfflineDb();
-      await db.delete(storeName, key);
-    } catch (err) {
-      console.warn(`[OfflineDB] delete(${storeName}) skipped (non-fatal):`, err);
-    }
-  },
-};

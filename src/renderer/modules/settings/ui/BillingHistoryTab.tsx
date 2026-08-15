@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
 import { ArrowUp, ArrowDown, XCircle, CreditCard, RefreshCw, CalendarPlus, Download, Mail, Loader2 } from 'lucide-react';
 import { useBillingHistory, downloadReceiptPdf, saveBlobDownload, type HistoryItem } from '../api/billingReceipts';
+import { useConfirmPayment } from '../../../shared/api/account/SubscriptionQueries';
 import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { Pagination, usePagination } from '../../../shared/components/tables/Pagination';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { cn } from '../../../shared/utils/cn';
 import EmailReceiptModal from './EmailReceiptModal';
-import PaymentHistory from '../../../shared/components/payments/PaymentHistory';
 
 function formatMoney(amount: number | undefined, currency?: string | null): string {
   if (amount === undefined || amount === null) return '';
@@ -33,7 +33,7 @@ function eventIcon(item: HistoryItem) {
 function statusBadge(item: HistoryItem) {
   const status = item.status_override ?? item.status;
   if (status === 'applied') return { label: 'Applied', cls: 'bg-green-100 text-green-700' };
-  if (status === 'pending') return { label: 'Scheduled', cls: 'bg-amber-100 text-amber-700' };
+  if (status === 'pending') return { label: 'Pending', cls: 'bg-amber-100 text-amber-700' };
   if (status === 'cancelled') return { label: 'Cancelled', cls: 'bg-gray-100 text-gray-500' };
   if (status === 'failed') return { label: 'Failed', cls: 'bg-red-100 text-red-700' };
   if (status === 'refunded') return { label: 'Refunded', cls: 'bg-red-100 text-red-700' };
@@ -73,6 +73,22 @@ function itemTitle(item: HistoryItem): string {
   return item.event || 'Change';
 }
 
+function SyncPaymentButton({ paymentId }: { paymentId: number }) {
+  const confirm = useConfirmPayment(paymentId);
+  return (
+    <button
+      type="button"
+      onClick={() => void confirm.mutate()}
+      disabled={confirm.isPending}
+      title="Re-check with the payment provider - paid but still pending? This confirms the real status."
+      className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+    >
+      {confirm.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+      Sync payment
+    </button>
+  );
+}
+
 export default function HistoryTab() {
   const { data: feed, isLoading } = useBillingHistory();
   const user = useAppSelector((state) => state.auth.user);
@@ -100,8 +116,6 @@ export default function HistoryTab() {
         <p className="text-xs text-gray-500 mt-0.5">Every charge, top-up, plan change, and credit application - newest first.</p>
       </div>
 
-      <PaymentHistory mode="pending-only" className="mb-5" />
-
       {isLoading ? (
         <div className="flex justify-center py-6">
           <CustosellLoader fullPage={false} />
@@ -128,6 +142,9 @@ export default function HistoryTab() {
                       </span>
                       {item.type === 'payment' && item.payment_id !== undefined && (
                         <div className="flex items-center gap-1.5">
+                          {(item.status_override ?? item.status) === 'pending' && (
+                            <SyncPaymentButton paymentId={item.payment_id} />
+                          )}
                           <button
                             type="button"
                             onClick={() => void handleDownload(item)}

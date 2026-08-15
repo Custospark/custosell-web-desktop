@@ -22,14 +22,27 @@ function SummaryCard({ label, value, highlight }: { label: string; value: string
   );
 }
 
-function Row({ label, value, bold, negative, sub }: { label: string; value: string; bold?: boolean; negative?: boolean; sub?: boolean }) {
+function varianceLabel(variance: number | null | undefined): string {
+  if (variance == null) return 'Variance';
+  if (Math.abs(variance) < 0.005) return 'Variance (Balanced)';
+  return variance > 0 ? 'Variance (Over)' : 'Variance (Short)';
+}
+
+function varianceValue(variance: number | null | undefined): string {
+  if (variance == null) return '-';
+  const amount = formatCurrency(Math.abs(variance));
+  if (Math.abs(variance) < 0.005) return '0.00';
+  return variance > 0 ? `+${amount}` : `-${amount}`;
+}
+
+function Row({ label, value, bold, negative, positive, sub }: { label: string; value: string; bold?: boolean; negative?: boolean; positive?: boolean; sub?: boolean }) {
   return (
     <tr className={bold ? 'bg-blue-50' : undefined}>
       <td className={`border border-gray-200 px-3 py-2 text-left ${sub ? 'pl-6 text-gray-600' : ''} ${bold ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
         {label}
       </td>
       <td
-        className={`border border-gray-200 px-3 py-2 text-right tabular-nums ${negative ? 'text-red-600' : ''} ${bold ? 'font-bold text-blue-800 text-base' : 'font-medium text-gray-900'}`}
+        className={`border border-gray-200 px-3 py-2 text-right tabular-nums ${negative ? 'text-red-600' : positive ? 'text-amber-600' : ''} ${bold ? 'font-bold text-blue-800 text-base' : 'font-medium text-gray-900'}`}
       >
         {value}
       </td>
@@ -134,9 +147,10 @@ export default function ShiftCloseReportContent({ data, forPrint = false }: Shif
             value={data.countedCash != null ? formatCurrency(data.countedCash) : '-'}
           />
           <Row
-            label="Variance"
-            value={data.variance != null ? formatCurrency(Math.abs(data.variance)) : '-'}
-            negative={(data.variance ?? 0) < 0}
+            label={varianceLabel(data.variance)}
+            value={varianceValue(data.variance)}
+            negative={(data.variance ?? 0) < -0.005}
+            positive={(data.variance ?? 0) > 0.005}
           />
         </tbody>
       </table>

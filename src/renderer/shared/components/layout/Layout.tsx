@@ -27,14 +27,15 @@ export function Layout() {
   }, [isAuthenticated, subscription, location.pathname, navigate]);
 
   // Immersive content mode is scoped to the cashier page, pipeline/estimates
-  // board detail pages, and the documents cabinet - leaving those routes exits
-  // fullscreen.
+  // board detail pages, the documents cabinet, and the notes page - leaving
+  // those routes exits fullscreen.
   useEffect(() => {
     const onImmersiveRoute =
       location.pathname === ROUTES.SALES.NEW ||
       location.pathname.startsWith(`${ROUTES.PIPELINE.BOARDS}/`) ||
       location.pathname.startsWith(`${ROUTES.ESTIMATES.BOARDS}/`) ||
-      /^\/documents\/cabinets\/\d+/.test(location.pathname);
+      /^\/documents\/cabinets\/\d+/.test(location.pathname) ||
+      location.pathname === ROUTES.NOTES.INDEX;
     if (state.contentFullscreen && !onImmersiveRoute) {
       dispatch({ type: 'SET_CONTENT_FULLSCREEN', payload: false });
     }

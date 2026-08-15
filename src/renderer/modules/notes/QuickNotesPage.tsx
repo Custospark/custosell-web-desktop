@@ -1,13 +1,14 @@
 import { useState, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useAppSelector } from '../../app/store/hooks/useApp';
+import { useAppContext } from '../../app/contexts/AppContext';
+import { useConfirm } from '../../shared/components/Feedback/ConfirmContext';
 import { Button } from '../../shared/components/buttons/Button';
 import { UserAvatar } from '../../shared/components/UserAvatar';
 import { Modal } from '../../shared/components/modals/Modal';
 import { cn } from '../../shared/utils/cn';
 import { formatRelativeTime } from '../../shared/utils/formatDateTime';
 import {
-  useCreateQuickNote,
   useDeleteQuickNote,
   useQuickNotes,
   useReorderQuickNotes,
@@ -20,20 +21,18 @@ import QuickNoteFormModal, { DEFAULT_NOTE_COLOR } from './QuickNoteFormModal';
 import NotesBackgroundPicker from './NotesBackgroundPicker';
 import { resolveNotesBackground } from './notesBackground';
 import {
-  StickyNote, Plus, Search, Pencil, Trash2, Share2, X, Pin, PinOff, RotateCcw, GripVertical, Tag, ImageIcon,
+  StickyNote, Plus, Search, Pencil, Trash2, Share2, X, Pin, PinOff, GripVertical, Tag, ImageIcon,
+  Maximize2, Minimize2,
 } from 'lucide-react';
-
-interface DeletedNoteState {
-  note: QuickNoteWithSyncMeta;
-  timer: number;
-}
 
 export default function QuickNotesPage() {
   const user = useAppSelector((s) => s.auth.user);
   const canShare = canShareQuickNotes(user?.account_type);
+  const { state, dispatch } = useAppContext();
+  const { confirm } = useConfirm();
+  const isFullscreen = state.contentFullscreen;
 
   const { data: notes = [] } = useQuickNotes();
-  const createNote = useCreateQuickNote();
   const deleteNote = useDeleteQuickNote();
   const updateNote = useUpdateQuickNote();
   const reorderNotes = useReorderQuickNotes();
@@ -46,9 +45,11 @@ export default function QuickNotesPage() {
   const [tagFilter, setTagFilter] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<QuickNoteWithSyncMeta | null>(null);
-  const [deleted, setDeleted] = useState<DeletedNoteState | null>(null);
   const [bgOpen, setBgOpen] = useState(false);
   const dragId = useRef<number | null>(null);
+
+  const toggleFullscreen = () =>
+    dispatch({ type: 'SET_CONTENT_FULLSCREEN', payload: !isFullscreen });
 
   const allTags = useMemo(() => {
     const tags = new Set<string>();
@@ -77,25 +78,15 @@ export default function QuickNotesPage() {
     setFormOpen(true);
   };
 
-  const handleDelete = (note: QuickNoteWithSyncMeta) => {
-    window.clearTimeout(deleted?.timer);
-    void deleteNote.mutateAsync(note.id);
-    setDeleted({ note, timer: window.setTimeout(() => setDeleted(null), 4000) });
-  };
-
-  const undoDelete = () => {
-    if (!deleted) return;
-    window.clearTimeout(deleted.timer);
-    setDeleted(null);
-    const note = deleted.note;
-    void createNote.mutateAsync({
-      title: note.title,
-      body: note.body,
-      color: note.color,
-      tag: note.tag,
-      is_shared: note.is_shared,
-      is_pinned: note.is_pinned,
+  const handleDelete = async (note: QuickNoteWithSyncMeta) => {
+    const accepted = await confirm({
+      title: `Delete "${note.title}"?`,
+      message: 'This note will be permanently removed. You cannot undo this.',
+      confirmText: 'Delete note',
+      variant: 'danger',
     });
+    if (!accepted) return;
+    void deleteNote.mutateAsync(note.id);
   };
 
   const togglePin = (note: QuickNoteWithSyncMeta) => {
@@ -130,44 +121,50 @@ export default function QuickNotesPage() {
 
   const isBgImage = background.type === 'gallery' && Boolean(background.value);
 
+  const pageBgStyle = isBgImage
+    ? {
+        backgroundImage: `url(${background.value})`,
+        backgroundSize: 'cover' as const,
+        backgroundPosition: 'center' as const,
+        backgroundAttachment: 'fixed' as const,
+      }
+    : { backgroundColor: background.value ?? '#f8fafc' };
+
   return (
-    <div className="relative w-full min-h-screen">
-      {/* Notes page background - per-user, defaults to a gallery image */}
-      {isBgImage ? (
-        <div
-          className="fixed inset-0 -z-10 bg-cover bg-center"
-          style={{ backgroundImage: `url(${background.value})` }}
-          aria-hidden
-        />
-      ) : (
-        <div
-          className="fixed inset-0 -z-10"
-          style={{ backgroundColor: background.value ?? '#f8fafc' }}
-          aria-hidden
-        />
-      )}
+    <div className="relative w-full min-h-screen" style={pageBgStyle}>
       <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <StickyNote className="w-6 h-6 text-blue-600" />
-            Quick notes
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            {canShare
-              ? 'Your sticky notes - share them with your team, pin the important ones, or drag to reorder.'
-              : 'Your private sticky notes - pin the important ones, or drag to reorder.'}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button type="button" variant="secondary" onClick={() => setBgOpen(true)}>
-            <ImageIcon className="w-4 h-4 mr-1.5" />
-            Background
-          </Button>
-          <Button type="button" onClick={openCreate}>
-            <Plus className="w-4 h-4 mr-1.5" />
-            New note
-          </Button>
+      <div className="mb-6 rounded-2xl border border-white/60 bg-white/70 p-4 shadow-[0_8px_32px_rgba(15,23,42,0.06)] backdrop-blur-xl sm:p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+              <StickyNote className="w-6 h-6 text-blue-600" />
+              Quick notes
+            </h1>
+            <p className="text-sm font-medium text-slate-700 mt-1">
+              {canShare
+                ? 'Your sticky notes - share them with your team, pin the important ones, or drag to reorder.'
+                : 'Your private sticky notes - pin the important ones, or drag to reorder.'}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant={isFullscreen ? 'outline' : 'secondary'}
+              onClick={toggleFullscreen}
+              title={isFullscreen ? 'Exit full screen (hides navigation)' : 'Full screen (hides navigation)'}
+            >
+              {isFullscreen ? <Minimize2 className="w-4 h-4 mr-1.5" /> : <Maximize2 className="w-4 h-4 mr-1.5" />}
+              {isFullscreen ? 'Exit full screen' : 'Full screen'}
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => setBgOpen(true)}>
+              <ImageIcon className="w-4 h-4 mr-1.5" />
+              Background
+            </Button>
+            <Button type="button" onClick={openCreate}>
+              <Plus className="w-4 h-4 mr-1.5" />
+              New note
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -192,7 +189,7 @@ export default function QuickNotesPage() {
               onChange={(e) => setSearch(e.target.value)}
               onFocus={() => setSearchFocused(true)}
               onBlur={() => setSearchFocused(false)}
-              className="w-full pl-9 pr-16 py-2.5 text-sm border-transparent bg-white text-gray-900 focus:outline-none rounded-[6px]"
+              className="w-full pl-9 pr-16 py-2.5 text-sm font-semibold border-transparent bg-white text-gray-900 focus:outline-none rounded-[6px]"
             />
             {search && (
               <button
@@ -208,13 +205,13 @@ export default function QuickNotesPage() {
       </div>
 
       {allTags.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 mb-5">
+        <div className="flex flex-wrap items-center gap-2 mb-5 rounded-xl border border-white/50 bg-white/55 p-1.5 shadow-sm backdrop-blur-md w-fit">
           <button
             type="button"
             onClick={() => setTagFilter(null)}
             className={cn(
-              'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium cursor-pointer transition-colors',
-              tagFilter === null ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200',
+              'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold cursor-pointer transition-colors',
+              tagFilter === null ? 'bg-blue-600 text-white' : 'bg-white/80 text-slate-700 hover:bg-white',
             )}
           >
             <StickyNote className="w-3 h-3" />
@@ -226,8 +223,8 @@ export default function QuickNotesPage() {
               type="button"
               onClick={() => setTagFilter(tagFilter === tag ? null : tag)}
               className={cn(
-                'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium cursor-pointer transition-colors',
-                tagFilter === tag ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200',
+                'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold cursor-pointer transition-colors',
+                tagFilter === tag ? 'bg-blue-600 text-white' : 'bg-white/80 text-slate-700 hover:bg-white',
               )}
             >
               <Tag className="w-3 h-3" />
@@ -238,10 +235,10 @@ export default function QuickNotesPage() {
       )}
 
       {filtered.length === 0 ? (
-        <div className="text-center py-16 text-gray-500">
-          <StickyNote className="w-10 h-10 mx-auto mb-3 text-gray-300" />
-          <p className="font-medium">{search || tagFilter ? 'No notes match your filters.' : 'No notes yet.'}</p>
-          <p className="text-sm mt-1">
+        <div className="mx-auto max-w-md text-center rounded-2xl border border-white/60 bg-white/70 px-6 py-14 text-slate-700 shadow-[0_8px_32px_rgba(15,23,42,0.06)] backdrop-blur-xl">
+          <StickyNote className="w-10 h-10 mx-auto mb-3 text-blue-500" />
+          <p className="font-bold text-slate-900">{search || tagFilter ? 'No notes match your filters.' : 'No notes yet.'}</p>
+          <p className="text-sm font-medium mt-1">
             {search || tagFilter ? 'Try a different search or tag.' : 'Jot down reminders, ideas, or handover notes from the header.'}
           </p>
           {!search && !tagFilter && (
@@ -254,8 +251,8 @@ export default function QuickNotesPage() {
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {filtered.map((note) => {
-            const bg = bgFor(note.color);
-            const darkText = isLightColor(bg);
+            const accent = bgFor(note.color);
+            const darkText = isLightColor(accent);
             return (
               <div
                 key={note.id}
@@ -263,50 +260,35 @@ export default function QuickNotesPage() {
                 onDragStart={(e) => handleDragStart(e, note.id)}
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, note.id)}
-                className="group relative flex flex-col min-h-[10rem] rounded-xl cursor-grab active:cursor-grabbing"
-                style={{ backgroundColor: bg }}
+                className="group relative flex flex-col min-h-[10rem] rounded-xl border border-black/10 shadow-sm cursor-grab active:cursor-grabbing"
+                style={{ backgroundColor: accent }}
               >
                 <GripVertical
                   className={cn(
-                    'absolute left-2 top-2 w-4 h-4 opacity-0 group-hover:opacity-60 transition-opacity',
-                    darkText ? 'text-gray-500' : 'text-white/70',
+                    'absolute left-2 top-3.5 w-4 h-4 opacity-0 group-hover:opacity-60 transition-opacity',
+                    darkText ? 'text-slate-500' : 'text-white/80',
                   )}
                   aria-hidden
                 />
                 <div className="flex items-start justify-between gap-2 pl-7 pr-4 pt-4 pb-1">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <h3 className={cn('text-sm leading-snug truncate', darkText ? 'text-gray-900' : 'text-white')}>
-                      {note.title}
-                    </h3>
-                  </div>
+                  <h3 className={cn('text-sm font-bold leading-snug truncate', darkText ? 'text-slate-900' : 'text-white')}>
+                    {note.title}
+                  </h3>
                   <div className="flex items-center gap-1 shrink-0">
                     {note.is_shared && (
-                      <span
-                        className={cn(
-                          'inline-flex items-center gap-1 text-[10px] font-medium rounded-full px-1.5 py-0.5',
-                          darkText ? 'text-blue-800 bg-blue-100' : 'text-blue-100 bg-blue-900/40',
-                        )}
-                        title="Visible to all members of this organization"
-                      >
+                      <span className="inline-flex items-center gap-1 text-[10px] font-medium rounded-full px-1.5 py-0.5 bg-blue-100 text-blue-800">
                         <Share2 className="w-2.5 h-2.5" />
                         Shared
                       </span>
                     )}
                     {note._pendingSync && (
-                      <span
-                        className={cn(
-                          'text-[10px] font-medium rounded-full px-1.5 py-0.5',
-                          darkText ? 'text-amber-800 bg-amber-100' : 'text-amber-100 bg-amber-900/40',
-                        )}
-                      >
+                      <span className="text-[10px] font-medium rounded-full px-1.5 py-0.5 bg-amber-100 text-amber-800">
                         Pending
                       </span>
                     )}
                     {note.is_pinned && (
                       <span title="Pinned to top" aria-label="Pinned">
-                        <Pin
-                          className={cn('w-3 h-3', darkText ? 'text-gray-600' : 'text-white')}
-                        />
+                        <Pin className={cn('w-3 h-3', darkText ? 'text-slate-600' : 'text-white')} />
                       </span>
                     )}
                   </div>
@@ -314,12 +296,7 @@ export default function QuickNotesPage() {
 
                 {note.tag && (
                   <div className="px-4 pt-1">
-                    <span
-                      className={cn(
-                        'inline-flex items-center gap-1 text-[10px] font-medium rounded-full px-2 py-0.5',
-                        darkText ? 'text-gray-600 bg-black/5' : 'text-white/90 bg-white/15',
-                      )}
-                    >
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold rounded-full px-2 py-0.5 bg-slate-100 text-slate-700">
                       <Tag className="w-2.5 h-2.5" />
                       {note.tag}
                     </span>
@@ -327,7 +304,7 @@ export default function QuickNotesPage() {
                 )}
 
                 {note.body ? (
-                  <p className={cn('text-sm leading-snug whitespace-pre-wrap break-words px-4 py-1 flex-1', darkText ? 'text-gray-800' : 'text-white/95')}>
+                  <p className={cn('text-sm font-medium leading-snug whitespace-pre-wrap break-words px-4 py-1 flex-1', darkText ? 'text-slate-800' : 'text-white/95')}>
                     {note.body}
                   </p>
                 ) : (
@@ -336,10 +313,19 @@ export default function QuickNotesPage() {
 
                 <div className="flex items-center justify-between px-3 py-2 mt-auto">
                   <div className="flex items-center gap-2 min-w-0">
-                    {note.is_shared && note.author ? (
-                      <UserAvatar name={note.author.name} size="xs" title={`${note.author.name} · shared note`} />
-                    ) : null}
-                    <span className={cn('text-[11px] truncate', darkText ? 'text-gray-500' : 'text-white/70')}>
+                    {note.author ? (
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <UserAvatar name={note.author.name} size="xs" title={note.author.name} className="ring-2 ring-white shrink-0" />
+                        <span className={cn('text-[11px] font-semibold truncate max-w-[6rem]', darkText ? 'text-slate-700' : 'text-white')}>
+                          {note.author.name}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 text-[9px] font-semibold text-slate-600 ring-2 ring-white">
+                        ?
+                      </span>
+                    )}
+                    <span className={cn('text-[11px] font-medium truncate', darkText ? 'text-slate-500' : 'text-white/80')}>
                       {formatRelativeTime(note.updated_at)}
                     </span>
                   </div>
@@ -351,7 +337,7 @@ export default function QuickNotesPage() {
                       aria-label={note.is_pinned ? 'Unpin note' : 'Pin to top'}
                       className={cn(
                         'inline-flex items-center justify-center w-9 h-9 rounded-lg cursor-pointer transition-colors',
-                        darkText ? 'text-gray-500 hover:text-blue-700 hover:bg-white/70' : 'text-white/80 hover:text-white hover:bg-white/20',
+                        darkText ? 'text-slate-600 hover:text-blue-700 hover:bg-white/70' : 'text-white hover:bg-white/20',
                       )}
                     >
                       {note.is_pinned ? <PinOff className="w-4 h-4" /> : <Pin className="w-4 h-4" />}
@@ -363,19 +349,19 @@ export default function QuickNotesPage() {
                       aria-label="Edit note"
                       className={cn(
                         'inline-flex items-center justify-center w-9 h-9 rounded-lg cursor-pointer transition-colors',
-                        darkText ? 'text-gray-500 hover:text-blue-700 hover:bg-white/70' : 'text-white/80 hover:text-white hover:bg-white/20',
+                        darkText ? 'text-slate-600 hover:text-blue-700 hover:bg-white/70' : 'text-white hover:bg-white/20',
                       )}
                     >
                       <Pencil className="w-4 h-4" />
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleDelete(note)}
+                      onClick={() => void handleDelete(note)}
                       title="Delete note"
                       aria-label="Delete note"
                       className={cn(
                         'inline-flex items-center justify-center w-9 h-9 rounded-lg cursor-pointer transition-colors',
-                        darkText ? 'text-gray-500 hover:text-red-700 hover:bg-white/70' : 'text-white/80 hover:text-red-200 hover:bg-white/20',
+                        darkText ? 'text-slate-600 hover:text-red-700 hover:bg-white/70' : 'text-white hover:bg-white/20',
                       )}
                     >
                       <Trash2 className="w-4 h-4" />
@@ -395,29 +381,6 @@ export default function QuickNotesPage() {
         note={editing}
         canShare={canShare}
       />
-
-      {deleted && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[22000] flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-2xl">
-          <StickyNote className="w-4 h-4 text-blue-600" />
-          <span className="text-sm text-gray-700">Note deleted</span>
-          <button
-            type="button"
-            onClick={undoDelete}
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:text-blue-700 cursor-pointer"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            Undo
-          </button>
-          <button
-            type="button"
-            onClick={() => { window.clearTimeout(deleted.timer); setDeleted(null); }}
-            aria-label="Dismiss"
-            className="p-1 rounded-lg text-gray-400 hover:text-gray-600 cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
 
       <Modal isOpen={bgOpen} onClose={() => setBgOpen(false)} title="Change background" size="md">
         <NotesBackgroundPicker

@@ -17,6 +17,10 @@ import {
   shouldCompleteSaleLocally,
 } from '../../../app/store/offline/sales/completeOfflineSale';
 import {
+  applyRefundOptimisticUpdates,
+  applySaleOptimisticUpdates,
+} from './saleOptimisticCache';
+import {
   canRefundSaleOffline,
   completeOfflineRefundInstant,
   shouldCompleteRefundLocally,
@@ -26,12 +30,9 @@ import {
   isOptimisticSale,
   reconcileSaleList,
 } from '../../../app/store/offline/sync/offlineCacheReconcile';
-import { inventoryKeys } from '../../inventory/api/products/ProductQueries';
 import { dashboardKeys } from '../../dashboard/DashboardQueries';
 import { orderKeys } from './orders/orderQueryKeys';
 import { shiftKeys } from '../../shifts/ShiftQueries';
-import type { Product } from '../../inventory/api/products/ProductTypes';
-import { tracksStock } from '../../inventory/api/products/ProductTypes';
 import type { Sale, CreateSalePayload, RefundData } from './salesTypes';
 
 export const salesKeys = {
@@ -306,83 +307,6 @@ export function useSale(id: number) {
   });
 }
 
-function isLocalPendingSale(sale: Sale | SaleWithSyncMeta): boolean {
-  const meta = sale as SaleWithSyncMeta;
-  return Boolean(
-    meta._pendingSync
-    || meta._localId
-    || sale.id < 0
-    || sale.receipt_number.startsWith('OFF-'),
-  );
-}
-
-function applySaleOptimisticUpdates(
-  qc: ReturnType<typeof useQueryClient>,
-  sale: Sale,
-  payload: CreateSalePayload,
-): void {
-  const row: SaleWithSyncMeta = isLocalPendingSale(sale)
-    ? { ...sale, _pendingSync: true }
-    : { ...sale };
-
-  qc.setQueryData<SaleWithSyncMeta[]>(salesKeys.list(), (old) => {
-    const list = old ?? [];
-    const exists = list.some(
-      (s) => s.id === sale.id || s.receipt_number === sale.receipt_number,
-    );
-    if (exists) return list;
-    return [row, ...list];
-  });
-
-  if (payload.shift_id) {
-    qc.setQueryData<SaleWithSyncMeta[]>([...shiftKeys.all, 'sales', payload.shift_id], (old) => {
-      const list = old ?? [];
-      if (list.some((s) => s.id === sale.id)) return list;
-      return [row, ...list];
-    });
-  }
-
-  qc.setQueryData<Product[]>(inventoryKeys.products(), (old) =>
-    (old ?? []).map((p) => {
-      const item = payload.items.find((i) => i.product_id === p.id);
-      if (!item || !tracksStock(p)) return p;
-      return { ...p, stock_quantity: Math.max(0, p.stock_quantity - item.quantity) };
-    }),
-  );
-
-  void qc.invalidateQueries({ queryKey: dashboardKeys.summary() });
-}
-
-function applyRefundOptimisticUpdates(
-  qc: ReturnType<typeof useQueryClient>,
-  updatedSale: SaleWithSyncMeta,
-  refundData: RefundData,
-  originalSale: Sale,
-): void {
-  qc.setQueryData<SaleWithSyncMeta[]>(salesKeys.list(), (old) =>
-    (old ?? []).map((s) => (s.id === updatedSale.id ? updatedSale : s)),
-  );
-
-  if (originalSale.shift_id) {
-    qc.setQueryData<Sale[]>([...shiftKeys.all, 'sales', originalSale.shift_id], (old) =>
-      (old ?? []).map((s) => (s.id === updatedSale.id ? updatedSale : s)),
-    );
-  }
-
-  qc.setQueryData<Product[]>(inventoryKeys.products(), (old) =>
-    (old ?? []).map((p) => {
-      if (!tracksStock(p)) return p;
-      const refundItem = refundData.items.find((item) => {
-        const saleItem = originalSale.sale_items?.find((si) => si.id === item.id);
-        return saleItem?.product_id === p.id;
-      });
-      if (!refundItem) return p;
-      return { ...p, stock_quantity: p.stock_quantity + refundItem.quantity };
-    }),
-  );
-
-  void qc.invalidateQueries({ queryKey: dashboardKeys.summary() });
-}
 
 export function useCreateSale() {
   const qc = useQueryClient();
@@ -415,12 +339,19 @@ export function useCreateSale() {
         queueMicrotask(() => {
           void qc.invalidateQueries({ queryKey: dashboardKeys.summary() });
           void qc.invalidateQueries({ queryKey: orderKeys.all });
-          if (payload.shift_id) {
-            void qc.invalidateQueries({ queryKey: [...shiftKeys.all, 'sales', payload.shift_id] });
-          }
+          // Invalidate ALL shift-scoped queries so My Shift / dashboard refresh live
+          // regardless of the shift id used on the payload.
+          void qc.invalidateQueries({ queryKey: shiftKeys.all });
         });
       } else if (payload.order_id) {
         void qc.invalidateQueries({ queryKey: orderKeys.all });
+      } else {
+        // Offline sale: still refresh shift-scoped views so My Shift updates live
+        // with the locally-persisted sale the moment it's recorded.
+        queueMicrotask(() => {
+          void qc.invalidateQueries({ queryKey: shiftKeys.all });
+          void qc.invalidateQueries({ queryKey: dashboardKeys.summary() });
+        });
       }
     },
     onError: (e) => {

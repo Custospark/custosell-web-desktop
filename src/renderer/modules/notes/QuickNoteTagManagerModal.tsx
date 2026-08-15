@@ -3,8 +3,9 @@ import { Modal } from '../../shared/components/modals/Modal';
 import { Button } from '../../shared/components/buttons/Button';
 import { useConfirm } from '../../shared/components/Feedback/ConfirmContext';
 import { cn } from '../../shared/utils/cn';
+import { useCreateQuickNote } from './api/QuickNoteQueries';
 import { useRemoveQuickNoteTag, useRenameQuickNoteTag } from './api/QuickNoteTagQueries';
-import { Check, Pencil, Tag, Trash2, X } from 'lucide-react';
+import { Check, Pencil, Plus, Tag, Trash2, X } from 'lucide-react';
 
 interface QuickNoteTagManagerModalProps {
   isOpen: boolean;
@@ -14,11 +15,13 @@ interface QuickNoteTagManagerModalProps {
 
 export default function QuickNoteTagManagerModal({ isOpen, onClose, tags }: QuickNoteTagManagerModalProps) {
   const { confirm } = useConfirm();
+  const createNote = useCreateQuickNote();
   const renameTag = useRenameQuickNoteTag();
   const removeTag = useRemoveQuickNoteTag();
 
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
+  const [newTag, setNewTag] = useState('');
 
   const startEdit = (tag: string) => {
     setEditing(tag);
@@ -35,6 +38,17 @@ export default function QuickNoteTagManagerModal({ isOpen, onClose, tags }: Quic
     setEditing(null);
   };
 
+  /** Create a tagged placeholder note so the tag appears immediately - modal stays open. */
+  const handleAdd = () => {
+    const tag = newTag.trim();
+    if (!tag || tags.includes(tag)) {
+      setNewTag('');
+      return;
+    }
+    setNewTag('');
+    createNote.mutate({ title: tag, tag, body: null });
+  };
+
   const handleRemove = async (tag: string) => {
     const ok = await confirm({
       title: `Remove "${tag}" tag?`,
@@ -48,10 +62,31 @@ export default function QuickNoteTagManagerModal({ isOpen, onClose, tags }: Quic
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Manage tags" size="sm">
+      <div className="mb-4 flex items-center gap-2">
+        <div className="relative flex-1 min-w-0">
+          <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            value={newTag}
+            onChange={(e) => setNewTag(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); }}
+            placeholder="New tag name..."
+            className="w-full rounded-lg border border-gray-300 pl-9 pr-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 focus:outline-none"
+          />
+        </div>
+        <Button
+          type="button"
+          onClick={handleAdd}
+          disabled={!newTag.trim() || tags.includes(newTag.trim())}
+        >
+          <Plus className="w-4 h-4 mr-1.5" />
+          Add
+        </Button>
+      </div>
+
       {tags.length === 0 ? (
-        <div className="py-8 text-center text-sm text-gray-500">
+        <div className="py-6 text-center text-sm text-gray-500">
           <Tag className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-          No tags yet. Add a tag when creating or editing a note.
+          No tags yet. Add one above, or tag a note when creating or editing it.
         </div>
       ) : (
         <div className="space-y-2">

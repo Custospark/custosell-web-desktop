@@ -78,8 +78,8 @@ describe('sales offline CRUD + sync', () => {
       items: [{ product_id: 3, quantity: 1, unit_price: 10000 }],
     };
 
-    const mutationId = await mutationQueue.enqueue({ method: 'POST', url: '/sales', data: payload, maxRetries: 3 });
-    await localSalesStore.save(sale, payload, mutationId);
+    const mutationId = await mutationQueue.enqueue({ method: "POST", url: "/sales", data: payload as never, maxRetries: 3 });
+    await localSalesStore.save(sale as never, payload as never, mutationId);
 
     // Durable across restart.
     const { resetOfflineDbState, getOfflineDb } = await import('../core/offlineDb');
@@ -112,8 +112,8 @@ describe('sales offline CRUD + sync', () => {
     };
     const payload = { receipt_number: 'OFF-002', payment_method: 'cash', total_amount: 10000, items: [] };
 
-    const mutationId = await mutationQueue.enqueue({ method: 'POST', url: '/sales', data: payload, maxRetries: 3 });
-    await localSalesStore.save(sale, payload, mutationId);
+    const mutationId = await mutationQueue.enqueue({ method: "POST", url: "/sales", data: payload as never, maxRetries: 3 });
+    await localSalesStore.save(sale as never, payload as never, mutationId);
 
     mocks.axiosInstance.post.mockRejectedValueOnce({ response: { status: 503, data: { message: 'busy' } } });
     await expect(mocks.axiosInstance.post('/sales', payload)).rejects.toBeTruthy();
@@ -149,8 +149,8 @@ describe('expenses offline CRUD + sync', () => {
     };
     const payload = { fields: { amount: '5000', description: 'Offline expense', expense_date: '2026-01-01', expense_category_id: '2' } };
 
-    const mutationId = await mutationQueue.enqueue({ method: 'POST', url: '/expenses', data: payload, maxRetries: 3 });
-    await localExpensesStore.save(expense, payload, mutationId, 'create');
+    const mutationId = await mutationQueue.enqueue({ method: "POST", url: "/expenses", data: payload as never, maxRetries: 3 });
+    await localExpensesStore.save(expense as never, payload, mutationId, "create");
 
     expect(await localExpensesStore.getPending()).toHaveLength(1);
     expect((await mutationQueue.getAll())[0].url).toBe('/expenses');
@@ -198,7 +198,7 @@ describe('shifts offline open/close + sync', () => {
     const payload = { clock_in: '2026-01-01T08:00:00Z', opening_balance: 50000 };
 
     const mutationId = await mutationQueue.enqueue({ method: 'POST', url: '/shifts', data: payload, maxRetries: 3 });
-    await localShiftsStore.saveOpen(shift, mutationId);
+    await localShiftsStore.saveOpen(shift as never, mutationId);
 
     // Durable across restart.
     const { resetOfflineDbState, getOfflineDb } = await import('../core/offlineDb');
@@ -244,7 +244,7 @@ describe('shifts offline open/close + sync', () => {
     const payload = { counted_cash: 180000, status: 'completed' };
 
     const mutationId = await mutationQueue.enqueue({ method: 'PUT', url: '/shifts/310', data: payload, maxRetries: 3 });
-    await localShiftsStore.saveClose(shift, mutationId);
+    await localShiftsStore.saveClose(shift as never, mutationId);
 
     expect(await localShiftsStore.getPendingCompleted()).toHaveLength(1);
     expect((await mutationQueue.getAll())[0].method).toBe('PUT');
@@ -284,7 +284,7 @@ describe('customers offline CRUD + sync', () => {
     const payload = { name: 'Offline Customer', email: 'customer@example.com' };
 
     const mutationId = await mutationQueue.enqueue({ method: 'POST', url: '/customers', data: payload, maxRetries: 3 });
-    await localCustomersStore.save(customer, payload, mutationId, 'create');
+    await localCustomersStore.save(customer as never, payload, mutationId, "create");
 
     expect(await localCustomersStore.getPending()).toHaveLength(1);
 

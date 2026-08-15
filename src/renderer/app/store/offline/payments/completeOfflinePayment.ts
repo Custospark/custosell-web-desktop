@@ -83,7 +83,7 @@ export async function completeOfflineSalePayment(
   updatedSale._pendingSync = sale._pendingSync;
 
   await updatePendingLocalSale(saleId, applyUpdate);
-  queryClient.setQueryData<SaleWithSyncMeta[]>(['sales'], (old) =>
+  queryClient.setQueryData<SaleWithSyncMeta[]>(['sales', 'list'], (old) =>
     (old ?? []).map((s) => (s.id === saleId ? updatedSale : s)),
   );
 
@@ -91,6 +91,10 @@ export async function completeOfflineSalePayment(
   if (activeShiftId) {
     appendShiftPaymentToCache(activeShiftId, payment);
   }
+
+  // Reflect the paid status on the dashboard summary immediately.
+  void queryClient.invalidateQueries({ queryKey: ['dashboard', 'summary'] });
+  void queryClient.invalidateQueries({ queryKey: ['sales'] });
 
   const formData = new FormData();
   formData.append('amount', String(payload.amount));

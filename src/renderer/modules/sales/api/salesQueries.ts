@@ -337,7 +337,9 @@ export function useCreateSale() {
       if (!isLocal) {
         // Cache is already updated optimistically - defer non-critical refetches so the modal opens faster.
         queueMicrotask(() => {
+          void qc.invalidateQueries({ queryKey: salesKeys.all });
           void qc.invalidateQueries({ queryKey: dashboardKeys.summary() });
+          void qc.invalidateQueries({ queryKey: dashboardKeys.branchPerformance() });
           void qc.invalidateQueries({ queryKey: orderKeys.all });
           // Invalidate ALL shift-scoped queries so My Shift / dashboard refresh live
           // regardless of the shift id used on the payload.
@@ -349,6 +351,7 @@ export function useCreateSale() {
         // Offline sale: still refresh shift-scoped views so My Shift updates live
         // with the locally-persisted sale the moment it's recorded.
         queueMicrotask(() => {
+          void qc.invalidateQueries({ queryKey: salesKeys.all });
           void qc.invalidateQueries({ queryKey: shiftKeys.all });
           void qc.invalidateQueries({ queryKey: dashboardKeys.summary() });
         });

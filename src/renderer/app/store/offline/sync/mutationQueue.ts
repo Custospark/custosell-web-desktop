@@ -1,6 +1,5 @@
 import { isSyncCoordinatorRunning } from './syncCoordinator';
-import { getOfflineDb } from '../core/offlineDb';
-import type { IDBPDatabase } from 'idb';
+import { getOfflineDb, type OfflineDbLike } from '../core/offlineDb';
 import { store } from '../../store';
 import { guardScopedMutations } from './syncDependencyGuard';
 import { entityIdMapper } from './entityIdMapper';
@@ -42,7 +41,7 @@ const STALE_SYNCING_TIMEOUT_MS = 5 * 60 * 1000;
 
 /** Non-throwing DB access - a broken/unavailable DB resolves to null so the
  *  caller can degrade (empty lists, no-op writes) instead of crashing queries. */
-async function tryGetDb(): Promise<IDBPDatabase | null> {
+async function tryGetDb(): Promise<OfflineDbLike | null> {
   try {
     return await getOfflineDb();
   } catch (err) {

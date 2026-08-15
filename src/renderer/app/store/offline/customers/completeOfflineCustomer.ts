@@ -89,6 +89,33 @@ export function completeOfflineUpdateCustomerInstant(customer: Customer, payload
   return updated;
 }
 
+/** Edit a still-pending customer: persist the merged record + queued payload so
+ *  the edit survives reload and syncs (mirrors completeOfflineUpdatePendingProduct). */
+export async function completeOfflineUpdatePendingCustomer(
+  existing: CustomerWithSyncMeta,
+  payload: UpdateCustomerData,
+): Promise<CustomerWithSyncMeta> {
+  const record = existing._localId
+    ? await localCustomersStore.getByCustomerId(existing.id)
+    : await localCustomersStore.getByCustomerId(existing.id);
+  if (!record) {
+    throw new Error('Pending customer record not found');
+  }
+
+  const updated: Customer = {
+    ...record.customer,
+    ...payload,
+    email: payload.email ?? record.customer.email,
+  };
+  const nextPayload = { ...(record.payload as UpdateCustomerData), ...payload };
+
+  await mutationQueue.updateMutation(record.mutationId, { data: nextPayload });
+  const updatedRecord = await localCustomersStore.updatePendingRecord(record.localId, updated, nextPayload);
+  await mutationQueue.requeue(record.mutationId);
+
+  return { ...updated, _pendingSync: true, _localId: updatedRecord.localId };
+}
+
 export function completeOfflineDeleteCustomerInstant(id: number): void {
   const customer: CustomerWithSyncMeta = {
     id,

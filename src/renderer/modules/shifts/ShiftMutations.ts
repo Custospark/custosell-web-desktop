@@ -3,12 +3,12 @@ import type { AxiosError } from 'axios';
 import { axiosInstance } from '../../app/api/axiosConfig';
 import { useToast } from '../../app/contexts/useToast';
 import type { ShiftRecord, ShiftWithSyncMeta } from '../../app/store/offline/sales/localShiftsStore';
-import { localShiftsStore } from '../../app/store/offline/sales/localShiftsStore';
 import {
   completeOfflineClockIn,
   completeOfflineClockOutInstant,
   finalizeShiftClose,
   shouldUseLocalShiftActions,
+  updateOfflineShiftBalance,
   updateOfflineShiftOpeningBalance,
 } from '../../app/store/offline/sales/completeOfflineShift';
 import { shouldCompleteMutationLocally, sanitizeErrorMessage } from '../../app/store/offline/core/offlineQueryUtils';
@@ -123,16 +123,9 @@ export function useUpdateShiftBalance() {
         if (openingOnly) {
           return updateOfflineShiftOpeningBalance(id, openingBalance as number | null, currentShift as ShiftRecord | null);
         }
-        // Fall back to a full local update for counted cash (queued PUT).
-        await localShiftsStore.patchShiftFields(id, payload);
-        const base = (currentShift ?? { id }) as ShiftRecord;
-        return {
-          ...base,
-          id,
-          ...payload,
-          updated_at: new Date().toISOString(),
-          _pendingSync: true,
-        } as ShiftWithSyncMeta;
+        // Counted cash (and combined balance updates): persist locally AND queue
+        // a PUT so the value reaches the server when back online.
+        return updateOfflineShiftBalance(id, payload, currentShift as ShiftRecord | null);
       }
 
       const { data } = await axiosInstance.put(`/shifts/${id}`, payload);

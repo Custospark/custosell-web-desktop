@@ -158,6 +158,35 @@ export async function updateOfflineShiftOpeningBalance(
   return { ...updated, _pendingSync: true };
 }
 
+/** Persist counted cash / combined balance updates locally and queue a PUT. */
+export async function updateOfflineShiftBalance(
+  shiftId: number,
+  fields: Record<string, number | null>,
+  currentShift: ShiftRecord | null,
+): Promise<ShiftWithSyncMeta> {
+  await localShiftsStore.patchShiftFields(shiftId, fields);
+
+  await mutationQueue
+    .enqueue({
+      method: 'PUT',
+      url: `/shifts/${shiftId}`,
+      data: fields,
+      maxRetries: 3,
+    })
+    .catch((err) => {
+      console.error('[OfflineShift] Balance enqueue failed:', err);
+    });
+
+  const updated: ShiftRecord = {
+    ...(currentShift ?? buildLocalShift()),
+    id: shiftId,
+    ...fields,
+    updated_at: new Date().toISOString(),
+  };
+
+  return { ...updated, _pendingSync: true };
+}
+
 async function persistOfflineClockOutInBackground(
   shiftId: number,
   shift: ShiftRecord,

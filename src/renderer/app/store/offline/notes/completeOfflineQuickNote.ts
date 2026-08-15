@@ -52,11 +52,11 @@ export async function persistOfflineQuickNoteInBackground(
   mutationType: QuickNoteMutationType,
 ): Promise<void> {
   let mutationId: string | undefined;
-  let method: 'POST' | 'DELETE' = 'POST';
+  let method: 'POST' | 'PUT' | 'DELETE' = 'POST';
   let url: string = QUICK_NOTES.BASE;
 
   if (mutationType === 'update') {
-    method = 'POST';
+    method = 'PUT';
     url = QUICK_NOTES.ITEM(note.id);
   } else if (mutationType === 'delete') {
     method = 'DELETE';

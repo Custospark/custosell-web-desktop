@@ -14,6 +14,7 @@ import {
   shouldCompleteCustomerLocally,
   completeOfflineCreateCustomerInstant,
   completeOfflineUpdateCustomerInstant,
+  completeOfflineUpdatePendingCustomer,
   completeOfflineDeleteCustomerInstant,
 } from '../../../../app/store/offline/customers/completeOfflineCustomer';
 import type { Customer, CreateCustomerData, UpdateCustomerData, CustomerPurchase, CustomerOverviewData } from './CustomerTypes';
@@ -54,9 +55,18 @@ function patchCustomerCache(
   qc: ReturnType<typeof useQueryClient>,
   patch: (old: CustomerWithSyncMeta[]) => CustomerWithSyncMeta[],
 ): void {
-  qc.setQueryData<CustomerWithSyncMeta[]>(customerKeys.customers(), (old) =>
+  const next = sanitizeCustomerList(patch(sanitizeCustomerList(qc.getQueryData<CustomerWithSyncMeta[]>(customerKeys.customers()) ?? [])));
+  qc.setQueryData<CustomerWithSyncMeta[]>(customerKeys.customers(), next);
+  // Keep the POS customer picker (keyed ['customers']) in sync live.
+  qc.setQueryData<CustomerWithSyncMeta[]>(['customers'], (old) =>
     sanitizeCustomerList(patch(sanitizeCustomerList(old ?? []))),
   );
+}
+
+/** Invalidate all customer caches including the POS picker list. */
+function invalidateCustomerCaches(qc: ReturnType<typeof useQueryClient>): void {
+  void qc.invalidateQueries({ queryKey: customerKeys.customers() });
+  void qc.invalidateQueries({ queryKey: ['customers'] });
 }
 
 async function readCustomersBaseline(): Promise<Customer[]> {
@@ -168,7 +178,7 @@ export function useCreateCustomer() {
     onSuccess: (customer) => {
       if (!customer) {
         void refreshCustomerCatalogSnapshot();
-        qc.invalidateQueries({ queryKey: customerKeys.customers() });
+        invalidateCustomerCaches(qc);
         return;
       }
       if (customer._pendingSync) {
@@ -179,7 +189,7 @@ export function useCreateCustomer() {
         showToast('success', 'Customer saved - will sync when online');
       } else {
         void refreshCustomerCatalogSnapshot();
-        qc.invalidateQueries({ queryKey: customerKeys.customers() });
+        invalidateCustomerCaches(qc);
       }
     },
     onError: (e) => {
@@ -201,7 +211,7 @@ export function useUpdateCustomer() {
 
       const isPendingOnly = (existing as CustomerWithSyncMeta)._pendingSync || id < 0;
       if (isPendingOnly) {
-        return { ...existing, ...data, _pendingSync: true } as CustomerWithSyncMeta;
+        return completeOfflineUpdatePendingCustomer(existing, data);
       }
 
       if (shouldCompleteCustomerLocally()) {
@@ -220,7 +230,7 @@ export function useUpdateCustomer() {
     onSuccess: (customer, { id }) => {
       if (!customer) {
         void refreshCustomerCatalogSnapshot();
-        qc.invalidateQueries({ queryKey: customerKeys.customers() });
+        invalidateCustomerCaches(qc);
         return;
       }
       if (customer._pendingSync) {
@@ -230,7 +240,7 @@ export function useUpdateCustomer() {
         showToast('success', 'Changes saved - will sync when online');
       } else {
         void refreshCustomerCatalogSnapshot();
-        qc.invalidateQueries({ queryKey: customerKeys.customers() });
+        invalidateCustomerCaches(qc);
       }
     },
     onError: (e) => {

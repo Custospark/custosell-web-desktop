@@ -89,6 +89,31 @@ export function completeOfflineUpdateCategoryInstant(category: Category, payload
   return updated;
 }
 
+/** Edit a still-pending category: persist the merged record + queued payload so
+ *  the edit survives reload and syncs (mirrors completeOfflineUpdatePendingProduct). */
+export async function completeOfflineUpdatePendingCategory(
+  existing: CategoryWithSyncMeta,
+  payload: CreateCategoryData,
+): Promise<CategoryWithSyncMeta> {
+  const record = await localCategoriesStore.getByCategoryId(existing.id);
+  if (!record) {
+    throw new Error('Pending category record not found');
+  }
+
+  const updated: Category = {
+    ...record.category,
+    ...payload,
+    updated_at: new Date().toISOString(),
+  };
+  const nextPayload = { ...(record.payload as CreateCategoryData), ...payload };
+
+  await mutationQueue.updateMutation(record.mutationId, { data: nextPayload });
+  const updatedRecord = await localCategoriesStore.updatePendingRecord(record.localId, updated, nextPayload);
+  await mutationQueue.requeue(record.mutationId);
+
+  return { ...updated, _pendingSync: true, _localId: updatedRecord.localId };
+}
+
 export function completeOfflineDeleteCategoryInstant(id: number): void {
   const category: CategoryWithSyncMeta = {
     id,

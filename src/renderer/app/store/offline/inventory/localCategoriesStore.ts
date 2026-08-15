@@ -129,4 +129,25 @@ export const localCategoriesStore = {
     }
     return null;
   },
+
+  async getByCategoryId(categoryId: number): Promise<LocalCategoryRecord | undefined> {
+    const db = await getOfflineDb();
+    const all = await db.getAll('localCategories');
+    return all.find((r) => r.category.id === categoryId);
+  },
+
+  async updatePendingRecord(
+    localId: string,
+    category: Category,
+    payload: CreateCategoryData | { id: number },
+  ): Promise<LocalCategoryRecord> {
+    const db = await getOfflineDb();
+    const record = await db.get('localCategories', localId);
+    if (!record) throw new Error('Pending category record not found');
+    record.category = category;
+    record.payload = payload;
+    record.syncStatus = 'pending';
+    await db.put('localCategories', record);
+    return record;
+  },
 };

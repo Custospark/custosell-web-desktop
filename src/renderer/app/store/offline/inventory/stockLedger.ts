@@ -65,7 +65,17 @@ export const stockLedger = {
   async seedFromProducts(items: { id: number; quantity: number }[]): Promise<void> {
     const db = await getOfflineDb();
     const bid = activeBusinessId();
-    const tx = db.transaction('stock', 'readwrite');
+    const dbLike = db as unknown as {
+      transaction: (names: string[] | string, mode?: string) => {
+        objectStore: (name: string) => {
+          get: (key: unknown) => Promise<{ quantity?: number } | undefined>;
+          put: (value: unknown) => Promise<void>;
+          add: (value: unknown) => Promise<void>;
+        };
+        done: Promise<void>;
+      };
+    };
+    const tx = dbLike.transaction('stock', 'readwrite');
     const store = tx.objectStore('stock');
     for (const { id, quantity } of items) {
       const existing = await store.get([bid, id]);
@@ -111,7 +121,19 @@ export const stockLedger = {
 
     const db = await getOfflineDb();
     const bid = activeBusinessId();
-    const tx = db.transaction(['stock', 'adjustments'], 'readwrite');
+    const dbLike = db as unknown as {
+      transaction: (names: string[] | string, mode?: string) => {
+        objectStore: (name: string) => {
+          get: (key: unknown) => Promise<{ quantity?: number } | undefined>;
+          getAll: () => Promise<unknown[]>;
+          put: (value: unknown) => Promise<void>;
+          add: (value: unknown) => Promise<void>;
+          delete: (key: unknown) => Promise<void>;
+        };
+        done: Promise<void>;
+      };
+    };
+    const tx = dbLike.transaction(['stock', 'adjustments'], 'readwrite');
     const stockStore = tx.objectStore('stock');
     const adjStore = tx.objectStore('adjustments');
     const now = new Date().toISOString();

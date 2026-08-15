@@ -22,7 +22,21 @@ export function isShiftOpenMutation(m: QueuedMutation): boolean {
 }
 
 export function isShiftCloseMutation(m: QueuedMutation): boolean {
-  return m.method === 'PUT' && /^\/shifts\/-?\d+$/.test(m.url);
+  // Only a PUT that actually closes the shift (status: completed) is a close.
+  // Balance-only updates (opening_balance / counted_cash) are a separate bucket
+  // so they are never treated as a close (which would end the user's shift).
+  const data = m.data as { status?: string } | undefined;
+  return m.method === 'PUT'
+    && /^\/shifts\/-?\d+$/.test(m.url)
+    && data?.status === 'completed';
+}
+
+/** Shift balance-only updates (opening balance / counted cash) - NOT a close. */
+export function isShiftBalanceMutation(m: QueuedMutation): boolean {
+  const data = m.data as Record<string, unknown> | undefined;
+  if (m.method !== 'PUT' || !/^\/shifts\/-?\d+$/.test(m.url)) return false;
+  if (!data) return false;
+  return ('opening_balance' in data || 'counted_cash' in data) && data.status !== 'completed';
 }
 
 export function isRefundMutation(m: QueuedMutation): boolean {

@@ -24,6 +24,7 @@ import {
   shouldCompleteCategoryLocally,
   completeOfflineCreateCategoryInstant,
   completeOfflineUpdateCategoryInstant,
+  completeOfflineUpdatePendingCategory,
   completeOfflineDeleteCategoryInstant,
 } from '../../../../app/store/offline/inventory/completeOfflineCategory';
 import { inventoryKeys } from './inventoryKeys';
@@ -160,7 +161,7 @@ export function useUpdateCategory() {
 
       const isPendingOnly = existing._pendingSync || id < 0;
       if (isPendingOnly) {
-        return { ...existing, ...data, _pendingSync: true } as CategoryWithSyncMeta;
+        return completeOfflineUpdatePendingCategory(existing, data);
       }
 
       if (shouldCompleteCategoryLocally()) {

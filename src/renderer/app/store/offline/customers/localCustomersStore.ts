@@ -129,4 +129,25 @@ export const localCustomersStore = {
     }
     return null;
   },
+
+  async getByCustomerId(customerId: number): Promise<LocalCustomerRecord | undefined> {
+    const db = await getOfflineDb();
+    const all = await db.getAll('localCustomers');
+    return all.find((r) => r.customer.id === customerId);
+  },
+
+  async updatePendingRecord(
+    localId: string,
+    customer: Customer,
+    payload: CreateCustomerData | UpdateCustomerData | { id: number },
+  ): Promise<LocalCustomerRecord> {
+    const db = await getOfflineDb();
+    const record = await db.get('localCustomers', localId);
+    if (!record) throw new Error('Pending customer record not found');
+    record.customer = customer;
+    record.payload = payload;
+    record.syncStatus = 'pending';
+    await db.put('localCustomers', record);
+    return record;
+  },
 };

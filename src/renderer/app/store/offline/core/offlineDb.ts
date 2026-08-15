@@ -67,7 +67,8 @@ export async function closeOfflineDb(): Promise<void> {
 export async function clearOfflineDbStores(): Promise<void> {
   try {
     const db = await getOfflineDb();
-    for (const name of Array.from(db.objectStoreNames)) {
+    const names = Array.from((db as unknown as { objectStoreNames: Iterable<string> }).objectStoreNames);
+    for (const name of names) {
       await db.clear(name as never);
     }
   } catch (err) {
@@ -162,11 +163,8 @@ export const safeStore = {
 
   async getAllFromIndex<T>(storeName: string, index: string, key: unknown): Promise<T[]> {
     const db = await getOfflineDb();
-    if ('getAllFromIndex' in db) {
-      return (await db.getAllFromIndex(storeName, index, key)) as T[];
-    }
-    const all = (await db.getAll(storeName)) as Array<Record<string, unknown>>;
-    return all.filter((r) => r[index] === key) as T[];
+    const dbLike = db as { getAllFromIndex: (s: string, i: string, k: unknown) => Promise<unknown[]> };
+    return (await dbLike.getAllFromIndex(storeName, index, key)) as T[];
   },  async get<T>(storeName: string, key: IDBValidKey | IDBKeyRange): Promise<T | undefined> {
     const db = await getOfflineDb();
     return (await db.get(storeName, key)) as T | undefined;

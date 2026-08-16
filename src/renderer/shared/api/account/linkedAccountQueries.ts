@@ -35,6 +35,7 @@ export interface LinkedAccountsData {
 
 interface SwitchPayload {
   user: AuthUser;
+  token: string;
 }
 
 export const linkedAccountKeys = {
@@ -107,9 +108,11 @@ export function useSwitchAccount() {
       const payload = unwrap<SwitchPayload>(data);
       const user = payload.user;
 
-      // Hydrate the auth slice with the target account's full context - same
-      // shape as /auth/me - without minting a new token.
-      dispatch(switchAccount(user));
+      // Hydrate the auth slice with the target account's full context AND its
+      // freshly minted token (switch = login without password). All subsequent
+      // requests use the target account's token, so /auth/me and the profile
+      // dropdown reflect the active account.
+      dispatch(switchAccount({ user, token: payload.token }));
 
       await persistAuthSnapshot().catch(() => undefined);
 

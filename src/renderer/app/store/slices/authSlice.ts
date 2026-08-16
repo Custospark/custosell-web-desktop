@@ -270,17 +270,22 @@ const authSlice = createSlice({
       state.isAuthenticated = true;
       state.isInitialized = true;
     },
-    switchAccount(state, action: PayloadAction<AuthUser>) {
+    switchAccount(state, action: PayloadAction<{ user: AuthUser; token: string }>) {
       // Full account swap: replace the active user context entirely (role,
       // modules, locations, business, subscription) with the target account's -
-      // the same shape as /auth/me. The session token is kept unchanged.
-      const user = normalizeAuthUser({ ...action.payload });
+      // the same shape as /auth/me - AND mint a fresh session token for the
+      // target account (switch = login without password). Each account keeps
+      // its own token, so /auth/me and all requests are scoped to the active
+      // account and switching never loses the originating account.
+      const user = normalizeAuthUser({ ...action.payload.user });
       state.user = user;
-      state.plans = action.payload.active_plans ?? state.plans;
+      state.token = action.payload.token;
+      state.plans = action.payload.user.active_plans ?? state.plans;
       state.businessId = user.business_id;
       state.activeLocationId = resolveDefaultLocationId(user);
       state.isAuthenticated = true;
       state.isInitialized = true;
+      state.isLocalSession = isLocalSessionToken(action.payload.token);
       state.pendingAuthSync = false;
     },
     updateShiftContext(

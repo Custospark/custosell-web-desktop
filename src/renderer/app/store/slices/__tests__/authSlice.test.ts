@@ -41,7 +41,7 @@ function makeUser(id: number, email: string, businessId: number, businessName: s
 }
 
 describe('authSlice.switchAccount', () => {
-  it('replaces the active user with the target account context', () => {
+  it('replaces the active user with the target account context and mints its token', () => {
     const initial = authReducer(
       undefined,
       loginSuccess({
@@ -52,17 +52,17 @@ describe('authSlice.switchAccount', () => {
 
     const next = authReducer(
       initial,
-      switchAccount(makeUser(2, 'two@example.com', 20, 'Business Two')),
+      switchAccount({ user: makeUser(2, 'two@example.com', 20, 'Business Two'), token: 'token-b' }),
     );
 
     expect(next.user?.id).toBe(2);
     expect(next.user?.email).toBe('two@example.com');
     expect(next.businessId).toBe(20);
     expect(next.user?.business?.name).toBe('Business Two');
-    // Token is preserved - one device session, swap context.
-    expect(next.token).toBe('token-a');
+    // A fresh token is minted for the target account - each account has its own
+    // session, so /auth/me and all requests are scoped to the active account.
+    expect(next.token).toBe('token-b');
     expect(next.isAuthenticated).toBe(true);
-    expect(next.isLocalSession).toBe(initial.isLocalSession);
   });
 
   it('resolves the active location from the target account', () => {
@@ -80,7 +80,7 @@ describe('authSlice.switchAccount', () => {
       { id: 4, name: 'Entebbe', code: 'EBB', is_default: false },
     ];
 
-    const next = authReducer(initial, switchAccount(target));
+    const next = authReducer(initial, switchAccount({ user: target, token: 'token-b' }));
     expect(next.activeLocationId).toBe(3);
   });
 
@@ -96,7 +96,7 @@ describe('authSlice.switchAccount', () => {
 
     const next = authReducer(
       initial,
-      switchAccount(makeUser(2, 'two@example.com', 20, 'Business Two')),
+      switchAccount({ user: makeUser(2, 'two@example.com', 20, 'Business Two'), token: 'token-b' }),
     );
 
     expect(next.pendingAuthSync).toBe(false);
@@ -113,7 +113,7 @@ describe('authSlice.switchAccount', () => {
 
     const switched = authReducer(
       initial,
-      switchAccount(makeUser(2, 'two@example.com', 20, 'Business Two')),
+      switchAccount({ user: makeUser(2, 'two@example.com', 20, 'Business Two'), token: 'token-b' }),
     );
     const afterLogout = authReducer(switched, logout());
 

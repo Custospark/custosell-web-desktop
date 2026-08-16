@@ -215,7 +215,7 @@ export default function BusinessSettingsForm() {
 
     const payload: UpdateBusinessData = {};
     for (const key of TAB_FIELDS[tab]) {
-      payload[key] = form[key];
+      (payload as Record<string, unknown>)[key] = form[key];
     }
 
     if (tab === 'profile') {

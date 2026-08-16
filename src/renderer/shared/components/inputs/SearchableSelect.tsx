@@ -103,10 +103,26 @@ export function SearchableSelect({
   useEffect(() => {
     if (!open) return;
     updatePosition();
+
+    // Reposition when any ancestor scroll container moves (window scroll,
+    // modal body scroll, drawer scroll, etc.) - not just the window. A portal
+    // dropdown positioned from getBoundingClientRect() drifts from its trigger
+    // when an in-between scroll container scrolls (e.g. inside a Modal).
     const onScrollOrResize = () => updatePosition();
+    const scrollTargets: (Element | Window)[] = [window];
+    let node: HTMLElement | null = triggerRef.current?.parentElement ?? null;
+    while (node) {
+      const style = getComputedStyle(node);
+      const scrollable =
+        /(auto|scroll)/.test(style.overflowY) || /(auto|scroll)/.test(style.overflowX);
+      if (scrollable) scrollTargets.push(node);
+      node = node.parentElement;
+    }
+    scrollTargets.forEach((target) => target.addEventListener('scroll', onScrollOrResize, true));
     window.addEventListener('resize', onScrollOrResize);
     window.addEventListener('scroll', onScrollOrResize, true);
     return () => {
+      scrollTargets.forEach((target) => target.removeEventListener('scroll', onScrollOrResize, true));
       window.removeEventListener('resize', onScrollOrResize);
       window.removeEventListener('scroll', onScrollOrResize, true);
     };

@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
 import {
   useCreateBudget, useUpdateBudget, useBudgetDetail, useSyncBudgetLines,
 } from '../api/BudgetQueries';
 import { getBusinessCurrency } from '../../../shared/utils/formatCurrency';
-import { Target, Wallet, CalendarDays, FileText, PiggyBank } from 'lucide-react';
+import { Target, Wallet, CalendarDays, FileText, PiggyBank, CloudUpload, CloudCheck } from 'lucide-react';
 import type { PersonalBudget, PersonalBudgetSummaryRow, BudgetLine } from '../api/BudgetTypes';
 import BudgetLinesEditor from './BudgetLinesEditor';
 
@@ -16,6 +16,18 @@ interface BudgetFormModalProps {
   onClose: () => void;
   budget?: BudgetLike | null;
 }
+
+/** Debounce shopping-list auto-saves so rapid edits don't fire a request each keystroke. */
+const AUTO_SAVE_DELAY_MS = 700;
+
+const linesEqual = (a: BudgetLine[], b: BudgetLine[]): boolean =>
+  a.length === b.length && a.every((line, i) => {
+    const other = b[i];
+    return other
+      && line.item_name === other.item_name
+      && line.quantity === other.quantity
+      && line.unit_price === other.unit_price;
+  });
 
 export default function BudgetFormModal({ open, onClose, budget }: BudgetFormModalProps) {
   const createMutation = useCreateBudget();
@@ -32,9 +44,14 @@ export default function BudgetFormModal({ open, onClose, budget }: BudgetFormMod
   const [periodEnd, setPeriodEnd] = useState('');
   const [lines, setLines] = useState<BudgetLine[]>([]);
   const [editorKey, setEditorKey] = useState(0);
+  /** Shopping list save state so the user sees their plan persists on its own. */
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  /** Last lines that were persisted server-side (prevents redundant re-sync). */
+  const lastSyncedRef = useRef<BudgetLine[]>([]);
 
   const loadLines = (source: BudgetLine[]) => {
     setLines(source);
+    lastSyncedRef.current = source;
   };
 
   useEffect(() => {
@@ -66,6 +83,31 @@ export default function BudgetFormModal({ open, onClose, budget }: BudgetFormMod
     setLines(next);
   };
 
+  // Auto-save the shopping list whenever it changes while editing an existing
+  // budget, so the user never loses their plan if they close without pressing
+  // "Save changes". Create mode can't persist lines yet (no budget id).
+  useEffect(() => {
+    if (!isEditing || !budget?.id) return;
+    if (linesEqual(lines, lastSyncedRef.current)) return;
+
+    const timer = window.setTimeout(() => {
+      syncMutation.mutate(
+        { id: budget.id, lines },
+        {
+          onSuccess: (saved) => {
+            lastSyncedRef.current = saved;
+            setAutoSaveStatus('saved');
+          },
+          onError: () => setAutoSaveStatus('error'),
+        },
+      );
+      setAutoSaveStatus('saving');
+    }, AUTO_SAVE_DELAY_MS);
+
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lines, isEditing, budget?.id]);
+
   const handleSubmit = async () => {
     if (!name.trim() || !plannedAmount) return;
     const data = {
@@ -96,6 +138,18 @@ export default function BudgetFormModal({ open, onClose, budget }: BudgetFormMod
 
   const isPending = createMutation.isPending || updateMutation.isPending || syncMutation.isPending;
   const canSubmit = !!name.trim() && !!plannedAmount && parseFloat(plannedAmount) >= 0;
+
+  const autoSaveIndicator = isEditing && budget?.id ? (
+    <span className="inline-flex items-center gap-1 text-[11px] text-gray-400">
+      {autoSaveStatus === 'saving' ? (
+        <><CloudUpload className="h-3.5 w-3.5 animate-pulse text-blue-500" /> Saving shopping list…</>
+      ) : autoSaveStatus === 'saved' ? (
+        <><CloudCheck className="h-3.5 w-3.5 text-green-500" /> Shopping list saved</>
+      ) : autoSaveStatus === 'error' ? (
+        <><CloudUpload className="h-3.5 w-3.5 text-red-500" /> Auto-save failed - Save changes to retry</>
+      ) : null}
+    </span>
+  ) : null;
 
   return (
     <Modal
@@ -205,7 +259,12 @@ export default function BudgetFormModal({ open, onClose, budget }: BudgetFormMod
           </div>
         </div>
 
-        <BudgetLinesEditor key={editorKey} value={lines} onChange={handleLinesChange} budgetTarget={plannedAmount ? parseFloat(plannedAmount) : null} />
+        <div className="space-y-2">
+          {autoSaveIndicator && (
+            <div className="flex justify-end">{autoSaveIndicator}</div>
+          )}
+          <BudgetLinesEditor key={editorKey} value={lines} onChange={handleLinesChange} budgetTarget={plannedAmount ? parseFloat(plannedAmount) : null} />
+        </div>
 
         <div className="flex items-center justify-end gap-3 border-t border-gray-100 pt-4">
           <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>

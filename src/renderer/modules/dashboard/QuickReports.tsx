@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Modal } from '../../shared/components/modals/Modal';
 import { Button } from '../../shared/components/buttons/Button';
-import { SearchableSelect } from '../../shared/components/inputs/SearchableSelect';
 import { useAppSelector } from '../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../app/store/slices/networkSlice';
 import { useReportDownload, useBranchPerformance } from './DashboardQueries';
@@ -368,30 +367,37 @@ export default function QuickReports() {
                 {(selectedReport.supportsCashierFilter || selectedReport.supportsShiftFilter) && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {selectedReport.supportsCashierFilter && staff.length > 0 && (
-                      <SearchableSelect
-                        label="Sales Person"
-                        value={userId}
-                        onChange={handleCashierChange}
-                        options={cashierOptions}
-                        placeholder="All sales people"
-                        searchPlaceholder="Search sales people..."
-                        emptyOption={{ value: '', label: 'All sales people' }}
-                      />
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Sales Person</label>
+                        <select
+                          value={userId}
+                          onChange={(e) => handleCashierChange(e.target.value)}
+                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">All sales people</option>
+                          {cashierOptions.map((opt) => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
+                      </div>
                     )}
                     {selectedReport.supportsShiftFilter && (
-                      <SearchableSelect
-                        label="Shift"
-                        value={shiftId}
-                        onChange={setShiftId}
-                        options={shiftOptions}
-                        placeholder={userId ? 'All shifts for this sales person' : 'All shifts'}
-                        searchPlaceholder="Search shifts..."
-                        emptyOption={{
-                          value: '',
-                          label: userId ? 'All shifts for this sales person' : 'All shifts',
-                        }}
-                        disabled={userId !== '' && shiftOptions.length === 0}
-                      />
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Shift</label>
+                        <select
+                          value={shiftId}
+                          onChange={(e) => setShiftId(e.target.value)}
+                          disabled={userId !== '' && shiftOptions.length === 0}
+                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400"
+                        >
+                          <option value="">
+                            {userId ? 'All shifts for this sales person' : 'All shifts'}
+                          </option>
+                          {shiftOptions.map((opt) => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
+                      </div>
                     )}
                     {selectedReport.supportsShiftFilter && userId && shiftOptions.length === 0 && (
                       <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 sm:col-span-2">

@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { Card } from '../../../shared/components/cards/Card';
-import { PeriodSelector } from '../../../shared/components/inputs/PeriodSelector';
+import { AccountingDateRange } from '../ui/AccountingDateRange';
 import { useTrialBalance, useIncomeStatement, useBalanceSheet, useCashFlow, useEquity } from '../api/AccountingQueries';
-import { useAccountingPeriodSelection } from '../context/AccountingPeriodSelectionContext';
-import { buildReportQueryString } from '../utils/periodSelectionUtils';
+import { currentMonthBounds, dateRangeToReportParams, buildReportQueryString, type ReportPeriodParams } from '../utils/periodSelectionUtils';
 import { axiosInstance } from '../../../app/api/axiosConfig';
 import { ACCOUNTING } from '../../../shared/api/endpoints/endpoints';
-import { Scale, BarChart3, ClipboardList, TrendingUp, PieChart, FileText, Download, Calendar } from 'lucide-react';
+import { Scale, BarChart3, ClipboardList, TrendingUp, PieChart, FileText, Download } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 
@@ -60,15 +59,10 @@ function StatusBadge({ label, type }: { label: string; type: 'success' | 'danger
 }
 
 export default function FinancialStatementsPage() {
-  const {
-    periodFilter,
-    setPeriodFilter,
-    reportParams,
-    selectionLabel: periodName,
-    startYear,
-    endYear,
-    periods,
-  } = useAccountingPeriodSelection();
+  const bounds = currentMonthBounds();
+  const [reportParams, setReportParams] = useState<ReportPeriodParams | undefined>(
+    dateRangeToReportParams(bounds.from, bounds.to),
+  );
 
   const [downloading, setDownloading] = useState<string | null>(null);
 
@@ -95,40 +89,6 @@ export default function FinancialStatementsPage() {
   const { data: eq } = useEquity(reportParams);
 
   const isLoading = reportParams && !tb && !stmt && !bs && !cf && !eq;
-
-  if (!reportParams) {
-    return (
-      <div className="space-y-6">
-        <Card>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600"><ClipboardList className="w-5 h-5" /></div>
-              <div>
-                <h1 className="text-xl font-semibold text-gray-900">Financial Statements</h1>
-                <p className="text-sm text-gray-500">Select a period to view your financial reports</p>
-              </div>
-            </div>
-          </div>
-        </Card>
-        <div className="flex items-center gap-4">
-          <PeriodSelector
-            periods={periods}
-            value={periodFilter}
-            onChange={setPeriodFilter}
-            startYear={startYear}
-            endYear={endYear}
-            className="w-full"
-          />
-        </div>
-        <div className="flex items-center justify-center h-48 text-sm text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-          <div className="text-center">
-            <Calendar className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-            <p>Select a period to view reports</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   const statements: { key: string; data: unknown; metrics: MetricItem[]; badge: { label: string; type: 'success' | 'danger' | 'warning' | 'info' } | null }[] = [
     {
@@ -188,22 +148,17 @@ export default function FinancialStatementsPage() {
             <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600"><ClipboardList className="w-5 h-5" /></div>
             <div>
               <h1 className="text-xl font-semibold text-gray-900">Financial Statements</h1>
-              <p className="text-sm text-gray-500">View and export your financial reports</p>
+              <p className="text-sm text-gray-500">View your financial reports for the selected period</p>
             </div>
+          </div>
+          <div>
+            <AccountingDateRange
+              value={reportParams}
+              onChange={setReportParams}
+            />
           </div>
         </div>
       </Card>
-
-      <div className="flex items-center gap-4">
-        <PeriodSelector
-          periods={periods}
-          value={periodFilter}
-          onChange={setPeriodFilter}
-          startYear={startYear}
-          endYear={endYear}
-          className="w-full"
-        />
-      </div>
 
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -249,7 +204,9 @@ export default function FinancialStatementsPage() {
                         </div>
                         <div>
                           <h3 className="text-sm font-semibold text-gray-900">{style.label}</h3>
-                          <p className="text-[11px] text-gray-500 mt-0.5">{periodName}</p>
+                          <p className="text-[11px] text-gray-500 mt-0.5">
+                            {reportParams?.date_from ?? 'start'} to {reportParams?.date_to ?? 'now'}
+                          </p>
                         </div>
                       </div>
                       {s.badge && <StatusBadge label={s.badge.label} type={s.badge.type} />}

@@ -3,17 +3,16 @@ import {
   Area, AreaChart, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine,
 } from 'recharts';
 import { Card } from '../../../shared/components/cards/Card';
-import { PeriodSelector } from '../../../shared/components/inputs/PeriodSelector';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { ChartContainer } from '../../../shared/components/charts/ChartContainer';
+import { AccountingDateRange } from '../ui/AccountingDateRange';
 import {
   CHART_THEME, ChartTooltipRow, ChartTooltipShell, chartAverage,
 } from '../../../shared/components/charts/chartPrimitives';
 import { useRatioTrends, useRatios } from '../api/AccountingQueries';
-import { useAccountingPeriodSelection } from '../context/AccountingPeriodSelectionContext';
-import { periodFilterToReportParams } from '../utils/periodSelectionUtils';
+import { currentMonthBounds, dateRangeToReportParams, buildReportQueryString, type ReportPeriodParams } from '../utils/periodSelectionUtils';
 import { useReportDownload } from '../../dashboard/DashboardQueries';
 import { ACCOUNTING } from '../../../shared/api/endpoints/endpoints';
 import {
@@ -33,18 +32,13 @@ const CATEGORY_META: Record<string, { title: string; icon: React.ElementType; ac
 };
 
 export default function RatiosPage() {
-  const {
-    periodFilter,
-    setPeriodFilter,
-    reportParams,
-    startYear,
-    endYear,
-    periods,
-  } = useAccountingPeriodSelection();
+  const bounds = currentMonthBounds();
+  const [reportParams, setReportParams] = useState<ReportPeriodParams | undefined>(
+    dateRangeToReportParams(bounds.from, bounds.to),
+  );
   const [selectedRatioKey, setSelectedRatioKey] = useState<string | null>(null);
   const [downloadOpen, setDownloadOpen] = useState(false);
   const [downloadFormat, setDownloadFormat] = useState<'pdf' | 'xlsx'>('pdf');
-  const [modalPeriodFilter, setModalPeriodFilter] = useState<string>('');
 
   const { data: trends, isLoading: trendsLoading } = useRatioTrends('monthly', 12);
   const downloadReport = useReportDownload();
@@ -55,21 +49,15 @@ export default function RatiosPage() {
   const isError = ratiosError && !ratios;
 
   function openDownload() {
-    setModalPeriodFilter(periodFilter);
     setDownloadFormat('pdf');
     setDownloadOpen(true);
   }
 
   function doDownload() {
-    const params = periodFilterToReportParams(modalPeriodFilter, periods);
-    if (!params) return;
+    if (!reportParams) return;
 
-    const search = new URLSearchParams();
-    if (params.period_id) search.set('period_id', String(params.period_id));
-    if (params.date_from && params.date_to) {
-      search.set('date_from', params.date_from);
-      search.set('date_to', params.date_to);
-    }
+    const query = buildReportQueryString(reportParams).replace(/^\?/, '');
+    const search = new URLSearchParams(query);
     search.set('format', downloadFormat);
     downloadReport(ACCOUNTING.EXPORT('ratios'), search, `ratios.${downloadFormat}`);
     setDownloadOpen(false);
@@ -129,13 +117,9 @@ export default function RatiosPage() {
       </Card>
 
       <div className="flex flex-wrap items-end gap-4">
-        <PeriodSelector
-          periods={periods}
-          value={periodFilter}
-          onChange={setPeriodFilter}
-          startYear={startYear}
-          endYear={endYear}
-          className="flex-1"
+        <AccountingDateRange
+          value={reportParams}
+          onChange={setReportParams}
         />
       </div>
 
@@ -328,15 +312,11 @@ export default function RatiosPage() {
 
       <Modal isOpen={downloadOpen} onClose={() => setDownloadOpen(false)} title="Download Ratios Report" size="md">
         <div className="space-y-4">
-          <p className="text-sm text-gray-500">Select the period and format for your report.</p>
+          <p className="text-sm text-gray-500">Select the format for your report.</p>
 
-          <PeriodSelector
-            periods={periods}
-            value={modalPeriodFilter}
-            onChange={setModalPeriodFilter}
-            startYear={startYear}
-            endYear={endYear}
-          />
+          <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
+            Period: {reportParams?.date_from ?? 'start'} to {reportParams?.date_to ?? 'now'}
+          </div>
 
           <div className="flex gap-2 pt-2">
             <button

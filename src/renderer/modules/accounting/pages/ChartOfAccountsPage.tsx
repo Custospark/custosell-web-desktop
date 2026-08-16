@@ -131,7 +131,7 @@ export default function ChartOfAccountsPage() {
               <p className="text-sm text-gray-500">Manage your general ledger accounts</p>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
             <Button variant="outline" onClick={() => setTreeView(!treeView)}>
               {treeView ? <List className="w-4 h-4 mr-1.5" /> : <TreePine className="w-4 h-4 mr-1.5" />}
               {treeView ? 'Flat View' : 'Tree View'}

@@ -4,9 +4,9 @@ import { useSearchParams } from 'react-router-dom';
 import { Card } from '../../../shared/components/cards/Card';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Table } from '../../../shared/components/tables/Table';
-import { PeriodSelector } from '../../../shared/components/inputs/PeriodSelector';
+import { AccountingDateRange } from '../ui/AccountingDateRange';
 import { useJournalEntries, usePostJournalEntry, useDeleteJournalEntry, useReverseJournalEntry } from '../api/AccountingQueries';
-import { AccountingPeriodSelectionProvider, useAccountingPeriodSelection } from '../context/AccountingPeriodSelectionContext';
+import { currentMonthBounds, dateRangeToReportParams, type ReportPeriodParams } from '../utils/periodSelectionUtils';
 import type { JournalEntry } from '../api/AccountingTypes';
 import AccountingImportExportModal from '../ui/AccountingImportExportModal';
 import { FileText, Plus, Send, Trash2, Search, ChevronLeft, ChevronRight, RotateCcw, Eye, Upload, Download } from 'lucide-react';
@@ -17,27 +17,30 @@ import { NewJournalEntryForm } from './NewJournalEntryForm';
 const PAGE_SIZE = 20;
 
 export default function JournalEntriesPage() {
-  return (
-    <AccountingPeriodSelectionProvider>
-      <JournalEntriesPageInner />
-    </AccountingPeriodSelectionProvider>
-  );
-}
-
-function JournalEntriesPageInner() {
   const [searchParams] = useSearchParams();
   const highlightEntryId = Number(searchParams.get('entry_id') || 0) || null;
   const [formOpen, setFormOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
-  const { periodFilter, setPeriodFilter, startYear, endYear, periods } = useAccountingPeriodSelection();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
   const [actionId, setActionId] = useState<number | null>(null);
   const [hoveredDescId, setHoveredDescId] = useState<number | null>(null);
   const [descPos, setDescPos] = useState({ top: 0, left: 0 });
 
-  // All filtering client-side - always fetch all entries
-  const { data: entries, isLoading, isFetching } = useJournalEntries();
+  // Applied date range - defaults to the current month, drives backend query.
+  const bounds = currentMonthBounds();
+  const [reportParams, setReportParams] = useState<ReportPeriodParams | undefined>(
+    dateRangeToReportParams(bounds.from, bounds.to),
+  );
+
+  const dateFilters = useMemo(() => {
+    const f: Record<string, string> = {};
+    if (reportParams?.date_from) f.date_from = reportParams.date_from;
+    if (reportParams?.date_to) f.date_to = reportParams.date_to;
+    return f;
+  }, [reportParams]);
+
+  const { data: entries, isLoading, isFetching, isError, refetch } = useJournalEntries(dateFilters);
   const postEntry = usePostJournalEntry();
   const deleteEntry = useDeleteJournalEntry();
   const reverseEntry = useReverseJournalEntry();
@@ -48,22 +51,13 @@ function JournalEntriesPageInner() {
     void qc.invalidateQueries({ queryKey: ['accounting'] });
   };
 
-  // Resolve periodFilter into a Set of matching period_ids
-  const activePeriodIds = useMemo(() => {
-    if (!periodFilter) return null;
-    const ids = periodFilter.split(',').map(Number).filter(Boolean);
-    return new Set(ids);
-  }, [periodFilter]);
-
   const filtered = useMemo(() => {
     if (!entries) return [];
     const q = search.toLowerCase();
     return entries
       .filter((e) => {
         if (highlightEntryId && e.id === highlightEntryId) return true;
-        // Period filter
-        if (activePeriodIds && !activePeriodIds.has(e.period_id)) return false;
-        // Search filter
+        // Search filter (date range already applied server-side)
         if (q && !e.entry_number.toLowerCase().includes(q) && !e.description.toLowerCase().includes(q)) return false;
         return true;
       })
@@ -78,7 +72,7 @@ function JournalEntriesPageInner() {
         if (byCreated !== 0) return byCreated;
         return b.id - a.id;
       });
-  }, [entries, search, activePeriodIds, highlightEntryId]);
+  }, [entries, search, highlightEntryId]);
 
   // Build a set of entry numbers that have been reversed (by finding reversal descriptions)
   const reversedEntryNumbers = useMemo(() => {
@@ -208,7 +202,7 @@ function JournalEntriesPageInner() {
   return (
     <div className="space-y-6">
       <Card>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600">
               <FileText className="w-5 h-5" />
@@ -218,7 +212,7 @@ function JournalEntriesPageInner() {
               <p className="text-sm text-gray-500">Record and manage journal entries</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
             <Button variant="outline" onClick={() => setImportOpen(true)}>
               <Upload className="w-4 h-4 mr-1.5" />Import
             </Button>
@@ -243,18 +237,23 @@ function JournalEntriesPageInner() {
             className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
-        <PeriodSelector
-          periods={periods}
-          value={periodFilter}
-          onChange={setPeriodFilter}
-          startYear={startYear}
-          endYear={endYear}
-          className="w-full sm:flex-1"
+        <AccountingDateRange
+          value={reportParams}
+          onChange={(params) => { setReportParams(params); setPage(0); }}
         />
         <span className="text-xs text-gray-400 whitespace-nowrap">{filtered.length} {filtered.length === 1 ? 'entry' : 'entries'}</span>
       </div>
 
-      <Table columns={columns} data={paged} loading={isLoading || isFetching} rowKey={(item) => item.id} />
+      {isError ? (
+        <div className="border border-red-200 rounded-lg p-6 text-center">
+          <p className="text-sm text-red-600">Failed to load journal entries.</p>
+          <Button variant="outline" size="sm" onClick={() => refetch()} className="mt-2">
+            Try again
+          </Button>
+        </div>
+      ) : (
+        <Table columns={columns} data={paged} loading={isLoading || isFetching} rowKey={(item) => item.id} />
+      )}
 
       {pageCount > 1 && (
         <div className="flex items-center justify-between text-sm text-gray-500">

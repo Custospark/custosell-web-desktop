@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
+import { useNetworkStatus } from '../../../app/store/hooks/useNetworkStatus';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { useBusiness } from '../../../modules/settings/api/settings/BusinessQueries';
 import { resolveBusinessDisplayName, resolveBusinessLogoPath } from '../../utils/shellDisplay';
 import { avatarUrl } from '../../utils/avatarUrl';
 import { isBusinessOwner } from '../../utils/moduleAccess';
+import { OfflineDropdownNotice } from './OfflineDropdownNotice';
 import { cn } from '../../utils/cn';
 import {
   Building2, ChevronDown, ExternalLink, Settings, CreditCard, CircleUser,
@@ -17,6 +19,7 @@ type DetailRow = { icon: typeof MapPin; value: string };
 /** Business context trigger - the Custosell equivalent of Custocare's context switcher. */
 export default function BusinessDropdown() {
   const navigate = useNavigate();
+  const { isCompletelyOffline } = useNetworkStatus();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const user = useAppSelector((s) => s.auth.user);
@@ -128,6 +131,11 @@ export default function BusinessDropdown() {
 
       {open && (
         <div className="fixed left-1/2 -translate-x-1/2 top-16 w-[calc(100vw-2rem)] max-w-sm rounded-xl border border-gray-200 bg-white shadow-xl z-50 lg:absolute lg:left-auto lg:right-0 lg:top-auto lg:-translate-x-0 lg:mt-2 lg:w-80">
+          {isCompletelyOffline && (
+            <div className="border-b border-gray-200">
+              <OfflineDropdownNotice />
+            </div>
+          )}
           <div className="px-4 py-3 border-b border-gray-200">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full flex items-center justify-center ring-2 ring-blue-200 bg-blue-50 shrink-0 overflow-hidden">

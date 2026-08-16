@@ -8,6 +8,8 @@ import { cn } from '../../utils/cn';
 import { formatUSD } from '../../utils/formatCurrency';
 import { canAccessModule } from '../../utils/moduleAccess';
 import QRCodeLib from 'qrcode';
+import { useNetworkStatus } from '../../../app/store/hooks/useNetworkStatus';
+import { OfflineDropdownNotice } from './OfflineDropdownNotice';
 import {
   Gift, Copy, Check, ExternalLink, Users, DollarSign,
   Sparkles, ChevronDown, QrCode, Download, X, Share2, Link,
@@ -26,6 +28,7 @@ export default function ReferralDropdown() {
   const [linkCopied, setLinkCopied] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const user = useAppSelector((s) => s.auth.user);
+  const { isCompletelyOffline } = useNetworkStatus();
   const { data: earnings, isLoading } = useReferralEarnings();
   const hasPipelineAccess = canAccessModule(user, 'pipeline');
 
@@ -155,6 +158,8 @@ export default function ReferralDropdown() {
 
           {isLoading ? (
             <div className="px-4 py-6 text-center text-sm text-gray-400">Loading...</div>
+          ) : isCompletelyOffline ? (
+            <OfflineDropdownNotice />
           ) : !hasReferralCode ? (
             <div className="px-4 py-6 text-center space-y-3">
               <Sparkles className="w-8 h-8 mx-auto text-indigo-300" />

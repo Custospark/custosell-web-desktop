@@ -10,6 +10,7 @@ import { SubscriptionGuard } from './middleware/SubscriptionGuard';
 import { EstimatesAccessMiddleware } from './middleware/EstimatesAccessMiddleware';
 import { PersonalIncomeMiddleware } from './middleware/PersonalIncomeMiddleware';
 import { QuickNotesMiddleware } from './middleware/QuickNotesMiddleware';
+import { RequireOnlineRoute } from './middleware/RequireOnlineRoute';
 import { HrAccessMiddleware, HrIndexRedirect } from './middleware/HrAccessMiddleware';
 import { ModuleLandingRedirect } from './middleware/ModuleLandingRedirect';
 import { AppChrome } from '../../shared/components/layout/AppChrome';
@@ -206,13 +207,15 @@ export function AppRoutes() {
           <Route element={<QuickNotesMiddleware />}>
             <Route path={ROUTES.NOTES.INDEX} element={<SuspenseWrapper><QuickNotesPage /></SuspenseWrapper>} />
           </Route>
-          <Route element={<ModuleAccessMiddleware module="account" />}>
-            <Route path={ROUTES.ACCOUNT.INDEX} element={<SuspenseWrapper><AccountPage /></SuspenseWrapper>}>
-              <Route index element={<Navigate to={ROUTES.ACCOUNT.NOTIFICATIONS} replace />} />
-              <Route path="notifications" element={<SuspenseWrapper><NotificationsPage /></SuspenseWrapper>} />
-              <Route path="profile" element={<SuspenseWrapper><ProfileSettingsPage /></SuspenseWrapper>} />
-              <Route path="security" element={<SuspenseWrapper><AccountSecurityPage /></SuspenseWrapper>} />
-              <Route path="referrals" element={<SuspenseWrapper><AccountReferralsPage /></SuspenseWrapper>} />
+          <Route element={<RequireOnlineRoute />}>
+            <Route element={<ModuleAccessMiddleware module="account" />}>
+              <Route path={ROUTES.ACCOUNT.INDEX} element={<SuspenseWrapper><AccountPage /></SuspenseWrapper>}>
+                <Route index element={<Navigate to={ROUTES.ACCOUNT.NOTIFICATIONS} replace />} />
+                <Route path="notifications" element={<SuspenseWrapper><NotificationsPage /></SuspenseWrapper>} />
+                <Route path="profile" element={<SuspenseWrapper><ProfileSettingsPage /></SuspenseWrapper>} />
+                <Route path="security" element={<SuspenseWrapper><AccountSecurityPage /></SuspenseWrapper>} />
+                <Route path="referrals" element={<SuspenseWrapper><AccountReferralsPage /></SuspenseWrapper>} />
+              </Route>
             </Route>
           </Route>
           <Route path="/notifications" element={<Navigate to={ROUTES.ACCOUNT.NOTIFICATIONS} replace />} />
@@ -360,8 +363,11 @@ export function AppRoutes() {
           <Route path={ROUTES.SETTINGS.BUSINESS} element={<SuspenseWrapper><BusinessSettingsPage /></SuspenseWrapper>} />
           <Route path={ROUTES.SETTINGS.DATA_EXPORT} element={<SuspenseWrapper><DataExportPage /></SuspenseWrapper>} />
           {/* Plans & billing - always reachable regardless of the settings module gate
-              (e.g. suspended/expired personal accounts must reach the plans page). */}
-          <Route path={ROUTES.SETTINGS.SUBSCRIPTION} element={<SuspenseWrapper><SubscriptionSettingsPage /></SuspenseWrapper>} />
+              (e.g. suspended/expired personal accounts must reach the plans page),
+              but only while online - requires an active connection. */}
+          <Route element={<RequireOnlineRoute />}>
+            <Route path={ROUTES.SETTINGS.SUBSCRIPTION} element={<SuspenseWrapper><SubscriptionSettingsPage /></SuspenseWrapper>} />
+          </Route>
           <Route element={<PlatformAdminRoute />}>
             <Route path={ROUTES.PLATFORM.INDEX} element={<Navigate to={ROUTES.PLATFORM.OVERVIEW} replace />} />
             <Route path={ROUTES.PLATFORM.OVERVIEW} element={<SuspenseWrapper><PlatformOverviewPage /></SuspenseWrapper>} />

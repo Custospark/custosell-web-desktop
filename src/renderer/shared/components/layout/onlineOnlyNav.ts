@@ -29,6 +29,11 @@ export const ONLINE_ONLY_NAV_ENTRIES: OnlineOnlyNavEntry[] = [
     message: 'Ordering online needs a connection. Reconnect to browse businesses and place orders.',
   },
   {
+    prefix: ROUTES.CUSTOMERS.OVERVIEW,
+    label: 'Customers',
+    message: 'Customer overview needs an internet connection. Reconnect to view customer details and activity.',
+  },
+  {
     prefix: ROUTES.INVENTORY.PURCHASE_ORDERS,
     label: 'Purchase orders',
     message: 'Purchase orders are online-only. Reconnect to create or manage orders.',
@@ -79,9 +84,24 @@ export const ONLINE_ONLY_NAV_ENTRIES: OnlineOnlyNavEntry[] = [
     message: 'Accounting is online-only. Reconnect to view books and statements.',
   },
   {
+    prefix: ROUTES.ACCOUNT.INDEX,
+    label: 'Account',
+    message: 'Account settings need an internet connection. Reconnect to manage your profile, security, and referrals.',
+  },
+  {
+    prefix: ROUTES.SETTINGS.INDEX,
+    label: 'Settings',
+    message: 'Settings need an internet connection. Reconnect to manage your business, billing, staff, and preferences.',
+  },
+  {
     prefix: ROUTES.SETTINGS.DATA_EXPORT,
     label: 'Data & Export',
     message: 'Data export needs an internet connection. Reconnect to export your business data.',
+  },
+  {
+    prefix: ROUTES.SETTINGS.SUBSCRIPTION,
+    label: 'Billing & Subscription',
+    message: 'Billing & Subscription needs an internet connection. Reconnect to view your plan and make changes.',
   },
   {
     prefix: ROUTES.PLATFORM.INDEX,

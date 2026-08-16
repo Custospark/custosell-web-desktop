@@ -31,9 +31,7 @@ const initialState: NetworkState = {
 export const checkNetworkConnectivity = createAsyncThunk(
   'network/checkConnectivity',
   async () => {
-    console.log('[NetSlice] checkNetworkConnectivity - starting probe');
     const result = await probeNetworkConnectivity();
-    console.log('[NetSlice] probe result:', result.systemStatus, result.isOnline, result.latency);
     return result;
   },
 );

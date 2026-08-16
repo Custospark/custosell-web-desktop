@@ -1,6 +1,5 @@
 import { Component, type ReactNode, type ErrorInfo } from 'react';
-import { RefreshCw, House } from 'lucide-react';
-import LogoImage from '../../assets/LogoImage';
+import { RefreshCw, House, Frown } from 'lucide-react';
 import { store } from '../../../app/store/store';
 import { getDefaultRoute } from '../../utils/moduleAccess';
 
@@ -17,7 +16,7 @@ interface State {
 /**
  * Global error boundary. Recovers to the closest safe surface rather than a
  * dead screen: Retry in place, or land on the dashboard (signed in) or home
- * (guest) via a fresh page load. Friendly, brand-forward copy.
+ * (guest) via a fresh page load. Friendly, reassuring copy.
  */
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
@@ -54,8 +53,8 @@ export class ErrorBoundary extends Component<Props, State> {
 
       return (
         <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 py-16 text-center">
-          <span className="mb-6 inline-flex items-center justify-center">
-            <LogoImage size="md" />
+          <span className="mb-6 inline-flex h-20 w-20 items-center justify-center rounded-full bg-amber-100">
+            <Frown className="h-10 w-10 text-amber-600" aria-hidden />
           </span>
           <h2 className="mb-2 text-lg font-semibold text-gray-900">Sorry, we hit a bump</h2>
           <p className="mb-1 max-w-md text-sm text-gray-500">

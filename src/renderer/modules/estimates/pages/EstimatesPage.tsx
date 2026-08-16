@@ -265,7 +265,7 @@ export default function EstimatesPage() {
   const statCards = [
     { label: 'Total estimates', key: 'total' as const, value: String(stats.total), icon: FileSpreadsheet, color: 'blue' as const, badge: 'All' },
     { label: 'Drafts', key: 'drafts' as const, value: String(stats.drafts), icon: FileText, color: 'amber' as const, badge: 'Pending' },
-    { label: 'Pipeline value', key: 'pipelineValue' as const, value: formatCurrency(stats.pipelineValue), icon: Target, color: 'indigo' as const, badge: 'Open' },
+    { label: 'Project value', key: 'pipelineValue' as const, value: formatCurrency(stats.pipelineValue), icon: Target, color: 'indigo' as const, badge: 'Open' },
     { label: 'Approved', key: 'approved' as const, value: String(stats.approved), icon: TrendingUp, color: 'green' as const, badge: 'Won' },
     { label: 'Avg margin', key: 'avgMargin' as const, value: `${stats.avgMargin.toFixed(1)}%`, icon: DollarSign, color: 'purple' as const, badge: 'Margin' },
   ];

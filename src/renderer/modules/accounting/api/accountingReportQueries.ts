@@ -1,8 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
 import { axiosInstance } from '../../../app/api/axiosConfig';
-import { useToast } from '../../../app/contexts/useToast';
+import { imperativeToast } from '../../../app/contexts/imperativeToast';
 import { ACCOUNTING } from '../../../shared/api/endpoints/endpoints';
+import { apiErrorMessage } from '../../../shared/utils/apiErrorMessage';
 import type {
   TrialBalance, IncomeStatement, BalanceSheet, RatioSet, RatioTrendItem,
   CashFlowStatement, EquityStatement, InventoryReconciliation,
@@ -11,8 +12,37 @@ import type { ReportPeriodParams } from '../utils/periodSelectionUtils';
 import { buildReportQueryString } from '../utils/periodSelectionUtils';
 import { accountingKeys, financialReportQueryDefaults } from './accountingQueryKeys';
 
+const REPORT_ERROR_FALLBACK = 'Failed to load financial report';
+
+/**
+ * Report pages fire several queries at once (trial balance, P&L, balance sheet,
+ * cash flow, equity) - the same failing request would otherwise toast repeatedly.
+ * Only the first occurrence of a message surfaces.
+ */
+const recentErrors = new Map<string, number>();
+
+function shouldToast(message: string): boolean {
+  const now = Date.now();
+  const last = recentErrors.get(message);
+  if (last && now - last < 5000) return false;
+  recentErrors.set(message, now);
+  return true;
+}
+
+function reportOnError(err: unknown): void {
+  const message = apiErrorMessage(err, REPORT_ERROR_FALLBACK);
+  if (shouldToast(message)) imperativeToast.show('error', message, 8000);
+}
+
+function useReportQuery<T>(options: UseQueryOptions<T, Error>) {
+  return useQuery<T>({
+    ...options,
+    onError: reportOnError,
+  });
+}
+
 export function useTrialBalance(reportParams?: ReportPeriodParams) {
-  return useQuery<TrialBalance>({
+  return useReportQuery<TrialBalance>({
     queryKey: accountingKeys.trialBalance(reportParams),
     queryFn: async () => {
       const params = buildReportQueryString(reportParams);
@@ -22,9 +52,8 @@ export function useTrialBalance(reportParams?: ReportPeriodParams) {
     ...financialReportQueryDefaults,
   });
 }
-
 export function useIncomeStatement(reportParams?: ReportPeriodParams) {
-  return useQuery<IncomeStatement>({
+  return useReportQuery<IncomeStatement>({
     queryKey: accountingKeys.incomeStatement(reportParams),
     queryFn: async () => {
       const params = buildReportQueryString(reportParams);
@@ -36,7 +65,7 @@ export function useIncomeStatement(reportParams?: ReportPeriodParams) {
 }
 
 export function useBalanceSheet(reportParams?: ReportPeriodParams) {
-  return useQuery<BalanceSheet>({
+  return useReportQuery<BalanceSheet>({
     queryKey: accountingKeys.balanceSheet(reportParams),
     queryFn: async () => {
       const params = buildReportQueryString(reportParams);
@@ -48,7 +77,7 @@ export function useBalanceSheet(reportParams?: ReportPeriodParams) {
 }
 
 export function useRatios(reportParams?: ReportPeriodParams) {
-  return useQuery<RatioSet>({
+  return useReportQuery<RatioSet>({
     queryKey: accountingKeys.ratios(reportParams),
     queryFn: async () => {
       const params = buildReportQueryString(reportParams);
@@ -60,7 +89,7 @@ export function useRatios(reportParams?: ReportPeriodParams) {
 }
 
 export function useRatioTrends(interval = 'monthly', count = 12) {
-  return useQuery<RatioTrendItem[]>({
+  return useReportQuery<RatioTrendItem[]>({
     queryKey: [...accountingKeys.ratios(), 'trends', interval, count],
     queryFn: async () => {
       const { data } = await axiosInstance.get<{ data: RatioTrendItem[] }>(
@@ -74,7 +103,7 @@ export function useRatioTrends(interval = 'monthly', count = 12) {
 }
 
 export function useCashFlow(reportParams?: ReportPeriodParams) {
-  return useQuery<CashFlowStatement>({
+  return useReportQuery<CashFlowStatement>({
     queryKey: accountingKeys.cashFlow(reportParams),
     queryFn: async () => {
       const params = buildReportQueryString(reportParams);
@@ -86,7 +115,7 @@ export function useCashFlow(reportParams?: ReportPeriodParams) {
 }
 
 export function useEquity(reportParams?: ReportPeriodParams) {
-  return useQuery<EquityStatement>({
+  return useReportQuery<EquityStatement>({
     queryKey: accountingKeys.equity(reportParams),
     queryFn: async () => {
       const params = buildReportQueryString(reportParams);
@@ -98,7 +127,7 @@ export function useEquity(reportParams?: ReportPeriodParams) {
 }
 
 export function useInventoryReconciliation() {
-  return useQuery<InventoryReconciliation>({
+  return useReportQuery<InventoryReconciliation>({
     queryKey: accountingKeys.inventoryReconciliation(),
     queryFn: async () => {
       const { data } = await axiosInstance.get<{ data: InventoryReconciliation }>(ACCOUNTING.INVENTORY_RECONCILIATION);

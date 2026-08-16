@@ -33,33 +33,33 @@ export function AccountingDateRange({ value, onChange, rightSlot }: AccountingDa
 
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-        <label className="flex flex-col gap-1">
+      <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-row sm:items-end">
+        <label className="flex flex-col gap-1 w-full sm:w-auto">
           <span className="text-xs font-medium text-gray-600">From</span>
           <input
             type="date"
             value={draftFrom}
             onChange={(e) => setDraftFrom(e.target.value)}
-            className="px-2.5 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-2.5 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             aria-label="From date"
           />
         </label>
-        <label className="flex flex-col gap-1">
+        <label className="flex flex-col gap-1 w-full sm:w-auto">
           <span className="text-xs font-medium text-gray-600">To</span>
           <input
             type="date"
             value={draftTo}
             onChange={(e) => setDraftTo(e.target.value)}
-            className="px-2.5 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-2.5 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             aria-label="To date"
           />
         </label>
-        <div className="flex items-center gap-2">
-          <Button size="sm" onClick={apply}>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Button size="sm" onClick={apply} className="flex-1 sm:flex-none">
             <Search className="w-3.5 h-3.5 mr-1" />Search
           </Button>
           {(draftFrom || draftTo) && (
-            <Button size="sm" variant="outline" onClick={clear}>
+            <Button size="sm" variant="outline" onClick={clear} className="flex-1 sm:flex-none">
               <X className="w-3.5 h-3.5 mr-1" />Clear
             </Button>
           )}

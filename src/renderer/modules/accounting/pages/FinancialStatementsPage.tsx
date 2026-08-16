@@ -82,13 +82,15 @@ export default function FinancialStatementsPage() {
       .catch(() => setDownloading(null));
   }
 
-  const { data: tb } = useTrialBalance(reportParams);
-  const { data: stmt } = useIncomeStatement(reportParams);
-  const { data: bs } = useBalanceSheet(reportParams);
-  const { data: cf } = useCashFlow(reportParams);
-  const { data: eq } = useEquity(reportParams);
+  const { data: tb, isError: tbError } = useTrialBalance(reportParams);
+  const { data: stmt, isError: stmtError } = useIncomeStatement(reportParams);
+  const { data: bs, isError: bsError } = useBalanceSheet(reportParams);
+  const { data: cf, isError: cfError } = useCashFlow(reportParams);
+  const { data: eq, isError: eqError } = useEquity(reportParams);
 
-  const isLoading = reportParams && !tb && !stmt && !bs && !cf && !eq;
+  const isError = Boolean(reportParams) && (tbError || stmtError || bsError || cfError || eqError);
+
+  const isLoading = reportParams && !isError && !tb && !stmt && !bs && !cf && !eq;
 
   const statements: { key: string; data: unknown; metrics: MetricItem[]; badge: { label: string; type: 'success' | 'danger' | 'warning' | 'info' } | null }[] = [
     {
@@ -160,7 +162,20 @@ export default function FinancialStatementsPage() {
         </div>
       </Card>
 
-      {isLoading ? (
+      {isError ? (
+        <Card>
+          <div className="p-6 text-center">
+            <div className="mx-auto w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mb-3">
+              <Download className="w-5 h-5 text-red-500" />
+            </div>
+            <p className="text-sm font-medium text-gray-900">Could not load financial statements</p>
+            <p className="text-sm text-gray-500 mt-1">The selected date range may fall outside your accounting records. Pick a range within your business&apos;s active periods and search again.</p>
+            <p className="text-xs text-gray-400 mt-2">
+              {reportParams?.date_from ?? 'start'} to {reportParams?.date_to ?? 'now'}
+            </p>
+          </div>
+        </Card>
+      ) : isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3, 4, 5].map((i) => (
             <Card key={i} className="h-48 animate-pulse">

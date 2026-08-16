@@ -248,9 +248,13 @@ export default function RatiosPage() {
 
       {!selectedDef && ratios && (
         <Card>
-          <div className="h-32 flex items-center justify-center text-sm text-gray-400 border border-dashed border-gray-200 rounded-lg">
-            Click on any ratio above to see its trend over time
-          </div>
+          {trendsLoading ? (
+            <CustosellLoader />
+          ) : (
+            <div className="h-32 flex items-center justify-center text-sm text-gray-400 border border-dashed border-gray-200 rounded-lg">
+              Click on any ratio above to see its trend over time
+            </div>
+          )}
         </Card>
       )}
 

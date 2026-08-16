@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { Card } from '../../../shared/components/cards/Card';
 import { Button } from '../../../shared/components/buttons/Button';
@@ -7,7 +8,8 @@ import { PeriodSelector } from '../../../shared/components/inputs/PeriodSelector
 import { useJournalEntries, usePostJournalEntry, useDeleteJournalEntry, useReverseJournalEntry } from '../api/AccountingQueries';
 import { useAccountingPeriodSelection } from '../context/AccountingPeriodSelectionContext';
 import type { JournalEntry } from '../api/AccountingTypes';
-import { FileText, Plus, Send, Trash2, Search, ChevronLeft, ChevronRight, RotateCcw, Eye } from 'lucide-react';
+import AccountingImportExportModal from '../ui/AccountingImportExportModal';
+import { FileText, Plus, Send, Trash2, Search, ChevronLeft, ChevronRight, RotateCcw, Eye, Upload, Download } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import { formatShiftDate } from '../../../shared/utils/formatDateTime';
 import { NewJournalEntryForm } from './NewJournalEntryForm';
@@ -18,6 +20,7 @@ export default function JournalEntriesPage() {
   const [searchParams] = useSearchParams();
   const highlightEntryId = Number(searchParams.get('entry_id') || 0) || null;
   const [formOpen, setFormOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const { periodFilter, setPeriodFilter, startYear, endYear, periods } = useAccountingPeriodSelection();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
@@ -26,10 +29,16 @@ export default function JournalEntriesPage() {
   const [descPos, setDescPos] = useState({ top: 0, left: 0 });
 
   // All filtering client-side - always fetch all entries
-  const { data: entries, isLoading } = useJournalEntries();
+  const { data: entries, isLoading, isFetching } = useJournalEntries();
   const postEntry = usePostJournalEntry();
   const deleteEntry = useDeleteJournalEntry();
   const reverseEntry = useReverseJournalEntry();
+  const qc = useQueryClient();
+
+  const handleImported = () => {
+    setImportOpen(false);
+    void qc.invalidateQueries({ queryKey: ['accounting'] });
+  };
 
   // Resolve periodFilter into a Set of matching period_ids
   const activePeriodIds = useMemo(() => {
@@ -201,9 +210,17 @@ export default function JournalEntriesPage() {
               <p className="text-sm text-gray-500">Record and manage journal entries</p>
             </div>
           </div>
-          <Button onClick={() => setFormOpen(true)}>
-            <Plus className="w-4 h-4 mr-1.5" />New Entry
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => setImportOpen(true)}>
+              <Upload className="w-4 h-4 mr-1.5" />Import
+            </Button>
+            <Button variant="outline" onClick={() => setImportOpen(true)}>
+              <Download className="w-4 h-4 mr-1.5" />Export
+            </Button>
+            <Button onClick={() => setFormOpen(true)}>
+              <Plus className="w-4 h-4 mr-1.5" />New Entry
+            </Button>
+          </div>
         </div>
       </Card>
 
@@ -229,7 +246,7 @@ export default function JournalEntriesPage() {
         <span className="text-xs text-gray-400 whitespace-nowrap">{filtered.length} {filtered.length === 1 ? 'entry' : 'entries'}</span>
       </div>
 
-      <Table columns={columns} data={paged} loading={isLoading} rowKey={(item) => item.id} />
+      <Table columns={columns} data={paged} loading={isLoading || isFetching} rowKey={(item) => item.id} />
 
       {pageCount > 1 && (
         <div className="flex items-center justify-between text-sm text-gray-500">
@@ -270,6 +287,13 @@ export default function JournalEntriesPage() {
           onClose={() => setFormOpen(false)}
         />
       )}
+
+      <AccountingImportExportModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        kind="journal"
+        onImported={handleImported}
+      />
     </div>
   );
 }

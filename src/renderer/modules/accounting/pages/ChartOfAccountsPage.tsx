@@ -1,13 +1,22 @@
 import { useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Card } from '../../../shared/components/cards/Card';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Table } from '../../../shared/components/tables/Table';
-import { Input } from '../../../shared/components/inputs/Input';
 import { Select } from '../../../shared/components/inputs/Select';
 import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
+import { Modal } from '../../../shared/components/modals/Modal';
 import { useChartOfAccounts, useChartOfAccountsTree, useCreateChartOfAccount } from '../api/AccountingQueries';
 import type { ChartOfAccount } from '../api/AccountingTypes';
-import { BookOpen, Plus, List, TreePine, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  PipelineFormSection,
+  PipelineIconField,
+  PipelineModalHero,
+  pipelineInputClass,
+  pipelineSelectClass,
+} from '../../pipeline/ui/pipelineFormFields';
+import AccountingImportExportModal from '../ui/AccountingImportExportModal';
+import { BookOpen, Plus, List, TreePine, Search, ChevronLeft, ChevronRight, Upload, Download } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import { AccountStatusBadge } from '../ui/AccountStatusBadge';
 import { AccountActions } from '../ui/AccountActions';
@@ -28,13 +37,20 @@ export default function ChartOfAccountsPage() {
   const [typeFilter, setTypeFilter] = useState('');
   const [treeView, setTreeView] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
 
   const filters = typeFilter ? { account_type: typeFilter } : undefined;
-  const { data: accounts, isLoading } = useChartOfAccounts(treeView ? undefined : filters);
-  const { data: treeData, isLoading: treeLoading } = useChartOfAccountsTree();
+  const { data: accounts, isLoading, isFetching } = useChartOfAccounts(treeView ? undefined : filters);
+  const { data: treeData, isLoading: treeLoading, isFetching: treeFetching } = useChartOfAccountsTree();
   const createAccount = useCreateChartOfAccount();
+  const qc = useQueryClient();
+
+  const handleImported = () => {
+    setImportOpen(false);
+    void qc.invalidateQueries({ queryKey: ['accounting'] });
+  };
 
   const filtered = useMemo(() => {
     if (!accounts) return [];
@@ -120,6 +136,12 @@ export default function ChartOfAccountsPage() {
               {treeView ? <List className="w-4 h-4 mr-1.5" /> : <TreePine className="w-4 h-4 mr-1.5" />}
               {treeView ? 'Flat View' : 'Tree View'}
             </Button>
+            <Button variant="outline" onClick={() => setImportOpen(true)}>
+              <Upload className="w-4 h-4 mr-1.5" />Import
+            </Button>
+            <Button variant="outline" onClick={() => setImportOpen(true)}>
+              <Download className="w-4 h-4 mr-1.5" />Export
+            </Button>
             <Button onClick={() => setFormOpen(true)}>
               <Plus className="w-4 h-4 mr-1.5" />Add Account
             </Button>
@@ -151,7 +173,7 @@ export default function ChartOfAccountsPage() {
 
       {treeView ? (
         <Card>
-          {treeLoading ? <CustosellLoader /> : (
+          {treeLoading || treeFetching ? <CustosellLoader /> : (
             <div className="overflow-x-auto">
               <div className="divide-y divide-gray-100">
                 {treeData?.map((node) => renderTree(node))}
@@ -162,15 +184,15 @@ export default function ChartOfAccountsPage() {
       ) : (
         <>
           <div className="space-y-3 md:hidden">
-            {isLoading ? <CustosellLoader /> : paged.map((item) => (
+            {isLoading || isFetching ? <CustosellLoader /> : paged.map((item) => (
               <ChartOfAccountMobileCard key={item.id} account={item} />
             ))}
-            {!isLoading && paged.length === 0 && (
+            {!isLoading && !isFetching && paged.length === 0 && (
               <div className="border border-gray-200 rounded-lg p-8 text-center text-gray-500">No data</div>
             )}
           </div>
           <div className="hidden md:block">
-            <Table columns={columns} data={paged} loading={isLoading} rowKey={(item) => item.id} />
+            <Table columns={columns} data={paged} loading={isLoading || isFetching} rowKey={(item) => item.id} />
           </div>
           {pageCount > 1 && (
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-sm text-gray-500">
@@ -187,6 +209,13 @@ export default function ChartOfAccountsPage() {
         </>
       )}
 
+      <AccountingImportExportModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        kind="chart"
+        onImported={handleImported}
+      />
+
       {formOpen && (
         <AddAccountForm
           onClose={() => setFormOpen(false)}
@@ -199,6 +228,16 @@ export default function ChartOfAccountsPage() {
     </div>
   );
 }
+
+const ACCOUNT_TYPE_OPTIONS = [
+  { value: 'Asset', label: 'Asset' },
+  { value: 'Liability', label: 'Liability' },
+  { value: 'Equity', label: 'Equity' },
+  { value: 'Revenue', label: 'Revenue' },
+  { value: 'Expense', label: 'Expense' },
+];
+
+const typeIdMap: Record<string, number> = { Asset: 1, Liability: 2, Equity: 3, Revenue: 4, Expense: 5 };
 
 function AddAccountForm({
   onClose,
@@ -214,47 +253,73 @@ function AddAccountForm({
   const [typeName, setTypeName] = useState('Asset');
   const [normalBalance, setNormalBalance] = useState<'debit' | 'credit'>('debit');
 
-  const typeIdMap: Record<string, number> = { Asset: 1, Liability: 2, Equity: 3, Revenue: 4, Expense: 5 };
-
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     onSubmit({ code, name, type_id: typeIdMap[typeName] ?? 1, normal_balance: normalBalance, is_active: true });
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-semibold text-gray-900">Add Account</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input label="Account Code" value={code} onChange={(e) => setCode(e.target.value)} required placeholder="e.g. 1000" />
-          <Input label="Account Name" value={name} onChange={(e) => setName(e.target.value)} required placeholder="e.g. Cash" />
-          <Select
-            label="Account Type"
-            options={[
-              { value: 'Asset', label: 'Asset' },
-              { value: 'Liability', label: 'Liability' },
-              { value: 'Equity', label: 'Equity' },
-              { value: 'Revenue', label: 'Revenue' },
-              { value: 'Expense', label: 'Expense' },
-            ]}
-            value={typeName}
-            onChange={(e) => setTypeName(e.target.value)}
-          />
-          <Select
-            label="Normal Balance"
-            options={[
-              { value: 'debit', label: 'Debit' },
-              { value: 'credit', label: 'Credit' },
-            ]}
-            value={normalBalance}
-            onChange={(e) => setNormalBalance(e.target.value as 'debit' | 'credit')}
-          />
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" type="button" onClick={onClose}>Cancel</Button>
-            <Button type="submit" loading={loading}>Create</Button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <Modal isOpen onClose={onClose} title="Add Account" subtitle="Add a new account to your chart of accounts." size="md">
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <PipelineModalHero
+          icon={BookOpen}
+          title="New account"
+          description="Accounts group the general ledger by type - assets, liabilities, revenue and expenses."
+          tone="indigo"
+        />
+
+        <PipelineFormSection title="Account details" icon={BookOpen}>
+          <PipelineIconField label="Account Code" icon={BookOpen} required>
+            <input
+              required
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="e.g. 1000"
+              className={pipelineInputClass}
+            />
+          </PipelineIconField>
+          <PipelineIconField label="Account Name" icon={BookOpen} required>
+            <input
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Cash"
+              className={pipelineInputClass}
+            />
+          </PipelineIconField>
+        </PipelineFormSection>
+
+        <PipelineFormSection title="Classification" icon={BookOpen}>
+          <PipelineIconField label="Account Type" icon={BookOpen} required>
+            <select
+              required
+              value={typeName}
+              onChange={(e) => setTypeName(e.target.value)}
+              className={pipelineSelectClass}
+            >
+              {ACCOUNT_TYPE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </PipelineIconField>
+          <PipelineIconField label="Normal Balance" icon={BookOpen} required>
+            <select
+              required
+              value={normalBalance}
+              onChange={(e) => setNormalBalance(e.target.value as 'debit' | 'credit')}
+              className={pipelineSelectClass}
+            >
+              <option value="debit">Debit</option>
+              <option value="credit">Credit</option>
+            </select>
+          </PipelineIconField>
+        </PipelineFormSection>
+
+        <div className="flex justify-end gap-2 border-t border-gray-100 pt-4">
+          <Button variant="outline" type="button" onClick={onClose}>Cancel</Button>
+          <Button type="submit" loading={loading}>Create account</Button>
+        </div>
+      </form>
+    </Modal>
   );
 }

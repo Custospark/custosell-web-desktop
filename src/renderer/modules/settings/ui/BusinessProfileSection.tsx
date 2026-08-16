@@ -32,6 +32,7 @@ export interface BusinessProfileSectionProps {
   localBusinessPhone: string;
   onBusinessPhoneCountryChange: (next: CountryCode) => void;
   onLocalBusinessPhoneChange: (value: string) => void;
+  rightSlot?: React.ReactNode;
 }
 
 export function BusinessProfileSection({
@@ -48,12 +49,14 @@ export function BusinessProfileSection({
   localBusinessPhone,
   onBusinessPhoneCountryChange,
   onLocalBusinessPhoneChange,
+  rightSlot,
 }: BusinessProfileSectionProps) {
   return (
     <BusinessSectionCard
       icon={Globe}
       title={isPersonal ? 'Profile' : 'Business profile'}
       description={isPersonal ? 'Your personal name and contact details.' : 'Public-facing business name and contact details.'}
+      rightSlot={rightSlot}
     >
       {isEditing ? (
         <div className="space-y-4">

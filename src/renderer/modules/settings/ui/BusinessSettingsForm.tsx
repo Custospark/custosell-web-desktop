@@ -1,8 +1,7 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useBusiness, useUpdateBusiness } from '../api/settings/BusinessQueries';
 import type { UpdateBusinessData } from '../api/settings/BusinessTypes';
 import { Badge } from '../../../shared/components/badges/Badge';
-import { Button } from '../../../shared/components/buttons/Button';
 import { LoadingSkeleton } from '../../../shared/components/loading/LoadingSkeletons';
 import { EmptyState } from '../../../shared/components/cards/EmptyState';
 import {
@@ -25,32 +24,20 @@ import { avatarUrl } from '../../../shared/utils/avatarUrl';
 import {
   Building2,
   MapPin,
-  Receipt,
   Store,
-  FileText,
-  Pencil,
   WifiOff,
   Coins,
-  Camera,
-  Image,
   Tags,
 } from 'lucide-react';
 import {
   emptyForm,
   type BusinessFormSnapshot,
   snapshotFromBusiness,
-  snapshotsEqual,
   formatLocationLine,
-  BusinessSectionCard,
-  BusinessViewField,
-  inputClass,
-  labelClass,
 } from './businessSettingsFormShared';
-import { BusinessProfileSection } from './BusinessProfileSection';
-import { BusinessLocationSection } from './BusinessLocationSection';
 import { useStorefrontFacets } from '../../storefront/api/storefrontQueries';
-import { BusinessPaymentSection } from './BusinessPaymentSection';
-import { BusinessSocialSection } from './BusinessSocialSection';
+import { BusinessSettingsTabs, type BusinessSettingsTab } from './BusinessSettingsTabs';
+import { BusinessSettingsTabPanels } from './BusinessSettingsTabPanels';
 
 export default function BusinessSettingsForm() {
   const { data: business, isLoading, error } = useBusiness();
@@ -61,7 +48,8 @@ export default function BusinessSettingsForm() {
   const user = useAppSelector((s) => s.auth.user);
   const isPersonal = user?.account_type === 'personal';
 
-  const [isEditing, setIsEditing] = useState(false);
+  const [activeTab, setActiveTab] = useState<BusinessSettingsTab>('profile');
+  const [editingTab, setEditingTab] = useState<BusinessSettingsTab | null>(null);
   const [baseline, setBaseline] = useState<BusinessFormSnapshot>({
     form: emptyForm,
     localPhone: '',
@@ -115,14 +103,6 @@ export default function BusinessSettingsForm() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
-  const currentSnapshot = useMemo<BusinessFormSnapshot>(
-    () => ({ form, localPhone, countryCode, localBusinessPhone, businessPhoneCountryCode, logoPath: null }),
-    [countryCode, form, localPhone, localBusinessPhone, businessPhoneCountryCode],
-  );
-
-  const hasChanges = isEditing && (!snapshotsEqual(currentSnapshot, baseline) || logoFileSelected);
-  const canSave = hasChanges && (form.name?.trim().length ?? 0) > 0 && !isCompletelyOffline;
-
   const update = <K extends keyof UpdateBusinessData>(key: K, val: UpdateBusinessData[K]) =>
     setForm((prev) => ({ ...prev, [key]: val }));
 
@@ -160,18 +140,6 @@ export default function BusinessSettingsForm() {
     ?? findCountryByCode(form.jurisdiction)?.code
     ?? countryCode.code;
 
-  const handleCancel = () => {
-    setCountryCode(baseline.countryCode);
-    setLocalPhone(baseline.localPhone);
-    setBusinessPhoneCountryCode(baseline.businessPhoneCountryCode);
-    setLocalBusinessPhone(baseline.localBusinessPhone);
-    setForm(baseline.form);
-    setLogoPreview(avatarUrl(baseline.logoPath) ?? null);
-    setLogoFileSelected(false);
-    if (logoFileRef.current) logoFileRef.current.value = '';
-    setIsEditing(false);
-  };
-
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -182,33 +150,95 @@ export default function BusinessSettingsForm() {
     }
   };
 
+  // ── Per-tab editing ────────────────────────────────────────────────────────
+  // Each tab owns a subset of the business form fields and can be edited and
+  // saved independently - no global edit mode, no "save everything" gate.
+
+  const TAB_FIELDS: Record<BusinessSettingsTab, (keyof UpdateBusinessData)[]> = {
+    profile: ['name', 'website', 'description', 'business_email', 'business_phone', 'email', 'phone'],
+    location: [
+      'address', 'city', 'state', 'postal_code', 'country', 'tax_id', 'tax_regime',
+      'jurisdiction', 'default_vat_rate', 'prices_include_tax', 'timezone', 'currency',
+      'business_category_id',
+    ],
+    payments: [
+      'payment_bank_name', 'payment_bank_branch', 'payment_bank_account_name',
+      'payment_bank_account_number', 'payment_mobile_money_provider',
+      'payment_mobile_money_account_name', 'payment_mobile_money_number',
+      'payment_instructions',
+    ],
+    receipts: ['receipt_footer'],
+    social: [],
+  };
+
+  /** True when the given tab has un-saved edits. */
+  function tabHasChanges(tab: BusinessSettingsTab): boolean {
+    if (tab === 'profile') {
+      const phoneChanged =
+        localPhone !== baseline.localPhone
+        || businessPhoneCountryCode.code !== baseline.businessPhoneCountryCode.code
+        || localBusinessPhone !== baseline.localBusinessPhone
+        || countryCode.code !== baseline.countryCode.code;
+      return phoneChanged || logoFileSelected || TAB_FIELDS.profile.some((k) => form[k] !== baseline.form[k]);
+    }
+    if (tab === 'social') return false;
+    return TAB_FIELDS[tab].some((k) => form[k] !== baseline.form[k]);
+  }
+
+  const tabCanSave = (tab: BusinessSettingsTab): boolean =>
+    tab !== 'social'
+    && tabHasChanges(tab)
+    && (tab !== 'profile' || (form.name?.trim().length ?? 0) > 0)
+    && !isCompletelyOffline;
+
+  const startEdit = (tab: BusinessSettingsTab) => {
+    if (isCompletelyOffline) return;
+    setEditingTab(tab);
+  };
+
+  const cancelEdit = () => {
+    setCountryCode(baseline.countryCode);
+    setLocalPhone(baseline.localPhone);
+    setBusinessPhoneCountryCode(baseline.businessPhoneCountryCode);
+    setLocalBusinessPhone(baseline.localBusinessPhone);
+    setForm(baseline.form);
+    setLogoPreview(avatarUrl(baseline.logoPath) ?? null);
+    setLogoFileSelected(false);
+    if (logoFileRef.current) logoFileRef.current.value = '';
+    setEditingTab(null);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canSave) return;
+    const tab = editingTab;
+    if (!tab || !tabCanSave(tab)) return;
 
-    const payload: UpdateBusinessData = {
-      ...form,
-      name: form.name?.trim() || '',
-      business_email: form.business_email?.trim() || null,
-      business_phone: buildInternationalPhone(businessPhoneCountryCode, localBusinessPhone) ?? null,
-    };
+    const payload: UpdateBusinessData = {};
+    for (const key of TAB_FIELDS[tab]) {
+      payload[key] = form[key];
+    }
 
-    if (isPersonal) {
-      payload.email = form.email?.trim() || null;
-      payload.phone = buildInternationalPhone(countryCode, localPhone) ?? null;
-    } else {
-      delete payload.email;
-      delete payload.phone;
+    if (tab === 'profile') {
+      payload.name = form.name?.trim() || '';
+      payload.business_email = form.business_email?.trim() || null;
+      payload.business_phone = buildInternationalPhone(businessPhoneCountryCode, localBusinessPhone) ?? null;
+      if (isPersonal) {
+        payload.email = form.email?.trim() || null;
+        payload.phone = buildInternationalPhone(countryCode, localPhone) ?? null;
+      } else {
+        delete payload.email;
+        delete payload.phone;
+      }
     }
 
     mutation.mutate(
       {
         data: payload,
-        logoFile: logoFileRef.current?.files?.[0],
+        logoFile: tab === 'profile' ? logoFileRef.current?.files?.[0] : undefined,
       },
       {
         onSuccess: () => {
-          setIsEditing(false);
+          setEditingTab(null);
         },
       },
     );
@@ -246,20 +276,6 @@ export default function BusinessSettingsForm() {
             </p>
           </div>
         </div>
-        {!isEditing ? (
-          <Button
-            type="button"
-            onClick={() => setIsEditing(true)}
-            disabled={isCompletelyOffline}
-            title={isCompletelyOffline ? 'Requires internet connection' : undefined}
-            className="w-full shrink-0 sm:w-auto"
-          >
-            <Pencil className="mr-1.5 h-4 w-4" aria-hidden />
-            {isPersonal ? 'Edit preferences' : 'Edit business'}
-          </Button>
-        ) : (
-          <Badge variant="primary" className="self-start lg:self-auto">Editing</Badge>
-        )}
       </div>
 
       {isCompletelyOffline && (
@@ -276,187 +292,85 @@ export default function BusinessSettingsForm() {
       )}
 
       <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-        <div className="space-y-4 p-4 sm:p-6">
-          {!isEditing && (
-            <article className="rounded-xl border-2 border-blue-200 bg-blue-50/40 shadow-sm">
-              <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:p-5">
-                <div className="mx-auto flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-white bg-white shadow-md sm:mx-0">
-                  {logoPreview ? (
-                    <img src={logoPreview} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    <Store className="h-10 w-10 text-blue-600" aria-hidden />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1 text-center sm:text-left">
-                  <h2 className="text-xl font-bold text-gray-900">{baseline.form.name || (isPersonal ? 'Your profile' : 'Your business')}</h2>
-                  <p className="mt-1 text-sm text-gray-600">
-                    {isPersonal
-                      ? (baseline.form.email || formatPhoneDisplay(baseline.form.phone) || 'No contact details yet')
-                      : (baseline.form.business_email || formatPhoneDisplay(baseline.form.business_phone) || 'No business contact details yet')}
-                  </p>
-                  <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-                    {!isPersonal && businessCategoryLabel ? (
-                      <Badge variant="primary">
-                        <Tags className="mr-1 inline h-3 w-3" aria-hidden />
-                        {businessCategoryLabel}
-                      </Badge>
-                    ) : null}
-                    {baseline.form.currency ? (
-                      <Badge variant="neutral">
-                        <Coins className="mr-1 inline h-3 w-3" aria-hidden />
-                        {baseline.form.currency}
-                      </Badge>
-                    ) : null}
-                    {locationLine ? (
-                      <Badge variant="neutral">
-                        <MapPin className="mr-1 inline h-3 w-3" aria-hidden />
-                        {locationLine}
-                      </Badge>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-            </article>
-          )}
-
-          {isEditing && !isPersonal && (
-            <BusinessSectionCard
-              icon={Image}
-              title="Business logo"
-              description="Upload your logo - it appears in the app header next to your business name."
-            >
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                <div className="relative mx-auto flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border-2 border-gray-200 bg-gray-100 sm:mx-0">
-                  {logoPreview ? (
-                    <img src={logoPreview} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    <Store className="h-8 w-8 text-gray-400" aria-hidden />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1 text-center sm:text-left">
-                  <input
-                    ref={logoFileRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleLogoChange}
-                    className="hidden"
-                    aria-label="Upload business logo"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full sm:w-auto"
-                    onClick={() => logoFileRef.current?.click()}
-                  >
-                    <Camera className="mr-1.5 h-4 w-4" aria-hidden />
-                    Upload logo
-                  </Button>
-                  <p className="mt-2 text-xs text-gray-500">JPG, PNG or GIF. Max 2MB.</p>
-                </div>
-              </div>
-            </BusinessSectionCard>
-          )}
-
-          <BusinessProfileSection
-            isEditing={isEditing}
-            isPersonal={isPersonal}
-            form={form}
-            baseline={baseline.form}
-            update={update}
-            countryCode={countryCode}
-            localPhone={localPhone}
-            onPhoneCountryChange={handlePhoneCountryChange}
-            onLocalPhoneChange={setLocalPhone}
-            businessPhoneCountryCode={businessPhoneCountryCode}
-            localBusinessPhone={localBusinessPhone}
-            onBusinessPhoneCountryChange={handleBusinessPhoneCountryChange}
-            onLocalBusinessPhoneChange={setLocalBusinessPhone}
-          />
-
-          <BusinessLocationSection
-            isEditing={isEditing}
-            isPersonal={isPersonal}
-            form={form}
-            baseline={baseline.form}
-            update={update}
-            selectedCountryCode={selectedCountryCode}
-            handleCountryChange={handleCountryChange}
-            handleJurisdictionChange={handleJurisdictionChange}
-            currencyRef={currencyRef}
-            currencyOpen={currencyOpen}
-            setCurrencyOpen={setCurrencyOpen}
-            currencySearch={currencySearch}
-            setCurrencySearch={setCurrencySearch}
-          />
-
-          {!isPersonal && (
-            <BusinessPaymentSection
-              isEditing={isEditing}
-              form={form}
-              baseline={baseline.form}
-              update={update}
-            />
-          )}
-
-          {!isPersonal && (
-            <BusinessSectionCard
-              icon={Receipt}
-              title="Receipt settings"
-              description="Footer text printed on customer receipts."
-            >
-              {isEditing ? (
-                <div>
-                  <label className={labelClass}>Receipt footer</label>
-                  <div className="relative">
-                    <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400 pointer-events-none" aria-hidden />
-                    <textarea
-                      className={`${inputClass} resize-none pl-10`}
-                      rows={4}
-                      value={form.receipt_footer || ''}
-                      onChange={(e) => update('receipt_footer', e.target.value || null)}
-                      placeholder="Thank you for your business!"
-                    />
-                  </div>
-                </div>
+        <article className="rounded-xl border-2 border-blue-200 bg-blue-50/40 shadow-sm">
+          <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:p-5">
+            <div className="mx-auto flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-white bg-white shadow-md sm:mx-0">
+              {logoPreview ? (
+                <img src={logoPreview} alt="" className="h-full w-full object-cover" />
               ) : (
-                <BusinessViewField label="Receipt footer" icon={<FileText className="h-4 w-4 text-blue-600" />}>
-                  {baseline.form.receipt_footer || '-'}
-                </BusinessViewField>
+                <Store className="h-10 w-10 text-blue-600" aria-hidden />
               )}
-            </BusinessSectionCard>
-          )}
-
-          {!isPersonal && <BusinessSocialSection />}
-        </div>
-
-        {isEditing && (
-          <div className="border-t-2 border-gray-200 bg-gray-50/80 px-4 py-3 sm:px-6 sm:py-4">
-            <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-              <p className="text-sm font-medium leading-snug text-gray-600">
-                {hasChanges ? 'You have unsaved changes' : isPersonal ? 'Update your preferences, then save' : 'Update your business details, then save'}
+            </div>
+            <div className="min-w-0 flex-1 text-center sm:text-left">
+              <h2 className="text-xl font-bold text-gray-900">{baseline.form.name || (isPersonal ? 'Your profile' : 'Your business')}</h2>
+              <p className="mt-1 text-sm text-gray-600">
+                {isPersonal
+                  ? (baseline.form.email || formatPhoneDisplay(baseline.form.phone) || 'No contact details yet')
+                  : (baseline.form.business_email || formatPhoneDisplay(baseline.form.business_phone) || 'No business contact details yet')}
               </p>
-              <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleCancel}
-                  disabled={mutation.isPending}
-                  className="w-full sm:w-auto"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  loading={mutation.isPending}
-                  disabled={!canSave}
-                  className="w-full sm:w-auto"
-                >
-                  Save changes
-                </Button>
+              <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+                {!isPersonal && businessCategoryLabel ? (
+                  <Badge variant="primary">
+                    <Tags className="mr-1 inline h-3 w-3" aria-hidden />
+                    {businessCategoryLabel}
+                  </Badge>
+                ) : null}
+                {baseline.form.currency ? (
+                  <Badge variant="neutral">
+                    <Coins className="mr-1 inline h-3 w-3" aria-hidden />
+                    {baseline.form.currency}
+                  </Badge>
+                ) : null}
+                {locationLine ? (
+                  <Badge variant="neutral">
+                    <MapPin className="mr-1 inline h-3 w-3" aria-hidden />
+                    {locationLine}
+                  </Badge>
+                ) : null}
               </div>
             </div>
           </div>
-        )}
+        </article>
+
+        <BusinessSettingsTabs
+          activeTab={activeTab}
+          onChange={setActiveTab}
+          isPersonal={isPersonal}
+        />
+
+        <BusinessSettingsTabPanels
+          activeTab={activeTab}
+          editingTab={editingTab}
+          isPersonal={isPersonal}
+          form={form}
+          baseline={baseline.form}
+          isCompletelyOffline={isCompletelyOffline}
+          isSaving={mutation.isPending}
+          logoPreview={logoPreview}
+          logoFileRef={logoFileRef}
+          currencyRef={currencyRef}
+          currencyOpen={currencyOpen}
+          setCurrencyOpen={setCurrencyOpen}
+          currencySearch={currencySearch}
+          setCurrencySearch={setCurrencySearch}
+          selectedCountryCode={selectedCountryCode}
+          update={update}
+          countryCode={countryCode}
+          localPhone={localPhone}
+          businessPhoneCountryCode={businessPhoneCountryCode}
+          localBusinessPhone={localBusinessPhone}
+          onPhoneCountryChange={handlePhoneCountryChange}
+          onLocalPhoneChange={setLocalPhone}
+          onBusinessPhoneCountryChange={handleBusinessPhoneCountryChange}
+          onLocalBusinessPhoneChange={setLocalBusinessPhone}
+          onCountryChange={handleCountryChange}
+          onJurisdictionChange={handleJurisdictionChange}
+          onLogoChange={handleLogoChange}
+          onEditTab={startEdit}
+          onCancelEdit={cancelEdit}
+          hasTabChanges={tabHasChanges}
+          tabCanSave={tabCanSave}
+        />
       </div>
     </form>
   );

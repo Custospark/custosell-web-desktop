@@ -52,6 +52,7 @@ export interface BusinessLocationSectionProps {
   setCurrencyOpen: (open: boolean | ((prev: boolean) => boolean)) => void;
   currencySearch: string;
   setCurrencySearch: (value: string) => void;
+  rightSlot?: React.ReactNode;
 }
 
 export function BusinessLocationSection({
@@ -68,6 +69,7 @@ export function BusinessLocationSection({
   setCurrencyOpen,
   currencySearch,
   setCurrencySearch,
+  rightSlot,
 }: BusinessLocationSectionProps) {
   const { data: facets, refetch: refetchFacets, isFetching: facetsLoading } = useStorefrontFacets();
   const businessCategories = facets?.business_categories ?? [];
@@ -96,6 +98,7 @@ export function BusinessLocationSection({
       icon={MapPin}
       title={isPersonal ? 'Location & preferences' : 'Location & details'}
       description={isPersonal ? 'Your location, timezone, and currency preferences.' : 'Address, tax information, timezone, and currency.'}
+      rightSlot={rightSlot}
     >
       {isEditing ? (
         <div className="space-y-4">

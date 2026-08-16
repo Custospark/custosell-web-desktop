@@ -21,6 +21,7 @@ export interface BusinessPaymentSectionProps {
   form: UpdateBusinessData;
   baseline: UpdateBusinessData;
   update: <K extends keyof UpdateBusinessData>(key: K, val: UpdateBusinessData[K]) => void;
+  rightSlot?: React.ReactNode;
 }
 
 export function BusinessPaymentSection({
@@ -28,12 +29,14 @@ export function BusinessPaymentSection({
   form,
   baseline,
   update,
+  rightSlot,
 }: BusinessPaymentSectionProps) {
   return (
     <BusinessSectionCard
       icon={Landmark}
       title="Payment details"
       description="Bank and mobile money accounts shown on invoices so customers know where to pay."
+      rightSlot={rightSlot}
     >
       {isEditing ? (
         <div className="space-y-6">

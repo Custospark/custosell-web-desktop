@@ -8,6 +8,7 @@ export default defineConfig({
       'src/renderer/modules/shifts/__tests__/**/*.test.{ts,tsx}',
       'src/renderer/modules/notes/**/*.test.{ts,tsx}',
       'src/renderer/app/store/offline/**/*.test.{ts,tsx}',
+      'src/renderer/app/store/slices/__tests__/**/*.test.{ts,tsx}',
       'src/renderer/shared/utils/__tests__/**/*.test.{ts,tsx}',
       'src/renderer/shared/components/payments/__tests__/**/*.test.{ts,tsx}',
     ],

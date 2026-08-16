@@ -270,6 +270,19 @@ const authSlice = createSlice({
       state.isAuthenticated = true;
       state.isInitialized = true;
     },
+    switchAccount(state, action: PayloadAction<AuthUser>) {
+      // Full account swap: replace the active user context entirely (role,
+      // modules, locations, business, subscription) with the target account's -
+      // the same shape as /auth/me. The session token is kept unchanged.
+      const user = normalizeAuthUser({ ...action.payload });
+      state.user = user;
+      state.plans = action.payload.active_plans ?? state.plans;
+      state.businessId = user.business_id;
+      state.activeLocationId = resolveDefaultLocationId(user);
+      state.isAuthenticated = true;
+      state.isInitialized = true;
+      state.pendingAuthSync = false;
+    },
     updateShiftContext(
       state,
       action: PayloadAction<{ shift_id: number | null; shift_clock_in: string | null }>,
@@ -311,7 +324,7 @@ const authSlice = createSlice({
 export const {
   loginStart, loginSuccess, loginFailure,
   registerStart, registerSuccess, registerFailure,
-  logout, hydrateAuth, setUser, setPlans, setBusiness, setInitialized, setActiveLocation, clearError, updateShiftContext,
+  logout, hydrateAuth, setUser, switchAccount, setPlans, setBusiness, setInitialized, setActiveLocation, clearError, updateShiftContext,
 } = authSlice.actions;
 
 export default authSlice.reducer;

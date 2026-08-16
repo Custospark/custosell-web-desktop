@@ -4,8 +4,10 @@ import { Link } from 'react-router-dom';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import ModuleLauncherModal from './ModuleLauncherModal';
+import { Modal } from '../../components/modals/Modal';
+import { LinkedAccountsManager } from '../../components/account/LinkedAccountsManager';
 import {
-  User, LogOut, Clock, BookOpen, HelpCircle, MessageSquareText, Bell, Sparkles, LayoutGrid, Shield,
+  User, LogOut, Clock, BookOpen, HelpCircle, MessageSquareText, Bell, Sparkles, LayoutGrid, Shield, Link2,
 } from 'lucide-react';
 
 interface UserProfileMenuProps {
@@ -26,9 +28,10 @@ export function UserProfileMenu({
 }: UserProfileMenuProps) {
   const user = useAppSelector((s) => s.auth.user);
   const [appsOpen, setAppsOpen] = useState(false);
+  const [linkedAccountsOpen, setLinkedAccountsOpen] = useState(false);
 
   if (typeof document === 'undefined') return null;
-  if (!open && !appsOpen) return null;
+  if (!open && !appsOpen && !linkedAccountsOpen) return null;
 
   return createPortal(
     <>
@@ -74,6 +77,15 @@ export function UserProfileMenu({
             <Shield className="w-4 h-4 shrink-0" />
             Security
           </Link>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => { onClose(); setLinkedAccountsOpen(true); }}
+            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+          >
+            <Link2 className="w-4 h-4 shrink-0" />
+            Linked Accounts
+          </button>
           <button
             type="button"
             role="menuitem"
@@ -158,6 +170,17 @@ export function UserProfileMenu({
         </div>
       )}
       <ModuleLauncherModal open={appsOpen} onClose={() => setAppsOpen(false)} />
+      <Modal
+        isOpen={linkedAccountsOpen}
+        onClose={() => setLinkedAccountsOpen(false)}
+        title="Linked Accounts"
+        subtitle="Switch between the accounts you own without logging out."
+        size="md"
+      >
+        <div className="p-5">
+          <LinkedAccountsManager embedded onClose={() => setLinkedAccountsOpen(false)} />
+        </div>
+      </Modal>
     </>,
     document.body,
   );

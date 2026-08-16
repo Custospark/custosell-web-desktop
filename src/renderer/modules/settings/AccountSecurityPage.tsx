@@ -1,13 +1,15 @@
 import { useState } from 'react';
-import { Shield, KeyRound, BadgeCheck, Activity } from 'lucide-react';
+import { Shield, KeyRound, BadgeCheck, Activity, Link2 } from 'lucide-react';
 import { cn } from '../../shared/utils/cn';
 import SecurityPasswordTab from './security/SecurityPasswordTab';
 import SecurityVerificationTab from './security/SecurityVerificationTab';
 import SecurityActivityTab from './security/SecurityActivityTab';
+import SecurityLinkedAccountsTab from './security/SecurityLinkedAccountsTab';
 
 const TABS = [
   { id: 'password', label: 'Password', icon: KeyRound },
   { id: 'verification', label: 'Verification', icon: BadgeCheck },
+  { id: 'linked-accounts', label: 'Linked Accounts', icon: Link2 },
   { id: 'activity', label: 'Activity', icon: Activity },
 ] as const;
 
@@ -26,7 +28,7 @@ export default function AccountSecurityPage() {
           <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Account</p>
           <h1 className="text-2xl font-bold text-gray-900">Security</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Manage your password, email verification, two-factor authentication, and sign-in activity.
+            Manage your password, email verification, two-factor authentication, linked accounts, and sign-in activity.
           </p>
         </div>
       </div>
@@ -52,6 +54,7 @@ export default function AccountSecurityPage() {
 
       {activeTab === 'password' && <SecurityPasswordTab />}
       {activeTab === 'verification' && <SecurityVerificationTab />}
+      {activeTab === 'linked-accounts' && <SecurityLinkedAccountsTab />}
       {activeTab === 'activity' && <SecurityActivityTab />}
     </div>
   );

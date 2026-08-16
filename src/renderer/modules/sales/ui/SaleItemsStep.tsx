@@ -442,7 +442,7 @@ export function SaleItemsStep({ onNext }: SaleItemsStepProps) {
         </div>
 
         {/* Secondary action toolbar - mobile keeps its own row; desktop moves into the sticky cart bar */}
-        <div className="lg:hidden flex items-center gap-3 overflow-x-auto overscroll-x-contain -mx-4 px-4 sm:-mx-6 sm:px-6 pb-2 pt-3 mt-auto w-max min-w-full">
+        <div className="lg:hidden flex flex-nowrap items-center gap-3 overflow-x-auto overscroll-x-contain scroll-smooth -mx-4 px-4 sm:-mx-6 sm:px-6 pb-2 pt-3 mt-auto" style={{ scrollbarWidth: 'none' }}>
           {mobileActions}
         </div>
 

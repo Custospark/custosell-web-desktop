@@ -6,7 +6,7 @@ import { Button } from '../../../shared/components/buttons/Button';
 import { Table } from '../../../shared/components/tables/Table';
 import { PeriodSelector } from '../../../shared/components/inputs/PeriodSelector';
 import { useJournalEntries, usePostJournalEntry, useDeleteJournalEntry, useReverseJournalEntry } from '../api/AccountingQueries';
-import { useAccountingPeriodSelection } from '../context/AccountingPeriodSelectionContext';
+import { AccountingPeriodSelectionProvider, useAccountingPeriodSelection } from '../context/AccountingPeriodSelectionContext';
 import type { JournalEntry } from '../api/AccountingTypes';
 import AccountingImportExportModal from '../ui/AccountingImportExportModal';
 import { FileText, Plus, Send, Trash2, Search, ChevronLeft, ChevronRight, RotateCcw, Eye, Upload, Download } from 'lucide-react';
@@ -17,6 +17,14 @@ import { NewJournalEntryForm } from './NewJournalEntryForm';
 const PAGE_SIZE = 20;
 
 export default function JournalEntriesPage() {
+  return (
+    <AccountingPeriodSelectionProvider>
+      <JournalEntriesPageInner />
+    </AccountingPeriodSelectionProvider>
+  );
+}
+
+function JournalEntriesPageInner() {
   const [searchParams] = useSearchParams();
   const highlightEntryId = Number(searchParams.get('entry_id') || 0) || null;
   const [formOpen, setFormOpen] = useState(false);

@@ -25,6 +25,13 @@ export function useJournalEntries(filters?: Record<string, string>) {
         return b.id - a.id;
       });
     },
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: 'always',
+    refetchInterval: 30_000,
+    placeholderData: (prev) => prev,
+    retry: (count, err) => !(err as { isAxiosError?: boolean })?.isAxiosError && count < 1,
+    networkMode: 'always',
   });
 }
 

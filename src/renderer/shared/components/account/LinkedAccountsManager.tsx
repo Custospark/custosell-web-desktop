@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import {
-  Link2, Link2Off, Repeat, ShieldCheck, User as UserIcon, Plus, Loader2, KeyRound, Lock, Eye, EyeOff,
+  Link2, Link2Off, Repeat, ShieldCheck, Plus, Loader2, KeyRound, Lock, Eye, EyeOff,
 } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
+import { UserAvatar } from '../../../shared/components/UserAvatar';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../../app/store/slices/networkSlice';
 import { cn } from '../../../shared/utils/cn';
@@ -206,13 +207,7 @@ export function LinkedAccountsManager({ embedded = false, onClose }: LinkedAccou
                 isCurrent ? 'border-blue-200 bg-blue-50/60' : 'border-gray-200 bg-white',
               )}
             >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-blue-700">
-                {account.avatar ? (
-                  <img src={account.avatar} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  <UserIcon className="h-4 w-4" aria-hidden />
-                )}
-              </div>
+              <UserAvatar name={account.name} avatar={account.avatar} size="md" />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <p className="truncate text-sm font-medium text-gray-900">{account.name}</p>

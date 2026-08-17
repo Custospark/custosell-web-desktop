@@ -51,7 +51,7 @@ export default function BudgetCard({ budget, onEdit, onDelete, onView, onDownloa
       <motion.div
         className="absolute inset-0 rounded-xl z-0"
         style={{
-          background: 'linear-gradient(90deg, #6366f1, #d946ef, #f59e0b, #6366f1)',
+          background: 'linear-gradient(90deg, #2563eb, #059669, #d946ef, #f59e0b, #2563eb)',
           backgroundSize: '300% 100%',
         }}
         animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}

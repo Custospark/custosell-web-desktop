@@ -1,6 +1,7 @@
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts';
+import { motion } from 'framer-motion';
 import { Wallet, Pencil, Trash2, CalendarDays, TrendingUp, TrendingDown, Eye, Download, Loader2 } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
@@ -46,7 +47,17 @@ export default function BudgetCard({ budget, onEdit, onDelete, onView, onDownloa
   const color = over ? 'bg-red-500' : budget.percentage > 80 ? 'bg-yellow-500' : 'bg-green-500';
 
   return (
-    <div className="rounded-xl border border-blue-500 bg-white p-4 space-y-3 cursor-pointer hover:shadow-md transition-shadow" onClick={() => onView(budget)}>
+    <div className="relative rounded-xl p-[2px] cursor-pointer hover:shadow-md transition-shadow" onClick={() => onView(budget)}>
+      <motion.div
+        className="absolute inset-0 rounded-xl z-0"
+        style={{
+          background: 'linear-gradient(90deg, #6366f1, #d946ef, #f59e0b, #6366f1)',
+          backgroundSize: '300% 100%',
+        }}
+        animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
+        transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
+      />
+      <div className="relative rounded-[10px] overflow-hidden bg-white p-4 space-y-3">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -151,6 +162,7 @@ export default function BudgetCard({ budget, onEdit, onDelete, onView, onDownloa
             Adjust
           </Button>
         </div>
+      </div>
       </div>
     </div>
   );

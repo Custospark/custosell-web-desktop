@@ -46,7 +46,7 @@ export default function BudgetCard({ budget, onEdit, onDelete, onView, onDownloa
   const color = over ? 'bg-red-500' : budget.percentage > 80 ? 'bg-yellow-500' : 'bg-green-500';
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3 cursor-pointer hover:shadow-md transition-shadow" onClick={() => onView(budget)}>
+    <div className="rounded-xl border border-blue-500 bg-white p-4 space-y-3 cursor-pointer hover:shadow-md transition-shadow" onClick={() => onView(budget)}>
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="flex items-center gap-2">

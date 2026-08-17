@@ -89,6 +89,7 @@ export function LinkedAccountsManager({ embedded = false, onClose }: LinkedAccou
   };
 
   const handleSendLinkCode = () => {
+    if (isCompletelyOffline) return;
     if (!email.trim() || !password) return;
     initiateLink.mutate(
       { email: email.trim(), password },
@@ -102,6 +103,7 @@ export function LinkedAccountsManager({ embedded = false, onClose }: LinkedAccou
   };
 
   const handleConfirmLink = () => {
+    if (isCompletelyOffline) return;
     if (targetUserId == null || !code.trim()) return;
     confirmLink.mutate(
       { target_user_id: targetUserId, code: code.trim() },
@@ -126,11 +128,13 @@ export function LinkedAccountsManager({ embedded = false, onClose }: LinkedAccou
   };
 
   const handleSetPrimary = (account: LinkedAccountSummary) => {
+    if (isCompletelyOffline) return;
     if (account.relation === 'primary') return;
     setPrimaryMutation.mutate(account.user_id);
   };
 
   const handleUnlink = async (account: LinkedAccountSummary) => {
+    if (isCompletelyOffline) return;
     if (account.relation === 'primary') return;
     const ok = await confirm({
       title: `Unlink ${account.name}?`,
@@ -149,6 +153,7 @@ export function LinkedAccountsManager({ embedded = false, onClose }: LinkedAccou
   };
 
   const handleConfirmUnlink = () => {
+    if (isCompletelyOffline) return;
     if (!unlinkTarget || !unlinkCode.trim()) return;
     confirmUnlink.mutate(
       { user_id: unlinkTarget.user_id, code: unlinkCode.trim() },

@@ -2,9 +2,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
 import { axiosInstance } from '../../../app/api/axiosConfig';
 import { useAppDispatch } from '../../../app/store/hooks/useApp';
-import { switchAccount } from '../../../app/store/slices/authSlice';
+import { switchAccount, setSwitchingAccount } from '../../../app/store/slices/authSlice';
 import { LINKED_ACCOUNTS } from '../../../shared/api/endpoints/endpoints';
 import { persistAuthSnapshot } from '../../../app/store/offline/auth/persistAuthSnapshot';
+import { redirectToPath } from '../../../app/store/auth/runAppLogout';
+import { clearServiceWorkerApiCache } from '../../../app/sw/registerServiceWorker';
+import { clearBusinessOfflineStores } from '../../../app/store/offline/core/offlineStoreClear';
+import { getDefaultRoute } from '../../../shared/utils/moduleAccess';
 import { useToast } from '../../../app/contexts/useToast';
 import type { AuthUser } from '../../../app/store/slices/authSlice';
 
@@ -102,29 +106,57 @@ export function useSwitchAccount() {
   const dispatch = useAppDispatch();
   const qc = useQueryClient();
   const { showToast } = useToast();
-  return useMutation<void, AxiosError, number>({
+  return useMutation<SwitchPayload, AxiosError, number, SwitchPayload | null>({
+    onMutate: () => {
+      // Global full-page switch loader - hides the previous account's UI so no
+      // stale data is visible while the new account's shell mounts.
+      dispatch(setSwitchingAccount(true));
+      return null;
+    },
     mutationFn: async (userId) => {
       const { data } = await axiosInstance.post<{ data: SwitchPayload }>(LINKED_ACCOUNTS.SWITCH(userId));
       const payload = unwrap<SwitchPayload>(data);
       const user = payload.user;
 
       // Hydrate the auth slice with the target account's full context AND its
-      // freshly minted token (switch = login without password). All subsequent
-      // requests use the target account's token, so /auth/me and the profile
-      // dropdown reflect the active account.
+      // freshly minted token (switch = login without password). The previous
+      // account's token is intentionally NOT revoked - it is the same person's
+      // account and leaving it is harmless; revoking here was logging the user
+      // out. The switch simply swaps the active session.
       dispatch(switchAccount({ user, token: payload.token }));
 
+      // Hard full isolation - exactly like logout + fresh login: drop every
+      // query, the service-worker API cache, and all business offline (IndexedDB)
+      // stores. Auth/secure stores (session + its encryption key) are preserved
+      // so the user stays logged into the new account - we only wipe business
+      // data, never the session.
+      qc.clear();
+      clearServiceWorkerApiCache();
+      await clearBusinessOfflineStores().catch(() => undefined);
+
+      // Persist the NEW session so AuthBootstrap rehydrates the target account
+      // on the full reload (auth stores are preserved by the clear above).
       await persistAuthSnapshot().catch(() => undefined);
 
-      // Business-scoped caches must not leak another account's data.
-      qc.clear();
+      return payload;
     },
-    onSuccess: () => {
+    onSuccess: (_data, _vars, result) => {
+      const user = result?.user;
       showToast('success', 'Switched account');
+
+      // Land on the modules the switched account can access - full navigation so
+      // the whole app re-initializes from the new session (like login). Each
+      // account has its own default landing page based on its modules/access
+      // (dashboard is only the default if the account can access it). forceReload
+      // guarantees we actually navigate even if the target path matches the
+      // current page, so the user never stays on the previous account's page.
+      const target = user ? getDefaultRoute(user) : '/';
+      redirectToPath(target, undefined, true);
     },
     onError: (err) => {
       const msg = (err.response?.data as { message?: string })?.message ?? 'Failed to switch account';
       showToast('error', msg);
+      dispatch(setSwitchingAccount(false));
     },
   });
 }

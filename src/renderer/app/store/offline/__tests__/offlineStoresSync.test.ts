@@ -38,7 +38,8 @@ beforeAll(async () => {
 
 /** Per-test: fresh module state + wipe all store rows (fast, no deleteDatabase). */
 async function freshDb(): Promise<void> {
-  const { resetOfflineDbState, clearOfflineDbStores, getOfflineDb } = await import('../core/offlineDb');
+  const { resetOfflineDbState, getOfflineDb } = await import('../core/offlineDb');
+  const { clearOfflineDbStores } = await import('../core/offlineStoreClear');
   resetOfflineDbState();
   await clearOfflineDbStores();
   await getOfflineDb();

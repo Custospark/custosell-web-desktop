@@ -39,6 +39,7 @@ export const store = configureStore({
       isInitialized: false,
       isLocalSession: false,
       pendingAuthSync: false,
+      isSwitchingAccount: false,
       error: null,
     },
   },

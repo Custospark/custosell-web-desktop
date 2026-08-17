@@ -63,19 +63,6 @@ export async function closeOfflineDb(): Promise<void> {
   dbPromise = null;
 }
 
-/** Wipe every row from the real IndexedDB (used by tests between cases). */
-export async function clearOfflineDbStores(): Promise<void> {
-  try {
-    const db = await getOfflineDb();
-    const names = Array.from((db as unknown as { objectStoreNames: Iterable<string> }).objectStoreNames);
-    for (const name of names) {
-      await db.clear(name as never);
-    }
-  } catch (err) {
-    console.warn('[OfflineDB] clear stores skipped (non-fatal):', err);
-  }
-}
-
 export function markOfflineDbBroken(): void {
   dbBroken = true;
   dbPromise = null;

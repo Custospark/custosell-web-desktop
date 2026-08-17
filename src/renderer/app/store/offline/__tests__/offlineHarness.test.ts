@@ -38,7 +38,8 @@ beforeAll(async () => {
 });
 
 async function freshDb(): Promise<void> {
-  const { resetOfflineDbState, clearOfflineDbStores, getOfflineDb } = await import('../core/offlineDb');
+  const { resetOfflineDbState, getOfflineDb } = await import('../core/offlineDb');
+  const { clearOfflineDbStores } = await import('../core/offlineStoreClear');
   resetOfflineDbState();
   await clearOfflineDbStores();
   // Clear the durable localStorage mirror so tests don't leak across cases.
@@ -235,7 +236,8 @@ describe('quick notes offline CRUD + sync (harness template)', () => {
     expect(await mutationQueue.getAll()).toHaveLength(1);
 
     // Simulate a cold start where IndexedDB is unavailable: wipe the live DB.
-    const { resetOfflineDbState, clearOfflineDbStores } = await import('../core/offlineDb');
+    const { resetOfflineDbState } = await import('../core/offlineDb');
+    const { clearOfflineDbStores } = await import('../core/offlineStoreClear');
     resetOfflineDbState();
     await clearOfflineDbStores();
     expect(await mutationQueue.getAll()).toHaveLength(0);

@@ -135,6 +135,9 @@ interface AuthState {
   isInitialized: boolean;
   isLocalSession: boolean;
   pendingAuthSync: boolean;
+  /** True while a linked-account switch is in flight - shell shows a full-screen
+   * loader and hides the previous account's UI to prevent data leaks. */
+  isSwitchingAccount: boolean;
   error: string | null;
 }
 
@@ -149,6 +152,7 @@ const initialState: AuthState = {
   isInitialized: false,
   isLocalSession: false,
   pendingAuthSync: false,
+  isSwitchingAccount: false,
   error: null,
 };
 
@@ -287,6 +291,10 @@ const authSlice = createSlice({
       state.isInitialized = true;
       state.isLocalSession = isLocalSessionToken(action.payload.token);
       state.pendingAuthSync = false;
+      state.isSwitchingAccount = false;
+    },
+    setSwitchingAccount(state, action: PayloadAction<boolean>) {
+      state.isSwitchingAccount = action.payload;
     },
     updateShiftContext(
       state,
@@ -329,7 +337,7 @@ const authSlice = createSlice({
 export const {
   loginStart, loginSuccess, loginFailure,
   registerStart, registerSuccess, registerFailure,
-  logout, hydrateAuth, setUser, switchAccount, setPlans, setBusiness, setInitialized, setActiveLocation, clearError, updateShiftContext,
+  logout, hydrateAuth, setUser, switchAccount, setSwitchingAccount, setPlans, setBusiness, setInitialized, setActiveLocation, clearError, updateShiftContext,
 } = authSlice.actions;
 
 export default authSlice.reducer;

@@ -11,10 +11,8 @@ import { AppMobileTabBar } from './AppMobileTabBar';
 import { OnboardingGate } from '../../../modules/onboarding/OnboardingGate';
 
 export function Layout() {
-  const { state, dispatch } = useAppContext();
   const navigate = useNavigate();
   const location = useLocation();
-  const collapsed = state.sidebarCollapsed;
   const user = useAppSelector((s) => s.auth.user);
   const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
   const subscription = user?.business?.subscription;
@@ -25,6 +23,21 @@ export function Layout() {
     if (subscription.onboarding_fee_paid) return;
     navigate(ROUTES.ONBOARDING, { replace: true });
   }, [isAuthenticated, subscription, location.pathname, navigate]);
+
+  // When the active account changes (linked-account switch), remount the whole
+  // shell so no previous account's mounted component keeps rendering stale
+  // data - strict isolation, same as a fresh login.
+  const accountKey = String(user?.business_id ?? user?.id ?? 'none');
+
+  return (
+    <LayoutShell key={accountKey} />
+  );
+}
+
+function LayoutShell() {
+  const { state, dispatch } = useAppContext();
+  const location = useLocation();
+  const collapsed = state.sidebarCollapsed;
 
   // Immersive content mode is scoped to the cashier page, pipeline/estimates
   // board detail pages, the documents cabinet, and the notes page - leaving

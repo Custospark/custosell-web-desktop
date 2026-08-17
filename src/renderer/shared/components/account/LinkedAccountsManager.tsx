@@ -4,6 +4,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../../../shared/components/buttons/Button';
 import { Modal } from '../../../shared/components/modals/Modal';
+import { CustosellLoader } from '../../../shared/components/loading/CustosellLoader';
 import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../../app/store/slices/networkSlice';
@@ -55,7 +56,7 @@ const fieldLabelClass = 'block text-xs font-medium text-gray-600 mb-1';
 export function LinkedAccountsManager({ embedded = false, onClose }: LinkedAccountsManagerProps) {
   const user = useAppSelector((s) => s.auth.user);
   const isCompletelyOffline = useAppSelector(selectIsCompletelyOffline);
-  const { data } = useLinkedAccounts();
+  const { data, isLoading: accountsLoading } = useLinkedAccounts();
   const initiateLink = useInitiateLinkAccount();
   const confirmLink = useConfirmLinkAccount();
   const switchMutation = useSwitchAccount();
@@ -177,18 +178,23 @@ export function LinkedAccountsManager({ embedded = false, onClose }: LinkedAccou
         </div>
       )}
 
-      <ul className="space-y-2">
-        {accounts.length === 0 && !currentAccount && (
-          <li className="rounded-lg border border-dashed border-gray-200 px-4 py-5 text-center text-sm text-gray-400">
-            No linked accounts yet. Add one to switch quickly.
-          </li>
-        )}
-        {accounts.map((account) => {
-          const isCurrent = account.user_id === user?.id;
-          const isPrimary = account.relation === 'primary';
-          const busy = switchMutation.isPending && switchMutation.variables === account.user_id;
-          return (
-            <li
+      {accountsLoading ? (
+        <div className="rounded-xl border border-gray-200">
+          <CustosellLoader message="Loading linked accounts..." />
+        </div>
+      ) : (
+        <ul className="space-y-2">
+          {accounts.length === 0 && !currentAccount && (
+            <li className="rounded-lg border border-dashed border-gray-200 px-4 py-5 text-center text-sm text-gray-400">
+              No linked accounts yet. Add one to switch quickly.
+            </li>
+          )}
+          {accounts.map((account) => {
+            const isCurrent = account.user_id === user?.id;
+            const isPrimary = account.relation === 'primary';
+            const busy = switchMutation.isPending && switchMutation.variables === account.user_id;
+            return (
+              <li
               key={account.id}
               className={cn(
                 'flex items-center gap-3 rounded-xl border px-3 py-2.5',
@@ -262,7 +268,8 @@ export function LinkedAccountsManager({ embedded = false, onClose }: LinkedAccou
             </li>
           );
         })}
-      </ul>
+        </ul>
+      )}
 
       <div className="flex items-center justify-end gap-2">
         {embedded && (

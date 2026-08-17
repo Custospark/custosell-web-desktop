@@ -4,6 +4,7 @@ import { SearchTopBar } from './SearchTopBar';
 import { SearchModal } from './search/SearchModal';
 import { useSearchKeyboard } from './search/useSearchKeyboard';
 import { canUseGlobalSearch } from './search/searchTypes';
+import { CustosellLoader } from '../loading/CustosellLoader';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { useAppContext } from '../../../app/contexts/AppContext';
 
@@ -16,9 +17,21 @@ import { useAppContext } from '../../../app/contexts/AppContext';
  */
 export function AppChrome() {
   const user = useAppSelector((s) => s.auth.user);
+  const isSwitchingAccount = useAppSelector((s) => s.auth.isSwitchingAccount);
   const { state } = useAppContext();
   const { isOpen: searchOpen, closeSearch } = useSearchKeyboard();
   const canSearch = !state.contentFullscreen && canUseGlobalSearch(user);
+
+  // While a linked-account switch is in flight, cover the entire app (including
+  // the previous account's dashboard) so no stale data is ever visible - the
+  // same experience as a fresh login.
+  if (isSwitchingAccount) {
+    return (
+      <div className="flex h-dvh items-center justify-center bg-white">
+        <CustosellLoader fullPage message="Switching account..." />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-dvh overflow-hidden bg-gray-50/30">

@@ -36,7 +36,10 @@ function isElectronApp(): boolean {
   return typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('electron');
 }
 
-function redirectToPath(path: string, navigate?: NavigateFunction): void {
+/** Navigate to a path, handling Electron hash routing. When forceReload is true
+ *  the page is always reloaded (needed for account switch so the app fully
+ *  re-initializes from the new session even if the path is unchanged). */
+export function redirectToPath(path: string, navigate?: NavigateFunction, forceReload = false): void {
   if (navigate) {
     navigate(path, { replace: true });
   }
@@ -46,13 +49,13 @@ function redirectToPath(path: string, navigate?: NavigateFunction): void {
   if (isElectron) {
     const base = window.location.href.split('#')[0];
     const target = `${base}#${path}`;
-    if (!window.location.hash.includes(path)) {
+    if (forceReload || !window.location.hash.includes(path)) {
       window.location.replace(target);
     }
     return;
   }
 
-  if (window.location.pathname !== path) {
+  if (forceReload || window.location.pathname !== path) {
     window.location.replace(path);
   }
 }

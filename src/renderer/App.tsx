@@ -1,10 +1,8 @@
 import { Provider } from 'react-redux';
-import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
-import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, HashRouter } from 'react-router-dom';
 import { store } from './app/store/store';
 import { queryClient } from './app/api/axiosConfig';
-import { shouldPersistQuery } from './app/api/queryPersist';
 import { AppProvider } from './app/contexts/AppContext';
 import { ToastProvider } from './app/contexts/ToastContext';
 import { ConfirmProvider } from './shared/components/Feedback/ConfirmProvider';
@@ -22,8 +20,6 @@ import './App.css';
 const isElectron = navigator.userAgent.toLowerCase().includes('electron');
 const Router = isElectron ? HashRouter : BrowserRouter;
 
-const CACHE_VERSION = 'v3';
-
 if (typeof window !== 'undefined') {
   // Browsers/Electron require a user gesture before an AudioContext can start -
   // unlock once on the first interaction so polling chimes can play afterwards.
@@ -38,26 +34,10 @@ if (typeof window !== 'undefined') {
   installShutdownFlushBarrier();
 }
 
-const persister = createSyncStoragePersister({
-  storage: window.localStorage,
-  key: 'CUSTOSELL_QUERY_CACHE',
-  throttleTime: 1000,
-});
-
 function App() {
   return (
     <Provider store={store}>
-      <PersistQueryClientProvider
-        client={queryClient}
-        persistOptions={{
-          persister,
-          maxAge: 1000 * 60 * 30,
-          buster: CACHE_VERSION,
-          dehydrateOptions: {
-            shouldDehydrateQuery: shouldPersistQuery,
-          },
-        }}
-      >
+      <QueryClientProvider client={queryClient}>
         <Router>
           <ScrollToTop />
           <PwaInstallPrompt />
@@ -75,7 +55,7 @@ function App() {
             </AppProvider>
           </LogoutProvider>
         </Router>
-      </PersistQueryClientProvider>
+      </QueryClientProvider>
     </Provider>
   );
 }

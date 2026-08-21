@@ -21,8 +21,8 @@ export default function DescriptionModal({ open, title, content, onSave, onClose
 
   return (
     <Modal isOpen={open} onClose={onClose} title={`Edit description - ${title}`} size="2xl">
-      <div className="flex min-h-0 flex-1 flex-col gap-4" style={{ maxHeight: 'calc(90vh - 120px)' }}>
-        <div className="min-h-0 flex-1">
+      <div className="flex min-h-0 flex-1 flex-col gap-4">
+        <div className="h-[55vh] min-h-[240px]">
           <DescriptionEditor
             content={html}
             onChange={setHtml}

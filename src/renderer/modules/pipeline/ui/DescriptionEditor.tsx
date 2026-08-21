@@ -188,6 +188,7 @@ export default function DescriptionEditor({
             '[&_.ProseMirror]:outline-none prose prose-sm max-w-none overflow-y-auto px-3 py-2 text-sm prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-indigo-600 prose-strong:text-gray-900 prose-code:rounded prose-code:bg-gray-100 prose-code:px-1 prose-code:text-xs prose-pre:rounded-lg prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-blockquote:border-l-indigo-400 prose-blockquote:text-gray-600 prose-li:text-gray-700',
             compact ? 'min-h-[100px]' : 'min-h-[200px]',
             fillHeight && 'min-h-0 flex-1',
+            fillHeight && '[&_.ProseMirror]:h-full [&_.ProseMirror]:overflow-y-auto',
             !editable && 'px-0 py-0 min-h-0',
           )}
         />

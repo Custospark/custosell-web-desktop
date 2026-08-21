@@ -9,6 +9,7 @@ import CardMetaFieldsSection from './CardMetaFieldsSection';
 import DescriptionModal from './DescriptionModal';
 import { PipelineFormSection, PipelineIconField, pipelineInputClass } from './pipelineFormFields';
 import { Button } from '../../../shared/components/buttons/Button';
+import { useConfirm } from '../../../shared/components/Feedback/ConfirmContext';
 import { cn } from '../../../shared/utils/cn';
 import { Calendar, Link as LinkIcon, Paperclip, Plus, Trash2, AlignLeft, Maximize2 } from 'lucide-react';
 import { toLocalDatetimeValue, toUtcIso } from './bookingHelpers';
@@ -24,6 +25,7 @@ interface CardDetailExtrasProps {
 
 export default function CardDetailExtras({ lead, boardId, workspace = 'pipeline', canEdit = true, onNavigate, meetingsLoading }: CardDetailExtrasProps) {
   const updateLead = useUpdatePipelineLead();
+  const { confirm } = useConfirm();
   const patchLead = (payload: Record<string, unknown>) => {
     if (!canEdit) return;
     updateLead.mutate({ id: lead.id, board_id: boardId, silent: true, ...payload });
@@ -66,9 +68,12 @@ export default function CardDetailExtras({ lead, boardId, workspace = 'pipeline'
               )}
             >
               <div
-                className="prose prose-sm max-w-none text-gray-700 prose-headings:text-gray-900 prose-p:my-1 prose-a:text-indigo-600 prose-strong:text-gray-900 prose-code:rounded prose-code:bg-gray-100 prose-code:px-1 prose-code:text-xs prose-pre:rounded-lg prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-blockquote:border-l-indigo-400 prose-blockquote:text-gray-600 prose-li:my-0.5 prose-li:text-gray-700"
+                className="line-clamp-6 prose prose-sm max-w-none text-gray-700 prose-headings:text-gray-900 prose-p:my-1 prose-a:text-indigo-600 prose-strong:text-gray-900 prose-code:rounded prose-code:bg-gray-100 prose-code:px-1 prose-code:text-xs prose-pre:rounded-lg prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-blockquote:border-l-indigo-400 prose-blockquote:text-gray-600 prose-li:my-0.5 prose-li:text-gray-700"
                 dangerouslySetInnerHTML={{ __html: lead.description }}
               />
+              <span className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-indigo-600">
+                <Maximize2 className="h-3 w-3" /> {canEdit ? 'Read more / Edit' : 'Read more'}
+              </span>
             </div>
           ) : (
             <button
@@ -95,7 +100,15 @@ export default function CardDetailExtras({ lead, boardId, workspace = 'pipeline'
               </button>
               <button
                 type="button"
-                onClick={() => patchLead({ description: null })}
+                onClick={async () => {
+                  const ok = await confirm({
+                    title: 'Remove description?',
+                    message: 'Remove the description from this card? This cannot be undone.',
+                    confirmText: 'Remove',
+                    variant: 'danger',
+                  });
+                  if (ok) patchLead({ description: null });
+                }}
                 className="inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium text-red-600 transition-colors hover:bg-red-50"
               >
                 Remove

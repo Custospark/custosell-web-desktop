@@ -69,6 +69,8 @@ interface DocumentExplorerProps {
   onDocumentDragStart: (doc: DocumentItem, e: React.DragEvent) => void;
   onFolderDragStart: (folder: DocumentFolder, e: React.DragEvent) => void;
   onCustomizeCanvas?: () => void;
+  /** Desktop: collapse the whole folders panel (VS Code style). */
+  onCollapseSidebar?: () => void;
 }
 
 export function DocumentExplorer({
@@ -102,6 +104,7 @@ export function DocumentExplorer({
   onDocumentDragStart,
   onFolderDragStart,
   onCustomizeCanvas,
+  onCollapseSidebar,
 }: DocumentExplorerProps) {
   const [expandedIds, setExpandedIds] = useState<Set<number>>(() => new Set());
   const [collapsedIds, setCollapsedIds] = useState<Set<number>>(() => new Set());
@@ -223,6 +226,7 @@ export function DocumentExplorer({
         onRefresh={onRefresh}
         onCustomizeCanvas={onCustomizeCanvas}
         onCollapseAll={collapseAll}
+        onCollapseSidebar={onCollapseSidebar}
       />
 
       <div className="min-h-0 flex-1 overflow-y-auto py-1">

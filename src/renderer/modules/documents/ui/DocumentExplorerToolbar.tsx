@@ -12,6 +12,7 @@ import {
   FolderUp,
   Link2,
   Palette,
+  PanelLeftClose,
   RefreshCw,
   Search,
   Upload,
@@ -35,6 +36,8 @@ interface DocumentExplorerToolbarProps {
   onRefresh: () => void;
   onCustomizeCanvas?: () => void;
   onCollapseAll: () => void;
+  /** Desktop: collapse the whole folders panel (VS Code style). */
+  onCollapseSidebar?: () => void;
 }
 
 /**
@@ -60,6 +63,7 @@ export default function DocumentExplorerToolbar({
   onRefresh,
   onCustomizeCanvas,
   onCollapseAll,
+  onCollapseSidebar,
 }: DocumentExplorerToolbarProps) {
   const [toolbarCollapsed, setToolbarCollapsed] = useState(false);
 
@@ -140,6 +144,16 @@ export default function DocumentExplorerToolbar({
           </p>
         ) : (
           <span className="flex-1" />
+        )}
+        {onCollapseSidebar && (
+          <button
+            type="button"
+            title="Collapse folders panel"
+            onClick={onCollapseSidebar}
+            className="hidden shrink-0 rounded p-1 text-gray-500 hover:bg-white/70 hover:text-indigo-600 lg:inline-flex"
+          >
+            <PanelLeftClose className="h-3.5 w-3.5" />
+          </button>
         )}
         <button
           type="button"

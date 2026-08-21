@@ -5,7 +5,7 @@ import { DocumentExplorer } from './DocumentExplorer';
 import { DocumentOpenTabs } from './DocumentOpenTabs';
 import { DocumentDetailPane } from './DocumentDetailPane';
 import { DocumentProgressBar } from './DocumentProgressBar';
-import { FolderOpen, FileText, WifiOff } from 'lucide-react';
+import { FolderOpen, FileText, PanelLeftOpen, WifiOff } from 'lucide-react';
 import type { DocumentsPanelData, DocumentsPanelActions } from './useDocumentsPanel';
 
 type MobileView = 'explorer' | 'content';
@@ -17,6 +17,7 @@ interface DocumentsPanelSidebarViewProps {
 
 export function DocumentsPanelSidebarView({ data, actions }: DocumentsPanelSidebarViewProps) {
   const [mobileView, setMobileView] = useState<MobileView>('content');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const {
     activeFolderId, activeTabId, activeDocument, openTabs, search, tagFilter,
     dropTargetFolderId, panelDragActive, online, canContribute, isViewerOnly,
@@ -51,7 +52,8 @@ export function DocumentsPanelSidebarView({ data, actions }: DocumentsPanelSideb
 
       {/* Explorer sidebar */}
       <aside className={cn(
-        'w-full shrink-0 flex-col p-1.5 sm:p-2 lg:flex lg:h-full lg:max-h-none lg:min-h-0 lg:w-80 xl:w-96',
+        'w-full shrink-0 flex-col p-1.5 sm:p-2 lg:flex lg:h-full lg:max-h-none lg:min-h-0',
+        sidebarCollapsed ? 'lg:hidden' : 'lg:w-80 lg:flex xl:w-96',
         mobileView === 'explorer' ? 'flex h-full min-h-0 overflow-hidden' : 'hidden lg:flex',
       )}>
         <DocumentExplorer
@@ -75,8 +77,21 @@ export function DocumentsPanelSidebarView({ data, actions }: DocumentsPanelSideb
           onDocumentDragStart={(doc, e) => { e.dataTransfer.setData('text/document-id', String(doc.id)); e.dataTransfer.effectAllowed = 'move'; }}
           onFolderDragStart={(folder, e) => { e.dataTransfer.setData('text/document-folder-id', String(folder.id)); e.dataTransfer.effectAllowed = 'move'; }}
           onCustomizeCanvas={data.canCustomizeVault && !cabinetId ? () => setShowVaultAppearance(true) : undefined}
+          onCollapseSidebar={() => setSidebarCollapsed(true)}
         />
       </aside>
+
+      {/* Desktop collapse rail (VS Code style) - visible only when collapsed */}
+      <div className={cn(
+        'hidden w-7 shrink-0 flex-col items-center border-r border-white/40 bg-white/70 backdrop-blur-sm lg:flex',
+        sidebarCollapsed ? '' : 'lg:hidden',
+      )}>
+        <button type="button" onClick={() => setSidebarCollapsed(false)}
+          title="Show folders panel"
+          className="mt-2 flex h-7 w-7 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 hover:text-indigo-700">
+          <PanelLeftOpen className="h-4 w-4" />
+        </button>
+      </div>
 
       {/* Content panel */}
       <div className={cn(

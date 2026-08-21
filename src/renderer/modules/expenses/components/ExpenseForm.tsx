@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { getBusinessCurrency } from '../../../shared/utils/formatCurrency';
 import { MoneyInput } from '../../../shared/components/inputs/MoneyInput';
+import { getBrowserTimezone } from '../../../shared/utils/browserTimezone';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { useBusinessTaxSettings } from '../../settings/hooks/useBusinessTaxSettings';
 import type { Expense } from '../api/ExpenseTypes';
@@ -168,6 +169,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
     if (isRecurring) {
       formData.append('is_recurring', '1');
       formData.append('recurrence_interval', recurrenceInterval);
+      formData.append('recurrence_timezone', getBrowserTimezone());
       if (nextDueDate) formData.append('next_due_date', nextDueDate);
     }
 

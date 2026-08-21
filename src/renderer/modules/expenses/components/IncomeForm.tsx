@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { getBusinessCurrency } from '../../../shared/utils/formatCurrency';
 import { MoneyInput } from '../../../shared/components/inputs/MoneyInput';
+import { getBrowserTimezone } from '../../../shared/utils/browserTimezone';
 import { formatFileSize } from '../../../shared/utils/formatFileSize';
 import type { IncomeSource, IncomeAttachment } from '../api/IncomeTypes';
 
@@ -134,6 +135,7 @@ export default function IncomeForm({ open, onClose, income }: IncomeFormProps) {
       income_date: incomeDate,
       is_recurring: isRecurring,
       recurrence_interval: isRecurring ? recurrenceInterval : null,
+      recurrence_timezone: isRecurring ? getBrowserTimezone() : null,
       next_due_date: isRecurring ? (nextDueDate || null) : null,
     };
 

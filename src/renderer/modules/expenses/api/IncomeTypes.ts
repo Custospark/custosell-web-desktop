@@ -23,6 +23,7 @@ export interface IncomeSource {
   income_date: string;
   is_recurring: boolean;
   recurrence_interval: 'daily' | 'weekly' | 'monthly' | 'yearly' | null;
+  recurrence_timezone: string | null;
   next_due_date: string | null;
   attachments?: IncomeAttachment[];
   created_at: string;
@@ -37,6 +38,7 @@ export interface CreateIncomeData {
   income_date: string;
   is_recurring?: boolean;
   recurrence_interval?: 'daily' | 'weekly' | 'monthly' | 'yearly' | null;
+  recurrence_timezone: string | null;
   next_due_date?: string | null;
 }
 

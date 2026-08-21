@@ -59,6 +59,7 @@ export interface Expense {
   attachments?: ExpenseAttachment[];
   is_recurring: boolean;
   recurrence_interval: string | null;
+  recurrence_timezone: string | null;
   recurrence_end_date: string | null;
   next_due_date: string | null;
   expense_date: string;
@@ -99,6 +100,7 @@ export interface CreateExpenseData {
   receipt?: File | null;
   is_recurring?: boolean;
   recurrence_interval?: string | null;
+  recurrence_timezone: string | null;
   recurrence_end_date?: string | null;
   next_due_date?: string | null;
   expense_date: string;

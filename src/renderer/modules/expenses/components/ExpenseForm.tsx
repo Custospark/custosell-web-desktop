@@ -148,7 +148,8 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
 
     const formData = new FormData();
     if (categoryId) formData.append('expense_category_id', categoryId);
-    if (budgetId) formData.append('budget_id', budgetId);
+    // Always send budget_id (empty when none) so an update can clear a prior link.
+    formData.append('budget_id', budgetId || '');
     if (locationId) formData.append('location_id', locationId);
     if (projectId) formData.append('project_id', projectId);
     if (fixedAssetId) formData.append('fixed_asset_id', fixedAssetId);
@@ -285,9 +286,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
           )}
         </FormSection>
 
-        {isPersonal && (
-          <BudgetPicker value={budgetId} onChange={setBudgetId} budgets={(budgets?.budgets ?? []).map((b) => ({ id: b.id, name: b.name }))} />
-        )}
+        <BudgetPicker value={budgetId} onChange={setBudgetId} budgets={(budgets?.budgets ?? []).map((b) => ({ id: b.id, name: b.name }))} />
 
         {/* Amount & Date */}
         <FormSection icon={DollarSign} title="Amount & Date">

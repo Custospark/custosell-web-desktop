@@ -42,7 +42,7 @@ function buildRows(value: BudgetLine[] | undefined, prev?: LineDraft[]): LineDra
         id,
         key: `line-${id}`,
         item_name: line.item_name ?? '',
-        quantity: Math.max(1, Number(line.quantity ?? 1) || 1),
+        quantity: Math.max(0.001, Number(line.quantity ?? 1) || 0.001),
         unit_price: Math.max(0, Number(line.unit_price ?? 0) || 0),
       };
     }
@@ -50,7 +50,7 @@ function buildRows(value: BudgetLine[] | undefined, prev?: LineDraft[]): LineDra
       id: null,
       key: prev?.[i]?.key ?? newKey(),
       item_name: line.item_name ?? '',
-      quantity: Math.max(1, Number(line.quantity ?? 1) || 1),
+      quantity: Math.max(0.001, Number(line.quantity ?? 1) || 0.001),
       unit_price: Math.max(0, Number(line.unit_price ?? 0) || 0),
     };
   });
@@ -109,7 +109,7 @@ export default function BudgetLinesEditor({ value, onChange, budgetTarget }: Bud
 
   const saveDraft = () => {
     if (!draft.item_name.trim()) return;
-    const quantity = Math.max(1, parseInt(draft.quantity, 10) || 1);
+    const quantity = Math.max(0.001, parseFloat(draft.quantity) || 0.001);
     const unitPrice = Math.max(0, parseFloat(draft.unit_price) || 0);
     const saved: LineDraft = {
       key: draft.key ?? newKey(),
@@ -136,7 +136,7 @@ export default function BudgetLinesEditor({ value, onChange, budgetTarget }: Bud
   };
 
   const canSave = draft.item_name.trim().length > 0;
-  const lineTotalPreview = (parseInt(draft.quantity, 10) || 1) * (parseFloat(draft.unit_price) || 0);
+  const lineTotalPreview = (parseFloat(draft.quantity) || 0.001) * (parseFloat(draft.unit_price) || 0);
   const target = budgetTarget ?? null;
   const showComparison = target !== null && total !== target;
 
@@ -238,7 +238,7 @@ export default function BudgetLinesEditor({ value, onChange, budgetTarget }: Bud
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
               <input
-                type="number" step="1" min="1" inputMode="numeric"
+                type="number" step="0.1" min="0.001" inputMode="decimal"
                 value={draft.quantity}
                 onChange={(e) => setDraft((d) => ({ ...d, quantity: e.target.value }))}
                 className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-blue-400 focus:outline-none"

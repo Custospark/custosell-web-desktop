@@ -10,7 +10,7 @@ function item(id: number, name: string, unitPrice: number, quantity: number, dec
       unit_price: unitPrice,
       unit,
       supports_decimal_quantity: decimal,
-      pricing_unit_label: decimal ? unit : null,
+      pricing_unit_label: decimal ? unit : undefined,
       description: null,
       image_path: null,
       stock_quantity: 100,

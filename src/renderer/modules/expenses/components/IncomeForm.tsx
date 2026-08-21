@@ -405,14 +405,12 @@ export default function IncomeForm({ open, onClose, income }: IncomeFormProps) {
         {/* ── Actions ──────────────────────────────────────── */}
         <div className="flex items-center justify-end gap-3 border-t border-gray-100 pt-4">
           <Button type="button" variant="secondary" onClick={onClose}>
-            {isEditing ? 'Done' : 'Cancel'}
+            {isEditing ? 'Cancel' : 'Cancel'}
           </Button>
-          {!isEditing && (
-            <Button type="submit" loading={isPending} disabled={!sourceName.trim() || !amount || isPending}>
-              <Wallet className="h-4 w-4" />
-              Save Income
-            </Button>
-          )}
+          <Button type="submit" loading={isPending} disabled={!sourceName.trim() || !amount || isPending}>
+            <Wallet className="h-4 w-4" />
+            {isEditing ? 'Save Changes' : 'Save Income'}
+          </Button>
         </div>
       </form>
     </Modal>

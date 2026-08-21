@@ -2,6 +2,7 @@ import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
 import { useBudgetDetail, usePurchaseLine, useBudgetAffordability } from '../api/BudgetQueries';
 import { getBusinessCurrency } from '../../../shared/utils/formatCurrency';
+import { formatQuantity } from '../../../shared/utils/formatQuantity';
 import {
   PiggyBank, ShoppingCart, Receipt, Wallet, ArrowRight, CheckCircle2, ShieldCheck, AlertTriangle, Loader2,
 } from 'lucide-react';
@@ -19,7 +20,7 @@ function PlanLineRow({ budgetId, line }: { budgetId: number; line: BudgetLine })
     <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-gray-200 px-3 py-2">
       <div className="min-w-0">
         <p className="text-sm font-medium text-gray-800 truncate">{line.item_name}</p>
-        <p className="text-xs text-gray-500">{line.quantity} × {getBusinessCurrency()} {Number(line.unit_price).toFixed(2)}</p>
+        <p className="text-xs text-gray-500">{formatQuantity(line.quantity)} × {getBusinessCurrency()} {Number(line.unit_price).toFixed(2)}</p>
       </div>
       <div className="flex items-center gap-2 shrink-0">
         <span className="text-sm font-semibold text-gray-700">{getBusinessCurrency()} {Number(line.line_total).toFixed(2)}</span>

@@ -86,6 +86,7 @@ export function buildLocalExpense(payload: ExpenseFormPayload): ExpenseWithSyncM
     business_id: authUser?.business_id ?? 0,
     expense_category_id: categoryId,
     expense_category: getSelectedCategory(categoryId),
+    budget_id: payload.fields.budget_id ? Number(payload.fields.budget_id) : null,
     recorded_by: authUser?.id ?? null,
     recorded_by_user: authUser ? { data: { id: authUser.id, name: authUser.name, email: authUser.email } } : null,
     location_id: payload.fields.location_id ? Number(payload.fields.location_id) : null,

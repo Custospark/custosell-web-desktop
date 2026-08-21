@@ -10,6 +10,7 @@ export default defineConfig({
       'src/renderer/modules/sales/api/__tests__/**/*.test.{ts,tsx}',
       'src/renderer/modules/storefront/cart/__tests__/**/*.test.{ts,tsx}',
       'src/renderer/modules/invoices/__tests__/**/*.test.{ts,tsx}',
+      'src/renderer/modules/expenses/__tests__/**/*.test.{ts,tsx}',
       'src/renderer/app/store/offline/**/*.test.{ts,tsx}',
       'src/renderer/app/store/slices/__tests__/**/*.test.{ts,tsx}',
       'src/renderer/shared/utils/__tests__/**/*.test.{ts,tsx}',

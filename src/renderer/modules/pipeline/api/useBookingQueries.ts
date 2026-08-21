@@ -19,9 +19,15 @@ async function publicFetch<T>(path: string, options?: RequestInit): Promise<T> {
     headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
     ...options,
   });
-  const body = await res.json();
-  if (!res.ok) throw new Error(body.message ?? 'Request failed');
-  return body;
+  const text = await res.text();
+  let body: { message?: string } | null = null;
+  try {
+    body = text ? JSON.parse(text) : null;
+  } catch {
+    body = null;
+  }
+  if (!res.ok) throw new Error(body?.message ?? 'Request failed');
+  return (body ?? {}) as T;
 }
 
 export function useBookingInfo(token: string) {

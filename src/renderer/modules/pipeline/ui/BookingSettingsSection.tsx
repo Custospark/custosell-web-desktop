@@ -131,21 +131,21 @@ export default function BookingSettingsSection({ boardId, stages, canManage }: B
     setF((prev) => ({ ...prev, dirty: false }));
   };
 
+  const bookingUrl = settings?.booking_url ?? `${window.location.origin}/book/${token}`;
+
   const handleCopyLink = useCallback(async () => {
-    const link = `${window.location.origin}/book/${token}`;
+    const link = bookingUrl;
     try {
       await navigator.clipboard.writeText(link);
       showToast('success', 'Booking link copied!');
     } catch {
       showToast('error', 'Could not copy link');
     }
-  }, [token, showToast]);
+  }, [bookingUrl, showToast]);
 
   const handleRegenerate = async () => {
     await regenerateToken.mutateAsync();
   };
-
-  const bookingUrl = settings?.booking_url ?? `${window.location.origin}/book/${token}`;
 
   if (isLoading) {
     return (

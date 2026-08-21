@@ -230,3 +230,64 @@ export function getCountryLabel(countryOrCode?: string | null): string {
   if (!countryOrCode?.trim()) return 'Not set';
   return resolveCountryCode(countryOrCode)?.name ?? countryOrCode.trim();
 }
+
+/**
+ * Suggested postal code / format hint per country (ISO-2 code). Used to
+ * auto-fill the postal code field when a country is selected and the field
+ * is still empty. Values are representative examples of each country's postal
+ * format - the owner can still edit them.
+ */
+const POSTAL_CODES_BY_COUNTRY: Record<string, string> = {
+  UG: '25600', // Kampala
+  KE: '00100', // Nairobi
+  TZ: '11000', // Dar es Salaam
+  RW: 'KG 110', // Kigali
+  BI: '00000',
+  SS: '00000',
+  ET: '1000', // Addis Ababa
+  SO: '00000',
+  DJ: '00000',
+  ER: '00000',
+  US: '10001',
+  GB: 'SW1A 1AA',
+  CA: 'K1A 0B1',
+  AU: '2000',
+  NZ: '1010',
+  IN: '110001',
+  NG: '100001',
+  ZA: '2001',
+  GH: 'GA-000', // Accra
+  AE: '00000', // Dubai
+  SA: '12211',
+  QA: '00000',
+  CN: '100000',
+  JP: '100-0001',
+  DE: '10115',
+  FR: '75001',
+  IT: '00100',
+  ES: '28001',
+  PT: '1100-001',
+  NL: '1011 AB',
+  BE: '1000',
+  CH: '8001',
+  SE: '111 21',
+  NO: '0150',
+  DK: '1050',
+  FI: '00100',
+  IE: 'D01 F5P2',
+  PL: '00-001',
+  RU: '101000',
+  BR: '01310-100',
+  MX: '01000',
+  AR: 'C1000',
+  TR: '34000',
+  EG: '11511',
+  IL: '6100000',
+};
+
+/** Return a suggested postal code for a country name/code, or null. */
+export function suggestedPostalCode(countryOrCode?: string | null): string | null {
+  const country = resolveCountryCode(countryOrCode);
+  if (!country) return null;
+  return POSTAL_CODES_BY_COUNTRY[country.code] ?? null;
+}

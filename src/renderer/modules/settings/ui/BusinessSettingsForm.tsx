@@ -11,6 +11,7 @@ import {
 import {
   findCountryByCode,
   resolveCountryCode,
+  suggestedPostalCode,
   type CountryCode,
 } from '../../../shared/utils/countryCodes';
 import {
@@ -126,6 +127,11 @@ export default function BusinessSettingsForm() {
     const country = findCountryByCode(isoCode);
     if (!country) return;
     update('country', country.name);
+    // Auto-fill a representative postal code when the field is still empty.
+    if (!form.postal_code || !form.postal_code.trim()) {
+      const postal = suggestedPostalCode(country.code);
+      if (postal) update('postal_code', postal);
+    }
   };
 
   const handleJurisdictionChange = (isoCode: string) => {

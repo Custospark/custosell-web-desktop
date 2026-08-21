@@ -95,6 +95,9 @@ export default function InvoiceBuilderForm({
     productId: number;
     productName: string;
     currentQty: number;
+    supportsDecimalQuantity?: boolean;
+    unit?: string | null;
+    lineUnitPrice?: number;
   } | null>(null);
   const [prevSeedCustomerId, setPrevSeedCustomerId] = useState(seed?.customerId ?? null);
 
@@ -464,6 +467,9 @@ export default function InvoiceBuilderForm({
             const p = products?.find((x) => x.id === qtyEdit.productId);
             return p && tracksStock(p) ? p.stock_quantity : SERVICE_QTY_SOFT_CAP;
           })()}
+          supportsDecimalQuantity={qtyEdit.supportsDecimalQuantity}
+          unit={qtyEdit.unit}
+          lineUnitPrice={qtyEdit.lineUnitPrice}
           onConfirm={(qty) => {
             updateQuantity(qtyEdit.lineKey, qty);
             setQtyEdit(null);

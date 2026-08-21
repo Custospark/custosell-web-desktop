@@ -33,6 +33,7 @@ const salesSlice = createSlice({
       wholesale_price?: number | null;
       is_service?: boolean;
       unit?: string | null;
+      supports_decimal_quantity?: boolean;
       tax_percentage?: number | string | null;
       tax_class?: string | null;
       price_tier?: 'retail' | 'wholesale';
@@ -54,6 +55,7 @@ const salesSlice = createSlice({
           name: action.payload.name,
           unit_price: effective,
           unit: action.payload.unit,
+          supports_decimal_quantity: action.payload.supports_decimal_quantity ?? false,
           tax_percentage: action.payload.tax_percentage ?? null,
           tax_class: action.payload.tax_class ?? 'standard',
           quantity: 1,

@@ -2,7 +2,7 @@ import type { CatalogItemType, CreateProductData, Product } from '../../api/prod
 import type { TaxClass } from '../../../../shared/utils/taxEngine';
 
 export interface FormState {
-  name: string; type: CatalogItemType; unit: string; category_id: number | null; description: string | null;
+  name: string; type: CatalogItemType; unit: string; pricing_unit: string; category_id: number | null; description: string | null;
   sku: string | null; barcode: string | null; is_active: boolean;
   is_recurring: boolean; billing_interval: string;
   unit_price: string; wholesale_price: string; cost_price: string; stock_quantity: string;
@@ -11,7 +11,7 @@ export interface FormState {
 }
 
 export const emptyForm: FormState = {
-  name: '', type: 'product', unit: '', category_id: null, description: null,
+  name: '', type: 'product', unit: '', pricing_unit: '', category_id: null, description: null,
   sku: null, barcode: null, is_active: true,
   is_recurring: false, billing_interval: 'month',
   unit_price: '', wholesale_price: '', cost_price: '', stock_quantity: '0',
@@ -27,7 +27,7 @@ export function toNumber(val: string): number {
 export function toProductForm(product: Product): FormState {
   return {
     name: product.name, type: product.type === 'service' ? 'service' : 'product',
-    unit: product.unit ?? '', category_id: product.category_id, description: product.description,
+    unit: product.unit ?? '', pricing_unit: product.pricing_unit ?? '', category_id: product.category_id, description: product.description,
     sku: product.sku, barcode: product.barcode, is_active: product.is_active,
     is_recurring: product.is_recurring ?? false,
     billing_interval: product.billing_interval ?? 'month',
@@ -46,7 +46,7 @@ export function toProductForm(product: Product): FormState {
 export function toCreatePayload(f: FormState, defaultLocationId: number | null): CreateProductData {
   const isService = f.type === 'service';
   return {
-    name: f.name, type: f.type, unit: f.unit || null, category_id: f.category_id, description: f.description,
+    name: f.name, type: f.type, unit: f.unit || null, pricing_unit: f.pricing_unit || null, category_id: f.category_id, description: f.description,
     sku: f.sku, barcode: f.barcode, is_active: f.is_active,
     is_recurring: f.is_recurring,
     billing_interval: f.is_recurring ? (f.billing_interval || 'month') : null,

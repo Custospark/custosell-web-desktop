@@ -7,6 +7,8 @@ export interface CartItem {
   quantity: number;
   discount_amount: number;
   unit?: string | null;
+  /** True when the product sells in fractional quantities (kg, litre, g, ml). */
+  supports_decimal_quantity?: boolean;
   /** Active price tier for this line - wholesale uses wholesale_price as unit_price. */
   price_tier: CartPriceTier;
   /** Fixed retail price captured at add time (so tier toggling offline is stable). */

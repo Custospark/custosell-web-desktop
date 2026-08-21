@@ -18,6 +18,9 @@ interface InvoiceLineItemsTableProps {
     productId: number;
     productName: string;
     currentQty: number;
+    supportsDecimalQuantity?: boolean;
+    unit?: string | null;
+    lineUnitPrice?: number;
   }) => void;
   onRemoveItem: (lineKey: string) => void;
   onClearAll: () => void;
@@ -110,7 +113,13 @@ export function InvoiceLineItemsTable({
                         <button
                           type="button"
                           title="Decrease quantity"
-                          onClick={() => onUpdateQuantity(item.lineKey, item.quantity - 1)}
+                          onClick={() => {
+                            const product = item.product_id != null
+                              ? products?.find((p) => p.id === item.product_id)
+                              : undefined;
+                            const step = product?.supports_decimal_quantity ? 0.5 : 1;
+                            onUpdateQuantity(item.lineKey, Math.max(0.001, Math.round((item.quantity - step) * 1000) / 1000));
+                          }}
                           className="w-8 h-8 rounded-full border-2 border-red-400 hover:bg-red-50 text-red-500 flex items-center justify-center"
                         >
                           <Minus className="w-4 h-4" />
@@ -118,15 +127,23 @@ export function InvoiceLineItemsTable({
                         <button
                           type="button"
                           title="Edit quantity"
-                          onClick={() => onEditQuantity({
-                            lineKey: item.lineKey,
-                            productId: item.product_id ?? 0,
-                            productName: item.name,
-                            currentQty: item.quantity,
-                          })}
+                          onClick={() => {
+                            const product = item.product_id != null
+                              ? products?.find((p) => p.id === item.product_id)
+                              : undefined;
+                            onEditQuantity({
+                              lineKey: item.lineKey,
+                              productId: item.product_id ?? 0,
+                              productName: item.name,
+                              currentQty: item.quantity,
+                              supportsDecimalQuantity: product?.supports_decimal_quantity ?? false,
+                              unit: product?.pricing_unit_label ?? product?.unit ?? null,
+                              lineUnitPrice: item.unit_price,
+                            });
+                          }}
                           className="w-14 text-center text-base font-semibold text-gray-900 tabular-nums hover:text-blue-600 flex flex-col items-center leading-tight"
                         >
-                          <span>{item.quantity}</span>
+                          <span>{item.quantity % 1 === 0 ? item.quantity : Number(item.quantity.toFixed(3))}</span>
                           <span className="inline-flex items-center gap-0.5 text-[9px] font-medium text-blue-500">
                             <Pencil className="w-2.5 h-2.5" /> edit
                           </span>
@@ -141,7 +158,10 @@ export function InvoiceLineItemsTable({
                             const maxQty = product && tracksStock(product)
                               ? product.stock_quantity
                               : Infinity;
-                            if (item.quantity < maxQty) onUpdateQuantity(item.lineKey, item.quantity + 1);
+                            if (item.quantity < maxQty) {
+                              const step = product?.supports_decimal_quantity ? 0.5 : 1;
+                              onUpdateQuantity(item.lineKey, Math.round((item.quantity + step) * 1000) / 1000);
+                            }
                           }}
                           className="w-8 h-8 rounded-full border-2 border-green-400 hover:bg-green-50 text-green-600 flex items-center justify-center"
                         >

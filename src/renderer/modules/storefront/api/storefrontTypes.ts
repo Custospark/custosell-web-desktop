@@ -36,6 +36,9 @@ export interface StorefrontProduct {
   sale_price?: string | number | null;
   discount_percent?: string | number | null;
   unit: string | null;
+  pricing_unit?: string | null;
+  supports_decimal_quantity?: boolean;
+  pricing_unit_label?: string;
   image_path: string | null;
   type?: string;
   stock_quantity?: number;

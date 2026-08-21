@@ -1,5 +1,6 @@
 import { forwardRef } from 'react';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
+import { formatQuantity } from '../../../../shared/utils/formatQuantity';
 import { cleanProductName } from '../../../../shared/utils/cleanProductName';
 import { useAppSelector } from '../../../../app/store/hooks/useApp';
 import type { Sale, SaleItem } from '../../api/salesTypes';
@@ -111,7 +112,7 @@ const ReceiptContent = forwardRef<HTMLDivElement, ReceiptContentProps>(({ sale }
                     <span>{cleanProductName(item.product_name)}</span>
                     {refunded && (
                       <span className="block ml-0 text-[10px] text-red-500">
-                        {item.refunded_quantity} refunded −{parseFloat(item.refunded_amount || '0').toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        {formatQuantity(item.refunded_quantity)} refunded −{parseFloat(item.refunded_amount || '0').toLocaleString('en-US', { minimumFractionDigits: 2 })}
                       </span>
                     )}
                     {lineDiscount > 0 && (
@@ -120,7 +121,7 @@ const ReceiptContent = forwardRef<HTMLDivElement, ReceiptContentProps>(({ sale }
                       </span>
                     )}
                   </td>
-                  <td className="py-1 text-center text-gray-800 px-2 whitespace-nowrap">{item.quantity}</td>
+                  <td className="py-1 text-center text-gray-800 px-2 whitespace-nowrap">{formatQuantity(item.quantity)}</td>
                   <td className="py-1 text-right text-gray-800 px-2 whitespace-nowrap">
                     <span>{unit.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                   </td>

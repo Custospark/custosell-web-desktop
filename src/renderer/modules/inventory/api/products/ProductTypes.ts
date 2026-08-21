@@ -18,6 +18,12 @@ export interface Product {
   name: string;
   type?: CatalogItemType;
   unit: string | null;
+  /** Machine-readable selling unit (kg, litre, piece, ...); null for unknown/custom units. */
+  pricing_unit?: string | null;
+  /** True for weight/volume units that accept fractional quantities (0.5 kg). */
+  supports_decimal_quantity?: boolean;
+  /** Presentable unit label (Kg, Litre, Piece, custom). */
+  pricing_unit_label?: string;
   description: string | null;
   sku: string | null;
   barcode: string | null;
@@ -100,6 +106,7 @@ export interface CreateProductData {
   name: string;
   type?: CatalogItemType;
   unit?: string | null;
+  pricing_unit?: string | null;
   unit_price: number;
   discount_percent?: number | null;
   wholesale_price?: number | null;

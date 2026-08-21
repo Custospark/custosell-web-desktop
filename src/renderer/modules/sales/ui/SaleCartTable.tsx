@@ -3,6 +3,7 @@ import type { CartItem } from '../api/salesTypes';
 import type { Product } from '../../inventory/api/products/ProductTypes';
 import { tracksStock, SERVICE_QTY_SOFT_CAP } from '../../inventory/api/products/ProductTypes';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
+import { formatQuantity } from '../../../shared/utils/formatQuantity';
 import { MoneyInput } from '../../../shared/components/inputs/MoneyInput';
 
 interface SaleCartTableProps {
@@ -68,6 +69,7 @@ function QtyStepper(
 ) {
   const maxStock = product && tracksStock(product) ? product.stock_quantity : SERVICE_QTY_SOFT_CAP;
   const atMax = item.quantity >= maxStock;
+  const qtyLabel = formatQuantity(item.quantity);
   return (
     <div className="flex items-center justify-center gap-2">
       <button title="Decrease quantity" type="button" onClick={() => onDecreaseQty(item)}
@@ -77,7 +79,7 @@ function QtyStepper(
       <span title="Click to edit quantity"
         className="w-14 text-center text-base font-semibold text-gray-900 tabular-nums cursor-pointer hover:text-blue-600 transition-colors flex flex-col items-center leading-tight"
         onClick={() => onEditQty(item, product)}>
-        <span>{item.quantity}</span>
+        <span>{qtyLabel}{item.unit ? ` ${item.unit}` : ''}</span>
         <span className="inline-flex items-center gap-0.5 text-[9px] font-medium text-blue-500">
           <Pencil className="w-2.5 h-2.5" /> edit
         </span>

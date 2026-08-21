@@ -42,7 +42,7 @@ export function SaleItemsStep({ onNext }: SaleItemsStepProps) {
   const [heldModalOpen, setHeldModalOpen] = useState(false);
   const [holdModalOpen, setHoldModalOpen] = useState(false);
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
-  const [qtyEdit, setQtyEdit] = useState<{ productId: number; productName: string; currentQty: number; maxQty: number; tier?: 'retail' | 'wholesale' } | null>(null);
+  const [qtyEdit, setQtyEdit] = useState<{ productId: number; productName: string; currentQty: number; maxQty: number; tier?: 'retail' | 'wholesale'; supportsDecimalQuantity?: boolean; unit?: string | null; lineUnitPrice?: number } | null>(null);
   const [reloadFeedback, setReloadFeedback] = useState<ReloadFeedback>('idle');
   const reloadFeedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const clearReloadFeedback = useCallback(() => {
@@ -181,6 +181,7 @@ export function SaleItemsStep({ onNext }: SaleItemsStepProps) {
     wholesale?: number | null,
     tier?: 'retail' | 'wholesale',
     isService?: boolean,
+    supportsDecimalQuantity?: boolean,
   ) => {
     dispatch(addToCart({
       product_id: id,
@@ -189,6 +190,7 @@ export function SaleItemsStep({ onNext }: SaleItemsStepProps) {
       wholesale_price: wholesale,
       is_service: isService,
       unit,
+      supports_decimal_quantity: supportsDecimalQuantity ?? false,
       tax_percentage: taxPercentage,
       tax_class: taxClass,
       price_tier: tier,
@@ -214,6 +216,7 @@ export function SaleItemsStep({ onNext }: SaleItemsStepProps) {
       match.wholesale_price != null ? parseFloat(match.wholesale_price) : null,
       undefined,
       isServiceItem(match),
+      match.supports_decimal_quantity,
     );
   }, [search, products, addItem]);
 
@@ -272,9 +275,9 @@ export function SaleItemsStep({ onNext }: SaleItemsStepProps) {
                         && (p.name.toLowerCase() === q || (p.sku && p.sku.toLowerCase() === q)),
                       );
                     if (exact) {
-                      addItem(exact.id, exact.name, parseFloat(exact.unit_price), exact.unit, exact.tax_percentage, exact.tax_class, exact.wholesale_price != null ? parseFloat(exact.wholesale_price) : null, undefined, isServiceItem(exact));
+                      addItem(exact.id, exact.name, parseFloat(exact.unit_price), exact.unit, exact.tax_percentage, exact.tax_class, exact.wholesale_price != null ? parseFloat(exact.wholesale_price) : null, undefined, isServiceItem(exact), exact.supports_decimal_quantity);
                     } else if (results.length > 0 && isSellable(results[0])) {
-                      addItem(results[0].id, results[0].name, parseFloat(results[0].unit_price), results[0].unit, results[0].tax_percentage, results[0].tax_class, results[0].wholesale_price != null ? parseFloat(results[0].wholesale_price) : null, undefined, isServiceItem(results[0]));
+                      addItem(results[0].id, results[0].name, parseFloat(results[0].unit_price), results[0].unit, results[0].tax_percentage, results[0].tax_class, results[0].wholesale_price != null ? parseFloat(results[0].wholesale_price) : null, undefined, isServiceItem(results[0]), results[0].supports_decimal_quantity);
                     }
                   }
                 }}
@@ -316,7 +319,7 @@ export function SaleItemsStep({ onNext }: SaleItemsStepProps) {
                         <tbody className="divide-y divide-gray-100">
                           {results.map((p) => (
                             <tr key={p.id} title={`Add ${p.name} to cart`} className="hover:bg-blue-50 cursor-pointer transition-colors"
-                              onMouseDown={() => isSellable(p) && addItem(p.id, p.name, parseFloat(p.unit_price), p.unit, p.tax_percentage, p.tax_class, p.wholesale_price != null ? parseFloat(p.wholesale_price) : null, undefined, isServiceItem(p))}>
+                              onMouseDown={() => isSellable(p) && addItem(p.id, p.name, parseFloat(p.unit_price), p.unit, p.tax_percentage, p.tax_class, p.wholesale_price != null ? parseFloat(p.wholesale_price) : null, undefined, isServiceItem(p), p.supports_decimal_quantity)}>
                               <td className="px-3 sm:px-4 py-2.5 sm:py-3">
                                 <ProductSearchThumb
                                   name={p.name}
@@ -426,15 +429,28 @@ export function SaleItemsStep({ onNext }: SaleItemsStepProps) {
               products={products}
               onEditQty={(item) => {
                 const p = products?.find((x) => x.id === item.product_id);
-                setQtyEdit({ productId: item.product_id, productName: item.name, currentQty: item.quantity, maxQty: p && tracksStock(p) ? p.stock_quantity : SERVICE_QTY_SOFT_CAP, tier: item.price_tier });
+                setQtyEdit({
+                  productId: item.product_id,
+                  productName: item.name,
+                  currentQty: item.quantity,
+                  maxQty: p && tracksStock(p) ? p.stock_quantity : SERVICE_QTY_SOFT_CAP,
+                  tier: item.price_tier,
+                  supportsDecimalQuantity: item.supports_decimal_quantity ?? p?.supports_decimal_quantity ?? false,
+                  unit: item.unit ?? p?.unit ?? null,
+                  lineUnitPrice: item.unit_price,
+                });
               }}
               onTierChange={(item, tier) => dispatch(setLineTier({ product_id: item.product_id, tier }))}
               onDiscountChange={(item, amount) => dispatch(setLineDiscount({ product_id: item.product_id, discountAmount: amount }))}
-              onDecreaseQty={(item) => dispatch(updateQuantity({ product_id: item.product_id, tier: item.price_tier, quantity: item.quantity - 1 }))}
+              onDecreaseQty={(item) => {
+                const step = item.supports_decimal_quantity ? 0.5 : 1;
+                dispatch(updateQuantity({ product_id: item.product_id, tier: item.price_tier, quantity: Math.max(0.001, Math.round((item.quantity - step) * 1000) / 1000) }));
+              }}
               onIncreaseQty={(item) => {
                 const p = products?.find((x) => x.id === item.product_id);
                 const maxStock = p && tracksStock(p) ? p.stock_quantity : SERVICE_QTY_SOFT_CAP;
-                if (item.quantity < maxStock) dispatch(updateQuantity({ product_id: item.product_id, tier: item.price_tier, quantity: item.quantity + 1 }));
+                const step = item.supports_decimal_quantity ? 0.5 : 1;
+                if (item.quantity < maxStock) dispatch(updateQuantity({ product_id: item.product_id, tier: item.price_tier, quantity: Math.round((item.quantity + step) * 1000) / 1000 }));
               }}
               onRemove={(item) => dispatch(removeFromCart({ product_id: item.product_id, tier: item.price_tier }))}
             />
@@ -472,6 +488,9 @@ export function SaleItemsStep({ onNext }: SaleItemsStepProps) {
           currentQty={qtyEdit.currentQty}
           maxQty={qtyEdit.maxQty}
           tier={qtyEdit.tier}
+          supportsDecimalQuantity={qtyEdit.supportsDecimalQuantity}
+          unit={qtyEdit.unit}
+          lineUnitPrice={qtyEdit.lineUnitPrice}
         />
       )}
     </>

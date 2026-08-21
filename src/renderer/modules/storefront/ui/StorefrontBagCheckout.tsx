@@ -4,6 +4,7 @@ import { Minus, Pencil, Plus, Trash2 } from 'lucide-react';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { Button } from '../../../shared/components/buttons/Button';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
+import { formatQuantity } from '../../../shared/utils/formatQuantity';
 import { cleanProductName } from '../../../shared/utils/cleanProductName';
 import { SERVICE_QTY_SOFT_CAP } from '../../inventory/api/products/ProductTypes';
 import QuantityEditModal from '../../sales/ui/QuantityEditModal';
@@ -44,6 +45,9 @@ export function StorefrontBagCheckout({
     productId: number;
     productName: string;
     currentQty: number;
+    supportsDecimalQuantity?: boolean;
+    unit?: string | null;
+    lineUnitPrice?: number;
   } | null>(null);
 
   return (
@@ -96,10 +100,13 @@ export function StorefrontBagCheckout({
                       productId: line.product.id,
                       productName: line.product.name,
                       currentQty: line.quantity,
+                      supportsDecimalQuantity: line.product.supports_decimal_quantity ?? false,
+                      unit: line.product.pricing_unit_label ?? line.product.unit ?? null,
+                      lineUnitPrice: unit,
                     })}
                     disabled={busy}
                   >
-                    {line.quantity}
+                    {formatQuantity(line.quantity)}
                     <Pencil className="h-3 w-3 text-blue-400" />
                   </button>
                   <button
@@ -196,6 +203,9 @@ export function StorefrontBagCheckout({
           productName={qtyEdit.productName}
           currentQty={qtyEdit.currentQty}
           maxQty={SERVICE_QTY_SOFT_CAP}
+          supportsDecimalQuantity={qtyEdit.supportsDecimalQuantity}
+          unit={qtyEdit.unit}
+          lineUnitPrice={qtyEdit.lineUnitPrice}
           onConfirm={(quantity) => {
             onUpdateQty(bag.shop.slug, qtyEdit.productId, quantity);
             setQtyEdit(null);

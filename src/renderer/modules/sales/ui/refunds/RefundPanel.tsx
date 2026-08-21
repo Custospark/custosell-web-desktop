@@ -10,6 +10,7 @@ import { Table } from '../../../../shared/components/tables/Table';
 import { Badge } from '../../../../shared/components/badges/Badge';
 import { Modal } from '../../../../shared/components/modals/Modal';
 import { LoadingSkeleton } from '../../../../shared/components/loading/LoadingSkeletons';
+import { formatQuantity } from '../../../../shared/utils/formatQuantity';
 import { EmptyState } from '../../../../shared/components/cards/EmptyState';
 import { Pagination, usePagination } from '../../../../shared/components/tables/Pagination';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
@@ -90,7 +91,9 @@ export default function RefundPanel() {
   /** Portion of the line the customer actually paid, post line + global discounts (incl. tax). */
   const refundLineAmount = (saleItem: SaleItem, qty: number) => {
     if (!saleItem || qty <= 0) return 0;
-    const perUnit = (parseFloat(String(saleItem.subtotal)) + parseFloat(String(saleItem.tax_amount ?? '0'))) / Math.max(1, saleItem.quantity);
+    const perUnit = saleItem.quantity > 0
+      ? (parseFloat(String(saleItem.subtotal)) + parseFloat(String(saleItem.tax_amount ?? '0'))) / saleItem.quantity
+      : 0;
     return Math.round(perUnit * qty * 100) / 100;
   };
 
@@ -394,23 +397,23 @@ export default function RefundPanel() {
                           <div className="min-w-0 flex-1">
                             <p className="text-sm font-medium text-gray-800 truncate">{item.product_name}</p>
                             <p className="text-xs text-gray-500 mt-0.5">
-                              Sold: {item.quantity} × {formatCurrency(item.unit_price)}
+                              Sold: {formatQuantity(item.quantity)} × {formatCurrency(item.unit_price)}
                               {lineDiscount > 0 && <span> · line disc. {formatCurrency(lineDiscount)}</span>}
                               {saleDiscount > 0 && <span> · global disc. {formatCurrency(saleDiscount)}</span>}
                             </p>
                             {item.refunded_quantity > 0 && (
                               <p className="text-xs text-amber-700 font-medium mt-0.5">
-                                {item.refunded_quantity} already refunded · {formatCurrency(item.refunded_amount)}
+                                {formatQuantity(item.refunded_quantity)} already refunded · {formatCurrency(item.refunded_amount)}
                               </p>
                             )}
                           </div>
                           <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
                             <div className="text-right">
-                              <input type="number" min={0} max={maxRefundable}
+                              <input type="number" min={0} max={maxRefundable} step={maxRefundable % 1 === 0 ? 1 : 0.1}
                                 value={refundQtys[item.id] || 0}
-                                onChange={(e) => setRefundQtys((prev) => ({ ...prev, [item.id]: Math.min(maxRefundable, Math.max(0, parseInt(e.target.value) || 0)) }))}
+                                onChange={(e) => setRefundQtys((prev) => ({ ...prev, [item.id]: Math.min(maxRefundable, Math.max(0, parseFloat(e.target.value) || 0)) }))}
                                 className="w-20 border border-gray-300 rounded-lg px-3 py-2 text-sm text-center" />
-                              <p className="text-xs text-gray-400 mt-1">Max {maxRefundable}</p>
+                              <p className="text-xs text-gray-400 mt-1">Max {formatQuantity(maxRefundable)}</p>
                             </div>
                             <div className="text-right w-24">
                               <p className="text-sm font-semibold text-gray-800">{formatCurrency(refundAmount)}</p>
@@ -425,7 +428,7 @@ export default function RefundPanel() {
                           <div className="min-w-0">
                             <p className="text-sm font-medium text-gray-800 truncate">{item.product_name}</p>
                             <p className="text-xs text-amber-700 font-medium mt-0.5">
-                              {item.refunded_quantity} refunded · {formatCurrency(item.refunded_amount)}
+                              {formatQuantity(item.refunded_quantity)} refunded · {formatCurrency(item.refunded_amount)}
                             </p>
                           </div>
                           <Badge variant="danger">Fully Refunded</Badge>

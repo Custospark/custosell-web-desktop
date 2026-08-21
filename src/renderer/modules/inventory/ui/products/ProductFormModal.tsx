@@ -193,6 +193,10 @@ export default function ProductFormModal({ open, onClose, product, onProductUpda
                   <option key={u} value={u} />
                 ))}
               </datalist>
+              <p className="mt-1.5 text-xs text-gray-400">
+                The unit is your pricing basis. Weight/volume units (Kg, Litre, g, mL) allow fractional
+                quantities at checkout (e.g. 0.5 Kg); pieces are whole numbers.
+              </p>
             </PipelineIconField>
           </div>
 

@@ -84,6 +84,7 @@ See [offline/README.md](./offline/README.md) for the full offline doc index.
 
 | Document | Contents |
 |----------|----------|
+| [2026-08-21-decimal-quantity-selectors.md](./adr/2026-08-21-decimal-quantity-selectors.md) | Decimal quantity selectors for POS, storefront carts, invoices + unit-aware pricing (preset chips, live line total, `formatQuantity`) |
 | [2026-08-14-service-worker-network-first.md](./adr/2026-08-14-service-worker-network-first.md) | SW serves static assets network-first (never cache-first online) - fixes stale-chunk "does not provide an export" errors; no-cache `sw.js`/`index.html`, forced SW updates, consistent deploys |
 | [2026-08-13-onboarding-welcome-optional-tour.md](./adr/2026-08-13-onboarding-welcome-optional-tour.md) | Intent modal welcomes the user by name; goal picking optional; tour is a choice (Take the tour / No thanks), never forced |
 | [2026-08-13-platform-conversions-dashboard.md](./adr/2026-08-13-platform-conversions-dashboard.md) | Platform → Conversions subnav: trial→paid funnel stats, monthly trend + yearly distribution charts, new `converted_at` timestamp + `platform.conversions.view` permission |

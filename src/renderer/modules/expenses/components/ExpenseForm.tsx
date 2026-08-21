@@ -16,6 +16,7 @@ import {
   FolderKanban, Package, Receipt, AlertCircle,
 } from 'lucide-react';
 import { getBusinessCurrency } from '../../../shared/utils/formatCurrency';
+import { MoneyInput } from '../../../shared/components/inputs/MoneyInput';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { useBusinessTaxSettings } from '../../settings/hooks/useBusinessTaxSettings';
 import type { Expense } from '../api/ExpenseTypes';
@@ -67,7 +68,6 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
   const displayExpense = freshExpense ?? expense;
   const attachmentsRef = useRef<ExpenseAttachmentsHandle>(null);
 
-  const amountRef = useRef<HTMLInputElement>(null);
   const dateRef = useRef<HTMLInputElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
 
@@ -139,7 +139,7 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
     setErrors(nextErrors);
     if (Object.values(nextErrors).some(Boolean)) {
       setAttempted(true);
-      if (nextErrors.amount) amountRef.current?.focus();
+      if (nextErrors.amount) setAttempted(true);
       else if (nextErrors.date) dateRef.current?.focus();
       else if (nextErrors.description) descriptionRef.current?.focus();
       return;
@@ -295,17 +295,15 @@ export default function ExpenseForm({ open, onClose, expense, shiftId }: Expense
               <label className="block text-xs font-medium text-gray-600 mb-1">Amount *</label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-500">{getBusinessCurrency()}</span>
-                <input
-                  ref={amountRef}
-                  type="number" min={0} step="100"
-                  value={amount}
-                  aria-invalid={!!errors.amount}
-                  onChange={(e) => { setAmount(e.target.value); clearError('amount'); }}
+                <MoneyInput
+                  value={parseFloat(amount) || 0}
+                  onValueChange={(n) => { setAmount(n > 0 ? String(n) : ''); clearError('amount'); }}
+                  placeholder="0"
+                  min={0}
                   className={cn(
                     'w-full pl-11 pr-3 py-2.5 border-2 rounded-lg text-sm focus:outline-none',
                     errors.amount ? 'border-red-300 bg-red-50/40 focus:border-red-400' : 'border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500',
                   )}
-                  placeholder="0"
                 />
               </div>
               {errors.amount && <p className="mt-1 text-xs font-medium text-red-600">{errors.amount}</p>}

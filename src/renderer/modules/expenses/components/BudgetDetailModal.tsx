@@ -1,7 +1,7 @@
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
 import { useBudgetDetail, usePurchaseLine, useBudgetAffordability } from '../api/BudgetQueries';
-import { getBusinessCurrency } from '../../../shared/utils/formatCurrency';
+import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { formatQuantity } from '../../../shared/utils/formatQuantity';
 import {
   PiggyBank, ShoppingCart, Receipt, Wallet, ArrowRight, CheckCircle2, ShieldCheck, AlertTriangle, Loader2,
@@ -20,10 +20,10 @@ function PlanLineRow({ budgetId, line }: { budgetId: number; line: BudgetLine })
     <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-gray-200 px-3 py-2">
       <div className="min-w-0">
         <p className="text-sm font-medium text-gray-800 truncate">{line.item_name}</p>
-        <p className="text-xs text-gray-500">{formatQuantity(line.quantity)} × {getBusinessCurrency()} {Number(line.unit_price).toFixed(2)}</p>
+        <p className="text-xs text-gray-500">{formatQuantity(line.quantity)} × {formatCurrency(line.unit_price)}</p>
       </div>
       <div className="flex items-center gap-2 shrink-0">
-        <span className="text-sm font-semibold text-gray-700">{getBusinessCurrency()} {Number(line.line_total).toFixed(2)}</span>
+        <span className="text-sm font-semibold text-gray-700">{formatCurrency(line.line_total)}</span>
         {line.purchased && line.expense_id ? (
           <span className="inline-flex items-center gap-1 rounded-full bg-green-100 text-green-700 px-2 py-0.5 text-xs font-medium">
             <CheckCircle2 className="h-3.5 w-3.5" /> Bought
@@ -79,12 +79,12 @@ export default function BudgetDetailModal({ open, onClose, budget }: BudgetDetai
             <p className="text-xs text-blue-700 font-medium">{budget.description || 'Money goal'}</p>
             {summary && (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3">
-                <Field label="Planned" value={`${getBusinessCurrency()} ${Number(summary.planned).toFixed(2)}`} />
-                <Field label="Spent" value={`${getBusinessCurrency()} ${Number(summary.actual_spend).toFixed(2)}`} accent="text-blue-700" />
-                <Field label="Income in" value={`${getBusinessCurrency()} ${Number(summary.actual_income).toFixed(2)}`} accent="text-green-700" />
+                <Field label="Planned" value={formatCurrency(summary.planned)} />
+                <Field label="Spent" value={formatCurrency(summary.actual_spend)} accent="text-blue-700" />
+                <Field label="Income in" value={formatCurrency(summary.actual_income)} accent="text-green-700" />
                 <Field
                   label="Left"
-                  value={`${getBusinessCurrency()} ${Number(summary.remaining).toFixed(2)}`}
+                  value={formatCurrency(summary.remaining)}
                   accent={Number(summary.remaining) < 0 ? 'text-red-600' : 'text-blue-700'}
                 />
               </div>
@@ -122,7 +122,7 @@ export default function BudgetDetailModal({ open, onClose, budget }: BudgetDetai
           {(data?.expenses ?? []).map((ex) => (
             <div key={ex.id} className="flex items-center justify-between gap-2 px-2 py-1.5">
               <span className="text-sm text-gray-600 truncate">{ex.description}</span>
-              <span className="text-sm font-semibold text-gray-700">-{getBusinessCurrency()} {Number(ex.amount).toFixed(2)}</span>
+              <span className="text-sm font-semibold text-gray-700">-{formatCurrency(ex.amount)}</span>
             </div>
           ))}
         </TxList>
@@ -135,7 +135,7 @@ export default function BudgetDetailModal({ open, onClose, budget }: BudgetDetai
           {(data?.income ?? []).map((inc) => (
             <div key={inc.id} className="flex items-center justify-between gap-2 px-2 py-1.5">
               <span className="text-sm text-gray-600 truncate">{inc.source_name}</span>
-              <span className="text-sm font-semibold text-green-700">+{getBusinessCurrency()} {Number(inc.amount).toFixed(2)}</span>
+              <span className="text-sm font-semibold text-green-700">+{formatCurrency(inc.amount)}</span>
             </div>
           ))}
         </TxList>

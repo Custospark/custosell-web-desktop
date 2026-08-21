@@ -5,6 +5,7 @@ import {
   useCreateBudget, useUpdateBudget, useBudgetDetail, useSyncBudgetLines,
 } from '../api/BudgetQueries';
 import { getBusinessCurrency } from '../../../shared/utils/formatCurrency';
+import { MoneyInput } from '../../../shared/components/inputs/MoneyInput';
 import { Target, Wallet, CalendarDays, FileText, PiggyBank, CloudUpload, CloudCheck } from 'lucide-react';
 import type { PersonalBudget, PersonalBudgetSummaryRow, BudgetLine } from '../api/BudgetTypes';
 import BudgetLinesEditor from './BudgetLinesEditor';
@@ -204,12 +205,12 @@ export default function BudgetFormModal({ open, onClose, budget }: BudgetFormMod
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-500">{getBusinessCurrency()}</span>
                 <Wallet className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="number" step="0.01" min="0"
-                  value={plannedAmount}
-                  onChange={(e) => setPlannedAmount(e.target.value)}
-                  className="w-full pl-12 pr-10 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-blue-400 focus:outline-none"
+                <MoneyInput
+                  value={parseFloat(plannedAmount) || 0}
+                  onValueChange={(n) => setPlannedAmount(n > 0 ? String(n) : '')}
                   placeholder="0.00"
+                  min={0}
+                  className="w-full pl-12 pr-10 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-blue-400 focus:outline-none"
                 />
               </div>
               {lines.length > 0 && (

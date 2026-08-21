@@ -12,6 +12,7 @@ import {
   Calendar, FileText, Tag, Paperclip, Link, Trash2, File, Wallet, Repeat,
 } from 'lucide-react';
 import { getBusinessCurrency } from '../../../shared/utils/formatCurrency';
+import { MoneyInput } from '../../../shared/components/inputs/MoneyInput';
 import { formatFileSize } from '../../../shared/utils/formatFileSize';
 import type { IncomeSource, IncomeAttachment } from '../api/IncomeTypes';
 
@@ -232,13 +233,12 @@ export default function IncomeForm({ open, onClose, income }: IncomeFormProps) {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Amount *</label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-500">{getBusinessCurrency()}</span>
-                  <input
-                    type="number" step="0.01" min="0"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    className="w-full pl-11 pr-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-blue-400 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                  <MoneyInput
+                    value={parseFloat(amount) || 0}
+                    onValueChange={(n) => setAmount(n > 0 ? String(n) : '')}
                     placeholder="0.00"
-                    required
+                    min={0}
+                    className="w-full pl-11 pr-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-blue-400 focus:ring-2 focus:ring-blue-400 focus:outline-none"
                   />
                 </div>
               </div>

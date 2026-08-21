@@ -4,7 +4,8 @@ import { Modal } from '../../../shared/components/modals/Modal';
 import {
   Plus, Trash2, ShoppingCart, Calculator, Pencil, Scale,
 } from 'lucide-react';
-import { getBusinessCurrency } from '../../../shared/utils/formatCurrency';
+import { getBusinessCurrency, formatCurrency } from '../../../shared/utils/formatCurrency';
+import { MoneyInput } from '../../../shared/components/inputs/MoneyInput';
 import { cn } from '../../../shared/utils/cn';
 import type { BudgetLine } from '../api/BudgetTypes';
 
@@ -164,11 +165,11 @@ export default function BudgetLinesEditor({ value, onChange, budgetTarget }: Bud
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-gray-800 truncate">{row.item_name}</p>
                     <p className="text-xs text-gray-500">
-                      {row.quantity} × {getBusinessCurrency()} {row.unit_price.toFixed(2)}
+                      {row.quantity} × {formatCurrency(row.unit_price)}
                     </p>
                   </div>
                   <span className="text-sm font-semibold text-gray-700 shrink-0">
-                    {getBusinessCurrency()} {(row.quantity * row.unit_price).toFixed(2)}
+                    {formatCurrency(row.quantity * row.unit_price)}
                   </span>
                   <div className="flex items-center gap-1 shrink-0">
                     <button
@@ -201,14 +202,14 @@ export default function BudgetLinesEditor({ value, onChange, budgetTarget }: Bud
               {showComparison && (
                 <div className="flex items-center gap-1.5 text-xs text-amber-700">
                   <Scale className="w-3.5 h-3.5" />
-                  Plan total {getBusinessCurrency()} {total.toFixed(2)} vs target {getBusinessCurrency()} {target.toFixed(2)}
+                  Plan total {formatCurrency(total)} vs target {formatCurrency(target)}
                 </div>
               )}
               <div className="flex items-center gap-1.5 text-sm text-gray-500">
                 <Calculator className="w-4 h-4 text-blue-500" /> Auto-total
               </div>
               <span className="font-bold text-blue-700">
-                {getBusinessCurrency()} {total.toFixed(2)}
+                {formatCurrency(total)}
               </span>
             </div>
           </div>
@@ -249,12 +250,12 @@ export default function BudgetLinesEditor({ value, onChange, budgetTarget }: Bud
               <label className="block text-sm font-medium text-gray-700 mb-1">Unit price</label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-500">{getBusinessCurrency()}</span>
-                <input
-                  type="number" step="0.01" min="0" inputMode="decimal"
-                  value={draft.unit_price}
-                  onChange={(e) => setDraft((d) => ({ ...d, unit_price: e.target.value }))}
-                  className="w-full pl-12 pr-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-blue-400 focus:outline-none"
+                <MoneyInput
+                  value={parseFloat(draft.unit_price) || 0}
+                  onValueChange={(n) => setDraft((d) => ({ ...d, unit_price: n > 0 ? String(n) : '' }))}
                   placeholder="0.00"
+                  min={0}
+                  className="w-full pl-12 pr-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:border-blue-400 focus:outline-none"
                 />
               </div>
             </div>
@@ -267,7 +268,7 @@ export default function BudgetLinesEditor({ value, onChange, budgetTarget }: Bud
           >
             <span className="text-sm text-gray-600">Line total</span>
             <span className={cn('text-sm font-bold', lineTotalPreview > 0 ? 'text-blue-700' : 'text-gray-400')}>
-              {getBusinessCurrency()} {lineTotalPreview.toFixed(2)}
+              {formatCurrency(lineTotalPreview)}
             </span>
           </div>
         </div>

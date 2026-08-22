@@ -29,7 +29,7 @@ interface DocumentsPanelModalsProps {
 }
 
 export function DocumentsPanelModals({ data, actions, modalState, fileInputRef, createFolder, createLink, updateFolder, updateDocument, updateVaultAppearance }: DocumentsPanelModalsProps) {
-  const { showSidebar, activeFolderId, cabinet, canContribute, moveTree, transfers } = data;
+  const { showSidebar, activeFolderId, cabinet, canContribute, cabinets, effectiveCabinetId, transfers } = data;
   const { handleDownload, handleRecordView, handleMoveConfirm, handleRenameConfirm, invalidateDocuments, handleCreateFolder, handleCreateLink, uploadFiles } = actions;
   const { showCreateFolder, showUpload, showLink, showVaultAppearance, previewDoc, moveTarget, renameTarget, accessTarget, folderColorTarget, emailTarget, actionTargetFolderId, folderName, folderVisibility, folderMembers, uploadVisibility, uploadMembers, uploadTags, linkTitle, linkUrl, createFolderParentId } = modalState;
   const { setShowCreateFolder, setShowUpload, setShowLink, setShowVaultAppearance, setPreviewDoc, setFolderName, setFolderVisibility, setFolderMembers, setUploadVisibility, setUploadMembers, setUploadTags, setLinkTitle, setLinkUrl, setCreateFolderParentId, setActionTargetFolderId } = actions;
@@ -46,10 +46,11 @@ export function DocumentsPanelModals({ data, actions, modalState, fileInputRef, 
       )}
       <MoveItemModal open={Boolean(moveTarget)} onClose={() => actions.handleMoveTargetChange(null)}
         title={moveTarget?.kind === 'folder' ? 'Move folder' : 'Move document'}
-        tree={moveTree} movingFolderId={moveTarget?.kind === 'folder' ? moveTarget.id : null}
+        cabinets={cabinets} currentCabinetId={cabinet?.id ?? effectiveCabinetId}
+        movingFolderId={moveTarget?.kind === 'folder' ? moveTarget.id : null}
         allowRoot={moveTarget?.kind === 'folder' ? Boolean(cabinet?.can_manage ?? true) : canContribute}
         loading={updateFolder.isPending || updateDocument.isPending}
-        onConfirm={(targetId) => void handleMoveConfirm(targetId)}
+        onConfirm={(target) => void handleMoveConfirm(target)}
       />
       <RenameItemModal open={Boolean(renameTarget)} onClose={() => actions.handleRenameTargetChange(null)}
         title={renameTarget?.kind === 'folder' ? 'Rename folder' : 'Rename document'}

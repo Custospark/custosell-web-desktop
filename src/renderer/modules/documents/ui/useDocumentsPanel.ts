@@ -49,6 +49,7 @@ export interface DocumentsPanelData {
   user: { name?: string; business?: { subscription?: { plan_slug?: string | null } | null } | null } | null;
   canCustomizeVault: boolean; isFetchingNextPage: boolean;
   vaultAppearance: DocumentsVaultAppearance | undefined; cabinet: DocumentCabinet | null;
+  cabinets: DocumentCabinet[];
   title: string; compact: boolean; cabinetId?: number; customerId?: number; projectId?: number; rootFolders: DocumentFolder[];
   folderLabel: string | null; activeFolder: DocumentFolder | null;
   resolvedAppearance: DocumentsVaultAppearance;
@@ -80,7 +81,7 @@ export interface DocumentsPanelActions {
   handleCreateLink: () => Promise<void>; handleRenameConfirm: (name: string) => Promise<void>;
   handleDeleteFolder: (folder: DocumentFolder) => Promise<void>;
   handleDeleteDocument: (doc: DocumentItem) => Promise<void>;
-  handleMoveConfirm: (targetId: number | null) => Promise<void>;
+  handleMoveConfirm: (target: { cabinetId: number; folderId: number | null }) => Promise<void>;
   handleExplorerDrop: (targetId: number | null, e: React.DragEvent) => Promise<void>;
   handleFolderDrop: (fId: number, e: React.DragEvent) => Promise<void>;
   handlePanelDrop: (e: React.DragEvent) => Promise<void>;
@@ -158,6 +159,8 @@ export function useDocumentsPanel(input: { cabinetId?: number; cabinet?: Documen
   const effectiveCabinetId = cabinetId ?? fallbackCabinets?.data[0]?.id ?? 0;
   const searching = Boolean(debouncedSearch || tagFilter);
   const { data: moveTree = [] } = useDocumentFolderTree(effectiveCabinetId > 0 ? effectiveCabinetId : undefined, showSidebar || Boolean(moveTarget));
+  const { data: cabinetsPage } = useDocumentCabinets(undefined, showSidebar || Boolean(moveTarget));
+  const cabinets = cabinetsPage?.data ?? [];
   const needsRootFolders = !showSidebar && !customerId && !projectId && !activeFolderId && !searching && effectiveCabinetId > 0;
   const { data: rootFoldersPage } = useDocumentFolderChildren(effectiveCabinetId, null, 1, needsRootFolders);
   const rootFolders = rootFoldersPage?.data ?? [];
@@ -345,11 +348,58 @@ export function useDocumentsPanel(input: { cabinetId?: number; cabinet?: Documen
     finally { upsertTransfer(transferId, { name: fileName, kind: 'download', percent: 100 }); removeTransfer(transferId); }
   };
 
-  const handleMoveConfirm = async (targetId: number | null) => {
+  const handleMoveConfirm = async (target: { cabinetId: number; folderId: number | null }) => {
     if (!moveTarget) return;
-    if (moveTarget.kind === 'folder') { const f = flatFolders.find((x) => x.id === moveTarget.id); if (!f) return; await updateFolder.mutateAsync({ id: moveTarget.id, name: f.name, visibility: f.visibility, parent_id: targetId }); }
-    else await updateDocument.mutateAsync({ id: moveTarget.id, folder_id: targetId });
-    setMoveTarget(null);
+    const { cabinetId, folderId } = target;
+    const movedId = moveTarget.id;
+    try {
+      if (moveTarget.kind === 'folder') {
+        const f = flatFolders.find((x) => x.id === movedId);
+        if (!f) return;
+        await updateFolder.mutateAsync({
+          id: movedId,
+          name: f.name,
+          visibility: f.visibility,
+          parent_id: folderId,
+          cabinet_id: cabinetId,
+        });
+      } else {
+        await updateDocument.mutateAsync({
+          id: movedId,
+          folder_id: folderId,
+          cabinet_id: cabinetId,
+        });
+      }
+
+      // After a successful move, return the user to the cabinet root. The moved
+      // item now lives in the destination cabinet (possibly a different one), so
+      // keeping it selected here would leave stale actions (rename/access/delete)
+      // on an item the current cabinet no longer owns.
+      setMoveTarget(null);
+      setActiveFolderId(null);
+      setActiveTabId(null);
+      if (moveTarget.kind === 'document') {
+        setOpenTabs((tabs) => tabs.filter((tab) => tab.id !== movedId));
+      } else {
+        // Folder moved: drop any open tab that lived under the moved subtree.
+        const movedSubtree = new Set<number>();
+        const collect = (folders: DocumentFolder[], rootId: number) => {
+          for (const folder of folders) {
+            if (folder.id === rootId || movedSubtree.has(folder.id)) {
+              movedSubtree.add(folder.id);
+              if (folder.children) collect(folder.children, rootId);
+            } else if (folder.children) {
+              collect(folder.children, rootId);
+            }
+          }
+        };
+        collect(allKnownFolders, movedId);
+        movedSubtree.add(movedId);
+        setOpenTabs((tabs) => tabs.filter((tab) => tab.folder_id == null || !movedSubtree.has(tab.folder_id)));
+      }
+    } catch {
+      // Move failed - keep the current view so the user can retry.
+    }
   };
 
   const handleExplorerDrop = async (targetId: number | null, e: React.DragEvent) => {
@@ -370,7 +420,7 @@ export function useDocumentsPanel(input: { cabinetId?: number; cabinet?: Documen
   const handleFolderDrop = async (fId: number, e: React.DragEvent) => { await handleExplorerDrop(fId, e); };
   const handlePanelDrop = async (e: React.DragEvent) => { e.preventDefault(); setPanelDragActive(false); setDropTargetFolderId(null); if (e.dataTransfer.files?.length) { await uploadFiles(e.dataTransfer.files); return; } await handleExplorerDrop(activeFolderId, e); };
 
-  const data: DocumentsPanelData = { activeFolderId, viewMode, search, tagFilter, loading, online, showSidebar, effectiveCabinetId, cabinetId, searching, contentsLoading, contentsFetching, canLoadMoreDocuments, canContribute, isViewerOnly, panelDragActive, dropTargetFolderId, transfers, activeTabId, openTabs, activeDocument, previewDoc, contents: contents ?? null, subfolders, documents, documentsMeta, breadcrumbs, allKnownFolders, flatFolders, moveTree, contentLayoutClass, user: user as DocumentsPanelData['user'], canCustomizeVault, isFetchingNextPage, vaultAppearance, cabinet, title, compact, customerId, projectId, rootFolders, folderLabel, activeFolder, resolvedAppearance };
+  const data: DocumentsPanelData = { activeFolderId, viewMode, search, tagFilter, loading, online, showSidebar, effectiveCabinetId, cabinetId, searching, contentsLoading, contentsFetching, canLoadMoreDocuments, canContribute, isViewerOnly, panelDragActive, dropTargetFolderId, transfers, activeTabId, openTabs, activeDocument, previewDoc, contents: contents ?? null, subfolders, documents, documentsMeta, breadcrumbs, allKnownFolders, flatFolders, moveTree, contentLayoutClass, user: user as DocumentsPanelData['user'], canCustomizeVault, isFetchingNextPage, vaultAppearance, cabinet, cabinets, title, compact, customerId, projectId, rootFolders, folderLabel, activeFolder, resolvedAppearance };
   const handleEmailSent = useCallback((id: number, result: { email_sent_count: number; last_emailed_at?: string | null }) => {
     setOpenTabs((tabs) => tabs.map((tab) => tab.id === id ? { ...tab, email_sent_count: result.email_sent_count, last_emailed_at: result.last_emailed_at ?? null } : tab));
   }, []);

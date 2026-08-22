@@ -1,34 +1,47 @@
 import { useMemo, useState } from 'react';
-import { ChevronRight, Folder, FolderInput } from 'lucide-react';
+import { FolderInput, Archive, Folder } from 'lucide-react';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { Button } from '../../../shared/components/buttons/Button';
-import { cn } from '../../../shared/utils/cn';
-import type { DocumentFolder } from '../api/documentTypes';
+import type { DocumentCabinet } from '../api/documentTypes';
+import { useDocumentFolderTree } from '../api/useDocumentQueries';
 import { collectFolderDescendantIds, flattenDocumentFolders } from '../api/documentFolderPathUtils';
-import { DocumentFormSection, DocumentModalFooter, DocumentModalHero } from './documentFormFields';
+import { DocumentFormSection, DocumentModalFooter, DocumentModalHero, documentSelectClass } from './documentFormFields';
 
 interface MoveItemModalProps {
   open: boolean;
   onClose: () => void;
   title: string;
-  tree: DocumentFolder[];
+  cabinets: DocumentCabinet[];
+  currentCabinetId?: number;
   movingFolderId?: number | null;
   allowRoot?: boolean;
-  onConfirm: (targetFolderId: number | null) => void;
+  onConfirm: (target: { cabinetId: number; folderId: number | null }) => void;
   loading?: boolean;
 }
 
+/**
+ * Move item across cabinets. The destination cabinet is chosen first (a
+ * dropdown), then only that cabinet's folders / subfolders are offered in a
+ * second dropdown - mirroring how picking a board limits the stages you can
+ * move a card/lead/task into.
+ */
 export function MoveItemModal({
   open,
   onClose,
   title,
-  tree,
+  cabinets,
+  currentCabinetId,
   movingFolderId = null,
   allowRoot = true,
   onConfirm,
   loading = false,
 }: MoveItemModalProps) {
-  const [targetId, setTargetId] = useState<number | null>(null);
+  const [targetCabinetId, setTargetCabinetId] = useState<number | null>(currentCabinetId ?? null);
+  const [targetFolderId, setTargetFolderId] = useState<number | null>(null);
+
+  // Fetch ONLY the selected cabinet's folder tree, so the folder options are
+  // scoped to the chosen destination cabinet.
+  const { data: tree = [] } = useDocumentFolderTree(targetCabinetId ?? undefined, open && targetCabinetId != null);
 
   const flat = useMemo(() => flattenDocumentFolders(tree), [tree]);
   const blockedIds = useMemo(
@@ -45,49 +58,67 @@ export function MoveItemModal({
     });
   }, [flat, blockedIds, movingFolderId]);
 
+  const targetCabinet =
+    cabinets.find((c) => c.id === targetCabinetId) ?? cabinets.find((c) => c.id === currentCabinetId) ?? null;
+
+  const handleCabinetChange = (cabinetId: number) => {
+    setTargetCabinetId(cabinetId);
+    // Switching cabinet resets the folder selection - the new cabinet has its
+    // own folder tree, so any previously chosen folder id is meaningless.
+    setTargetFolderId(null);
+  };
+
   return (
-    <Modal isOpen={open} onClose={onClose} title={title} subtitle="Choose where to move this item." size="lg">
+    <Modal isOpen={open} onClose={onClose} title={title} subtitle="Choose a cabinet, then a folder inside it to move this item to." size="lg">
       <div className="space-y-5">
         <DocumentModalHero
           icon={FolderInput}
-          title="Move to folder"
-          description="Root level places the item outside any folder in this cabinet."
+          title="Move to cabinet / folder"
+          description="Pick a destination cabinet, then a folder inside it. Root level places the item outside any folder."
           tone="slate"
         />
 
-        <DocumentFormSection title="Destination" icon={Folder}>
-          {allowRoot && (
-            <button
-              type="button"
-              onClick={() => setTargetId(null)}
-              className={cn(
-                'flex w-full items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm transition-colors',
-                targetId === null ? 'border-indigo-500 bg-indigo-50 text-indigo-900' : 'border-gray-200 hover:border-gray-300',
-              )}
-            >
-              <Folder className="h-4 w-4 text-gray-500" />
-              Root level
-            </button>
-          )}
-
-          <div className="max-h-64 space-y-1 overflow-y-auto">
-            {options.map((folder) => (
-              <button
-                key={folder.id}
-                type="button"
-                onClick={() => setTargetId(folder.id)}
-                className={cn(
-                  'flex w-full items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm transition-colors',
-                  targetId === folder.id ? 'border-indigo-500 bg-indigo-50 text-indigo-900' : 'border-gray-200 hover:border-gray-300',
-                )}
-                style={{ paddingLeft: `${12 + (folder.depth - 1) * 14}px` }}
-              >
-                {folder.depth > 1 && <ChevronRight className="h-3 w-3 shrink-0 text-gray-400" />}
-                <Folder className="h-4 w-4 shrink-0 text-amber-600" />
-                <span className="truncate">{folder.name}</span>
-              </button>
+        <DocumentFormSection title="Destination cabinet" icon={Archive}>
+          <select
+            className={documentSelectClass}
+            value={targetCabinetId ?? ''}
+            onChange={(e) => handleCabinetChange(Number(e.target.value))}
+            title="Destination cabinet"
+          >
+            {cabinets.map((cabinet) => (
+              <option key={cabinet.id} value={cabinet.id}>
+                {cabinet.name}
+                {cabinet.id === currentCabinetId ? ' (current)' : ''}
+              </option>
             ))}
-          </div>
+          </select>
+          <p className="mt-1.5 text-xs text-gray-400">
+            Only the folders of the selected cabinet are shown below.
+          </p>
+        </DocumentFormSection>
+
+        <DocumentFormSection title="Destination folder" icon={Folder}>
+          <select
+            className={documentSelectClass}
+            value={targetFolderId ?? ''}
+            onChange={(e) => setTargetFolderId(e.target.value === '' ? null : Number(e.target.value))}
+            title="Destination folder"
+            disabled={!targetCabinet}
+          >
+            {allowRoot && <option value="">Root level of {targetCabinet?.name ?? 'this cabinet'}</option>}
+            {options.map((folder) => (
+              <option key={folder.id} value={folder.id}>
+                {'\u00A0'.repeat(Math.max(0, folder.depth - 1) * 3)}
+                {folder.depth > 1 ? '\u2514 ' : ''}
+                {folder.name}
+              </option>
+            ))}
+          </select>
+          {options.length === 0 && (
+            <p className="mt-1.5 text-xs text-gray-400">
+              No folders available in this cabinet{allowRoot ? ' - you can still move to its root level.' : '.'}
+            </p>
+          )}
         </DocumentFormSection>
 
         <DocumentModalFooter>
@@ -95,8 +126,11 @@ export function MoveItemModal({
           <Button
             type="button"
             loading={loading}
-            disabled={!allowRoot && targetId === null}
-            onClick={() => onConfirm(targetId)}
+            disabled={!targetCabinet || (!allowRoot && targetFolderId === null)}
+            onClick={() => {
+              if (!targetCabinet) return;
+              onConfirm({ cabinetId: targetCabinet.id, folderId: targetFolderId });
+            }}
           >
             Move here
           </Button>

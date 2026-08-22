@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
-import { ArrowLeftRight, FolderOpen, MessageSquare, Plus, TrendingUp, Trophy } from 'lucide-react';
+import { ArrowLeftRight, FolderOpen, MessageSquare, Plus, Sparkles, TrendingUp, Trophy } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 
 interface BoardSwitcherIconsProps {
@@ -14,6 +14,8 @@ interface BoardSwitcherIconsProps {
   onOpenConversation?: () => void;
   conversationMessagesCount?: number;
   conversationUnreadCount?: number;
+  onOpenAutomations?: () => void;
+  automationsActive?: boolean;
   onCreateNew: () => void;
   allowCreate?: boolean;
   className?: string;
@@ -30,6 +32,8 @@ export default function BoardSwitcherIcons({
   onOpenConversation,
   conversationMessagesCount = 0,
   conversationUnreadCount = 0,
+  onOpenAutomations,
+  automationsActive = false,
   onCreateNew,
   allowCreate = true,
   className,
@@ -152,6 +156,24 @@ export default function BoardSwitcherIcons({
             conversationUnreadCount > 0 ? 'bg-blue-600' : 'bg-gray-400',
           )}
           <span className="hidden sm:inline">Discussions</span>
+        </button>
+      )}
+      {onOpenAutomations && (
+        <button
+          type="button"
+          onClick={onOpenAutomations}
+          className={cn(
+            'inline-flex items-center gap-2 rounded-xl border-2 px-2 py-1.5 text-sm font-semibold shadow-sm transition-all active:scale-[0.98] sm:px-4 sm:py-2.5',
+            automationsActive
+              ? 'border-fuchsia-500 bg-gradient-to-r from-fuchsia-100 via-white to-purple-100 text-fuchsia-900 shadow-md shadow-fuchsia-200/50'
+              : 'border-fuchsia-300/90 bg-gradient-to-r from-fuchsia-50 via-white to-purple-50 text-fuchsia-800 hover:border-fuchsia-400 hover:from-fuchsia-100 hover:to-purple-100 hover:shadow-md hover:shadow-fuchsia-200/50',
+          )}
+          title="Automations"
+          aria-label="Automations"
+          aria-pressed={automationsActive}
+        >
+          <Sparkles className="h-4 w-4 text-fuchsia-600" />
+          <span className="hidden sm:inline">Automations</span>
         </button>
       )}
       {allowCreate && (

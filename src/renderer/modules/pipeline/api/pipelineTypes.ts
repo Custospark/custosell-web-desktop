@@ -23,7 +23,7 @@ export type {
   PipelineCalendarDay,
 } from './pipelineCalendarTypes';
 
-export type BoardViewMode = 'kanban' | 'calendar' | 'progress' | 'fame' | 'members';
+export type BoardViewMode = 'kanban' | 'calendar' | 'progress' | 'fame' | 'members' | 'automations';
 
 export type PipelineVisibility = 'team' | 'private' | 'shared';
 

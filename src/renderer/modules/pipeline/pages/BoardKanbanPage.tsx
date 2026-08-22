@@ -11,6 +11,7 @@ import BoardSwitcherIcons from '../ui/BoardSwitcherIcons';
 import BoardCalendarView from '../ui/BoardCalendarView';
 import BoardProgressView from '../ui/BoardProgressView';
 import BoardFameView from '../ui/BoardFameView';
+import BoardAutomationsView from '../ui/BoardAutomationsView';
 import BoardMembersView from '../ui/BoardMembersView';
 import PetalBackground from '../ui/PetalBackground';
 import KanbanBoardSkeleton from '../ui/KanbanBoardSkeleton';
@@ -268,6 +269,7 @@ export default function BoardKanbanPage() {
       <div className={cn('min-h-0 flex-1 overflow-y-auto', viewMode !== 'fame' && 'hidden')} aria-hidden={viewMode !== 'fame'} style={fameBgStyle}>
         <BoardFameView canContribute={canContribute} boardId={boardId} />
       </div>
+      {viewMode === 'automations' && <BoardAutomationsView boardId={boardId} canManage={showBoardManagementControls} />}
       <BoardSwitcherIcons
         allowCreate={allowCreateBoard}
         onOpenAll={() => setAllBoardsOpen(true)}
@@ -286,6 +288,8 @@ export default function BoardKanbanPage() {
         }}
         conversationMessagesCount={conversationMessagesCount}
         conversationUnreadCount={conversationUnreadCount}
+        onOpenAutomations={() => setViewMode((mode) => (mode === 'automations' ? 'kanban' : 'automations'))}
+        automationsActive={viewMode === 'automations'}
         onCreateNew={() => setCreateBoardOpen(true)}
       />
       <BoardKanbanPageModals

@@ -41,6 +41,10 @@ export const pipelineConversationKeys = {
   automations: (boardId: number) => [...pipelineKeys.all, 'board-automations', boardId] as const,
 };
 
+export const pipelineAutomationRuleKeys = {
+  list: (boardId: number) => [...pipelineKeys.all, 'automation-rules', boardId] as const,
+};
+
 export const pipelineProgressKeys = {
   summary: (boardId: number, period: string, from?: string, to?: string, stageIds?: string) =>
     [...pipelineKeys.all, 'progress-summary', boardId, period, from ?? '', to ?? '', stageIds ?? ''] as const,

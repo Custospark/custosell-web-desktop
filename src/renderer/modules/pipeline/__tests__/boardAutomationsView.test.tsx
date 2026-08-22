@@ -48,6 +48,14 @@ vi.mock('../api/usePipelineAutomationRuleQueries', () => ({
   useBoardAutomationRules: () => ({ data: rules, isLoading: false }),
   useToggleAutomationRule: () => ({ mutateAsync: toggleMock }),
   useDeleteAutomationRule: () => ({ mutateAsync: deleteMock }),
+  useAutomationRuleRuns: () => ({
+    data: [
+      { id: 11, rule_id: 1, lead_id: 1, trigger: 'status_changed', status: 'success', actions_executed: 1, message: null, detail: null, lead_title: 'Escalate hot leads', created_at: '2026-08-22T09:00:00.000Z' },
+      { id: 12, rule_id: 1, lead_id: null, trigger: 'status_changed', status: 'failed', actions_executed: 0, message: 'Boom', detail: null, lead_title: null, created_at: '2026-08-21T09:00:00.000Z' },
+    ],
+    isLoading: false,
+    isFetching: false,
+  }),
   isOptimisticRule: (rule: { id: number }) => rule.id < 0,
 }));
 
@@ -127,5 +135,15 @@ describe('BoardAutomationsView', () => {
     render(<BoardAutomationsView boardId={10} canManage={false} />);
     expect(screen.queryByText('Delete')).toBeNull();
     expect(screen.getAllByText(/view automations but not manage/i).length).toBe(2);
+  });
+
+  it('expands run history with success and failed entries', () => {
+    render(<BoardAutomationsView boardId={10} canManage />);
+    const historyButtons = screen.getAllByTitle('Run history');
+    expect(historyButtons.length).toBe(2);
+    fireEvent.click(historyButtons[0]);
+    expect(screen.getAllByText('success').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('failed').length).toBeGreaterThan(0);
+    expect(screen.getByText(/Boom/)).toBeTruthy();
   });
 });

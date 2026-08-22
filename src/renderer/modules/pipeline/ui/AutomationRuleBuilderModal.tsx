@@ -9,6 +9,7 @@ import {
 import type {
   AutomationActionConfig,
   AutomationCondition,
+  AutomationConditionGroup,
   AutomationTriggerConfig,
   PipelineAutomationRule,
 } from '../api/pipelineAutomationRuleTypes';
@@ -18,19 +19,16 @@ import { usePipelineLabels } from '../api/usePipelineMetaQueries';
 import { usePipelineBoardMetaFields } from '../api/usePipelineMetaFieldQueries';
 import {
   ACTION_OPTIONS,
-  CARD_TYPE_OPTIONS,
-  CONDITION_FIELD_OPTIONS,
   FREQUENCY_OPTIONS,
-  PRIORITY_OPTIONS,
   SCHEDULED_TRIGGERS,
-  STATUS_OPTIONS,
   TRIGGER_OPTIONS,
   WEEKDAY_OPTIONS,
+  isOrGroup,
   isValidRuleDraft,
-  operatorsForField,
 } from './automationRuleBuilderOptions';
 import { usePipelineKanban } from '../api/usePipelineBoardQueries';
 import ActionDetails from './AutomationRuleActionDetails';
+import AutomationConditionBuilder from './AutomationConditionBuilder';
 import { PipelineNumberInput } from './PipelineNumberInput';
 import { Plus, Trash2, Sparkles } from 'lucide-react';
 
@@ -61,11 +59,17 @@ export default function AutomationRuleBuilderModal({
   const [trigger, setTrigger] = useState<AutomationTriggerConfig>(
     () => rule?.trigger ?? { type: 'stage_entered' },
   );
-  const [conditions, setConditions] = useState<AutomationCondition[]>(() => rule?.conditions ?? []);
+  const [conditions, setConditions] = useState<AutomationCondition[]>(() => {
+    const stored = rule?.conditions;
+    if (Array.isArray(stored)) return stored;
+    return isOrGroup(stored) ? (stored as AutomationConditionGroup).conditions : [];
+  });
+  const [conditionsLogic, setConditionsLogic] = useState<'and' | 'or'>(() =>
+    isOrGroup(rule?.conditions) ? 'or' : 'and',
+  );
   const [actions, setActions] = useState<AutomationActionConfig[]>(() =>
     rule?.actions?.length ? rule.actions : [{ type: 'move_to_stage' as const }],
   );
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   const isScheduled = useMemo(
@@ -96,22 +100,26 @@ export default function AutomationRuleBuilderModal({
     const payload = {
       name: name.trim(),
       trigger: { ...trigger },
-      conditions: conditions.length > 0 ? conditions : null,
+      conditions:
+        conditions.length === 0
+          ? null
+          : conditionsLogic === 'or'
+            ? { logic: 'or' as const, conditions }
+            : conditions,
       actions,
     };
 
-    setSaving(true);
+    // Optimistic: close the modal immediately so the user sees the rule in the
+    // list; the mutation updates the cache and rolls back on error via toast.
+    onClose();
     try {
       if (mode === 'edit' && rule) {
-        await updateRule.mutateAsync({ ruleId: rule.id, payload });
+        void updateRule.mutate({ ruleId: rule.id, payload });
       } else {
-        await createRule.mutateAsync(payload);
+        void createRule.mutate(payload);
       }
-      onClose();
     } catch {
       // Error toast already handled by the query hooks.
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -282,146 +290,20 @@ export default function AutomationRuleBuilderModal({
         )}
       </PipelineFormSection>
 
-      <PipelineFormSection
-        title={`Conditions${conditions.length > 0 ? ` (${conditions.length})` : ''}`}
-        icon={Sparkles}
-        description="Optional - only run when every condition matches."
-      >
-        {conditions.map((condition, index) => {
-          const operators = operatorsForField(condition.field);
-          return (
-            <div key={index} className="flex flex-wrap items-end gap-2 rounded-lg border border-gray-100 bg-white p-2">
-              <div className="min-w-[140px] flex-1">
-                <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-gray-400">Field</label>
-                <select
-                  value={condition.field}
-                  onChange={(e) => updateCondition(index, { field: e.target.value as AutomationCondition['field'], value: undefined })}
-                  className={pipelineSelectClass}
-                >
-                  {CONDITION_FIELD_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="min-w-[120px] flex-1">
-                <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-gray-400">Operator</label>
-                <select
-                  value={condition.operator}
-                  onChange={(e) => updateCondition(index, { operator: e.target.value as AutomationCondition['operator'] })}
-                  className={pipelineSelectClass}
-                >
-                  {operators.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="min-w-[120px] flex-1">
-                <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-gray-400">Value</label>
-                {condition.field === 'stage_id' ? (
-                  <select
-                    value={(condition.value as number) ?? ''}
-                    onChange={(e) => updateCondition(index, { value: e.target.value ? Number(e.target.value) : null })}
-                    className={pipelineSelectClass}
-                  >
-                    <option value="">Select stage</option>
-                    {stages.map((s) => (
-                      <option key={s.id} value={s.id}>{s.name}</option>
-                    ))}
-                  </select>
-                ) : condition.field === 'status' ? (
-                  <select
-                    value={(condition.value as string) ?? 'open'}
-                    onChange={(e) => updateCondition(index, { value: e.target.value })}
-                    className={pipelineSelectClass}
-                  >
-                    {STATUS_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
-                  </select>
-                ) : condition.field === 'priority' ? (
-                  <select
-                    value={(condition.value as string) ?? 'medium'}
-                    onChange={(e) => updateCondition(index, { value: e.target.value })}
-                    className={pipelineSelectClass}
-                  >
-                    {PRIORITY_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
-                  </select>
-                ) : condition.field === 'card_type' ? (
-                  <select
-                    value={(condition.value as string) ?? 'lead'}
-                    onChange={(e) => updateCondition(index, { value: e.target.value })}
-                    className={pipelineSelectClass}
-                  >
-                    {CARD_TYPE_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
-                  </select>
-                ) : condition.field === 'assigned_to' ? (
-                  <select
-                    value={(condition.value as number) ?? ''}
-                    onChange={(e) => updateCondition(index, { value: e.target.value ? Number(e.target.value) : null })}
-                    className={pipelineSelectClass}
-                  >
-                    <option value="">Anyone</option>
-                    {members.map((m) => (
-                      <option key={m.id} value={m.id}>{m.name}</option>
-                    ))}
-                  </select>
-                ) : condition.field === 'has_label' ? (
-                  <select
-                    value={(condition.value as number) ?? ''}
-                    onChange={(e) => updateCondition(index, { value: e.target.value ? Number(e.target.value) : null })}
-                    className={pipelineSelectClass}
-                  >
-                    <option value="">Any label</option>
-                    {labels.map((l) => (
-                      <option key={l.id} value={l.id}>{l.name}</option>
-                    ))}
-                  </select>
-                ) : condition.field === 'meta' ? (
-                  <select
-                    value={condition.meta_field_id ?? ''}
-                    onChange={(e) => updateCondition(index, { meta_field_id: e.target.value ? Number(e.target.value) : null })}
-                    className={pipelineSelectClass}
-                  >
-                    <option value="">Select custom field</option>
-                    {metaFields.map((m) => (
-                      <option key={m.id} value={m.id}>{m.name}</option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    value={(condition.value as string) ?? ''}
-                    onChange={(e) => updateCondition(index, { value: e.target.value })}
-                    placeholder="Value"
-                    className={pipelineInputClass}
-                  />
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={() => setConditions((current) => current.filter((_, i) => i !== index))}
-                className="mb-1 rounded-lg p-2 text-red-500 transition-colors hover:bg-red-50"
-                title="Remove condition"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </div>
-          );
-        })}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() =>
-            setConditions((current) => [...current, { field: 'status', operator: 'is', value: 'open' }])
-          }
-        >
-          <Plus className="h-4 w-4" />
-          Add condition
-        </Button>
-      </PipelineFormSection>
+      <AutomationConditionBuilder
+        conditions={conditions}
+        conditionsLogic={conditionsLogic}
+        onLogicChange={setConditionsLogic}
+        onChange={updateCondition}
+        onRemove={(index) => setConditions((current) => current.filter((_, i) => i !== index))}
+        onAdd={() =>
+          setConditions((current) => [...current, { field: 'status', operator: 'is', value: 'open' }])
+        }
+        stages={stages}
+        members={members}
+        labels={labels}
+        metaFields={metaFields}
+      />
 
       <PipelineFormSection title="Actions" icon={Sparkles} description="What happens when the automation fires.">
         {actions.map((action, index) => (
@@ -468,10 +350,10 @@ export default function AutomationRuleBuilderModal({
       {error && <p className="text-sm font-medium text-red-600">{error}</p>}
 
       <div className="flex items-center justify-end gap-2 pt-1">
-        <Button variant="secondary" onClick={onClose} disabled={saving}>
+        <Button variant="secondary" onClick={onClose}>
           Cancel
         </Button>
-        <Button onClick={() => void handleSave()} loading={saving}>
+        <Button onClick={() => void handleSave()} loading={createRule.isPending || updateRule.isPending}>
           {mode === 'edit' ? 'Save changes' : 'Create automation'}
         </Button>
       </div>

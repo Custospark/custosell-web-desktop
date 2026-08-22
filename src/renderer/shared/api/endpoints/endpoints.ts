@@ -253,6 +253,7 @@ export const PIPELINE = {
   BOARD_AUTOMATION_RULES: (boardId: number) => `/pipeline/boards/${boardId}/automation-rules`,
   AUTOMATION_RULE: (ruleId: number) => `/pipeline/automation-rules/${ruleId}`,
   AUTOMATION_RULE_TOGGLE: (ruleId: number) => `/pipeline/automation-rules/${ruleId}/toggle`,
+  AUTOMATION_RULE_RUNS: (ruleId: number) => `/pipeline/automation-rules/${ruleId}/runs`,
   BOARD_TEMPLATES: '/pipeline/board-templates',
   BOARD_APPLY_TEMPLATE: (boardId: number) => `/pipeline/boards/${boardId}/apply-template`,
   BOARD_PROGRESS_SUMMARY: (boardId: number) => `/pipeline/boards/${boardId}/progress/summary`,

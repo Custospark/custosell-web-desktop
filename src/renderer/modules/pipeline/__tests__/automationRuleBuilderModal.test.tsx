@@ -2,12 +2,17 @@ import { describe, expect, it, vi, afterEach, beforeEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import AutomationRuleBuilderModal from '../ui/AutomationRuleBuilderModal';
 
+const createMutateMock = vi.fn();
+const updateMutateMock = vi.fn();
+
 vi.mock('../api/usePipelineAutomationRuleQueries', () => ({
   useCreateAutomationRule: () => ({
-    mutateAsync: vi.fn().mockResolvedValue({ id: 99 }),
+    mutate: createMutateMock,
+    isPending: false,
   }),
   useUpdateAutomationRule: () => ({
-    mutateAsync: vi.fn().mockResolvedValue({ id: 1 }),
+    mutate: updateMutateMock,
+    isPending: false,
   }),
 }));
 
@@ -49,6 +54,8 @@ vi.mock('../../../shared/components/modals/Modal', () => ({
 
 afterEach(() => {
   cleanup();
+  createMutateMock.mockReset();
+  updateMutateMock.mockReset();
 });
 
 /**
@@ -98,5 +105,41 @@ describe('AutomationRuleBuilderModal', () => {
     const trigger = screen.getByLabelText('When') as HTMLSelectElement;
     fireEvent.change(trigger, { target: { value: 'recurring' } });
     expect(screen.getByText(/Recurring rules create one card/i)).toBeTruthy();
+  });
+
+  it('closes the modal immediately on create and fires the optimistic mutation', () => {
+    const onClose = vi.fn();
+    render(<AutomationRuleBuilderModal boardId={1} open mode="create" onClose={onClose} />);
+    fireEvent.change(screen.getByLabelText(/Automation name/i), { target: { value: 'Escalate hot' } });
+    fireEvent.click(screen.getByText('Create automation'));
+
+    // Optimistic: onClose runs before/without waiting on the server.
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(createMutateMock).toHaveBeenCalledWith(expect.objectContaining({ name: 'Escalate hot' }));
+  });
+
+  it('fires the update mutation when editing', () => {
+    const onClose = vi.fn();
+    const rule = {
+      id: 7,
+      board_id: 1,
+      name: 'Existing rule',
+      trigger: { type: 'status_changed' as const },
+      conditions: null,
+      actions: [{ type: 'archive' as const }],
+      is_active: true,
+      run_count: 1,
+      last_run_at: null,
+      paused_at: null,
+      created_by: 1,
+      creator: null,
+      created_at: 'x',
+      updated_at: 'x',
+    };
+    render(<AutomationRuleBuilderModal boardId={1} open mode="edit" rule={rule} onClose={onClose} />);
+    fireEvent.click(screen.getByText('Save changes'));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(updateMutateMock).toHaveBeenCalledWith({ ruleId: 7, payload: expect.objectContaining({ name: 'Existing rule' }) });
   });
 });

@@ -7,6 +7,7 @@ import { sanitizeErrorMessage } from '../../../app/store/offline/core/offlineQue
 import type {
   PipelineAutomationRule,
   PipelineAutomationRulePayload,
+  PipelineAutomationRun,
 } from './pipelineAutomationRuleTypes';
 import { pipelineAutomationRuleKeys } from './pipelineQueryKeys';
 
@@ -222,5 +223,17 @@ export function useDeleteAutomationRule(boardId: number) {
       }
       showToast('error', sanitizeErrorMessage(err, 'Could not delete automation'));
     },
+  });
+}
+
+export function useAutomationRuleRuns(ruleId: number, enabled = true) {
+  return useQuery({
+    queryKey: pipelineAutomationRuleKeys.runs(ruleId),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(PIPELINE.AUTOMATION_RULE_RUNS(ruleId));
+      return normalizeList<PipelineAutomationRun>(data);
+    },
+    enabled: enabled && ruleId > 0,
+    staleTime: 15_000,
   });
 }

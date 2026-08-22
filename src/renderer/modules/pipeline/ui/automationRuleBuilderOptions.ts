@@ -158,6 +158,13 @@ export function cloneAction(action?: Record<string, unknown>): Record<string, un
   return action ? { ...action } : { type: 'move_to_stage' };
 }
 
+/** True when the stored conditions are an OR group wrapper {logic, conditions}. */
+export function isOrGroup(conditions?: unknown): boolean {
+  if (!conditions || typeof conditions !== 'object') return false;
+  const candidate = conditions as { logic?: unknown; conditions?: unknown };
+  return candidate.logic === 'or' && Array.isArray(candidate.conditions);
+}
+
 export function isValidRuleDraft(draft: {
   name: string;
   trigger: AutomationTriggerConfig;

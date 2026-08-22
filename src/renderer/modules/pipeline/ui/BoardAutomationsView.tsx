@@ -12,6 +12,7 @@ import {
 import type { PipelineAutomationRule } from '../api/pipelineAutomationRuleTypes';
 import { utcTimeToLocal } from '../api/automationTimeUtils';
 import AutomationRuleBuilderModal from './AutomationRuleBuilderModal';
+import AutomationRuleRunHistory from './AutomationRuleRunHistory';
 import { SCHEDULED_TRIGGERS, TRIGGER_OPTIONS, ACTION_OPTIONS } from './automationRuleBuilderOptions';
 import { Sparkles, Plus, Pencil, Trash2, Power, Search } from 'lucide-react';
 
@@ -235,6 +236,8 @@ export default function BoardAutomationsView({ boardId, canManage = true }: Boar
                       <span className="text-[11px] text-slate-400">You can view automations but not manage them.</span>
                     )}
                   </div>
+
+                  {!isOptimisticRule(rule) && <AutomationRuleRunHistory ruleId={rule.id} />}
                 </div>
               ))}
             </div>

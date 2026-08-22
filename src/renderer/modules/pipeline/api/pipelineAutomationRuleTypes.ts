@@ -120,7 +120,7 @@ export interface PipelineAutomationRule {
   board_id: number;
   name: string;
   trigger: AutomationTriggerConfig;
-  conditions: AutomationCondition[] | null;
+  conditions: AutomationCondition[] | AutomationConditionGroup | null;
   actions: AutomationActionConfig[];
   is_active: boolean;
   run_count: number;
@@ -135,7 +135,26 @@ export interface PipelineAutomationRule {
 export interface PipelineAutomationRulePayload {
   name: string;
   trigger: AutomationTriggerConfig;
-  conditions?: AutomationCondition[] | null;
+  conditions?: AutomationCondition[] | AutomationConditionGroup | null;
   actions: AutomationActionConfig[];
   is_active?: boolean;
+}
+
+/** AND/OR group wrapper accepted by the backend condition evaluator. */
+export interface AutomationConditionGroup {
+  logic: 'and' | 'or';
+  conditions: AutomationCondition[];
+}
+
+export interface PipelineAutomationRun {
+  id: number;
+  rule_id: number;
+  lead_id: number | null;
+  trigger: string;
+  status: 'success' | 'failed';
+  actions_executed: number;
+  message: string | null;
+  detail: Record<string, unknown> | null;
+  lead_title?: string | null;
+  created_at: string | null;
 }

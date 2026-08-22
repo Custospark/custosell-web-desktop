@@ -92,7 +92,7 @@ export function useConfirmLinkAccount() {
       return unwrap<LinkedAccountsData>(data);
     },
     onSuccess: (result) => {
-      if (result.accounts) qc.setQueryData(linkedAccountKeys.list(), result.accounts);
+      if (result.accounts) qc.setQueryData(linkedAccountKeys.list(), result);
       showToast('success', 'Account linked. You can now switch to it from your profile.');
     },
     onError: (err) => {
@@ -172,7 +172,7 @@ export function useSetPrimary() {
       return unwrap<LinkedAccountsData>(data);
     },
     onSuccess: (result) => {
-      if (result.accounts) qc.setQueryData(linkedAccountKeys.list(), result.accounts);
+      if (result.accounts) qc.setQueryData(linkedAccountKeys.list(), result);
       showToast('success', 'Default account updated');
     },
     onError: (err) => {
@@ -213,7 +213,7 @@ export function useConfirmUnlinkAccount() {
       return unwrap<LinkedAccountsData>(data);
     },
     onSuccess: (result) => {
-      if (result.accounts) qc.setQueryData(linkedAccountKeys.list(), result.accounts);
+      if (result.accounts) qc.setQueryData(linkedAccountKeys.list(), result);
       showToast('success', 'Account unlinked');
     },
     onError: (err) => {

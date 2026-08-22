@@ -22,6 +22,7 @@ import {
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { selectIsCompletelyOffline } from '../../../app/store/slices/networkSlice';
 import { avatarUrl } from '../../../shared/utils/avatarUrl';
+import { getBrowserTimezone } from '../../../shared/utils/browserTimezone';
 import {
   Building2,
   MapPin,
@@ -82,7 +83,12 @@ export default function BusinessSettingsForm() {
     setLocalPhone(snapshot.localPhone);
     setBusinessPhoneCountryCode(snapshot.businessPhoneCountryCode);
     setLocalBusinessPhone(snapshot.localBusinessPhone);
-    setForm(snapshot.form);
+    // Auto-fill the timezone from the user's browser when the business has none set.
+    const nextForm = { ...snapshot.form };
+    if (!nextForm.timezone || !nextForm.timezone.trim()) {
+      nextForm.timezone = getBrowserTimezone();
+    }
+    setForm(nextForm);
     setLogoPreview(avatarUrl(snapshot.logoPath) ?? null);
     setLogoFileSelected(false);
     if (logoFileRef.current) logoFileRef.current.value = '';

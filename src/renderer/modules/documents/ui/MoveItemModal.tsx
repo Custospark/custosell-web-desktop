@@ -50,13 +50,15 @@ export function MoveItemModal({
   );
 
   const options = useMemo(() => {
-    // Folder moves require manage on the destination; document moves need contribute.
+    // Both file and folder moves resolve the full nested subtree. The backend
+    // requires contributor access to the destination cabinet, so use the same
+    // can_contribute flag for both - can_manage is stricter and would hide
+    // valid nested destination folders when moving a folder.
     return flat.filter((folder) => {
       if (blockedIds.has(folder.id)) return false;
-      if (movingFolderId != null) return folder.can_manage !== false;
       return folder.can_contribute !== false;
     });
-  }, [flat, blockedIds, movingFolderId]);
+  }, [flat, blockedIds]);
 
   const targetCabinet =
     cabinets.find((c) => c.id === targetCabinetId) ?? cabinets.find((c) => c.id === currentCabinetId) ?? null;

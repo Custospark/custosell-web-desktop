@@ -106,4 +106,17 @@ describe('MoveItemModal cross-cabinet', () => {
 
     expect(onConfirm).toHaveBeenCalledWith({ cabinetId: 2, folderId: null });
   });
+
+  it('resolves nested folders for folder moves too (can_contribute, not only can_manage)', () => {
+    render(
+      <MoveItemModal open onClose={() => {}} title="Move folder" cabinets={cabinets} currentCabinetId={1} onConfirm={() => {}} />,
+    );
+
+    // The legal cabinet tree has a nested "NDAs" subfolder. It must appear as a
+    // destination for a FOLDER move even when it only carries can_contribute.
+    fireEvent.change(screen.getByTitle('Destination cabinet'), { target: { value: '2' } });
+    const folderSelect = screen.getByTitle('Destination folder') as HTMLSelectElement;
+    expect(folderSelect.textContent).toContain('Contracts');
+    expect(folderSelect.textContent).toContain('NDAs');
+  });
 });

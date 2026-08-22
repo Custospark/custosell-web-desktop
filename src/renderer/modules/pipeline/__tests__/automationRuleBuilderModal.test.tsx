@@ -142,4 +142,29 @@ describe('AutomationRuleBuilderModal', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(updateMutateMock).toHaveBeenCalledWith({ ruleId: 7, payload: expect.objectContaining({ name: 'Existing rule' }) });
   });
+
+  it('pre-populates the form from the rule being edited', () => {
+    const rule = {
+      id: 9,
+      board_id: 1,
+      name: 'Escalate hot leads',
+      trigger: { type: 'due_date_passed' as const, frequency: 'daily' as const, time: '06:00' },
+      conditions: [
+        { field: 'priority' as const, operator: 'is' as const, value: 'high' },
+      ],
+      actions: [{ type: 'set_priority' as const, priority: 'urgent' as const }],
+      is_active: true,
+      run_count: 3,
+      last_run_at: null,
+      paused_at: null,
+      created_by: 1,
+      creator: null,
+      created_at: 'x',
+      updated_at: 'x',
+    };
+    render(<AutomationRuleBuilderModal boardId={1} open mode="edit" rule={rule} onClose={() => {}} />);
+
+    expect((screen.getByLabelText(/Automation name/i) as HTMLInputElement).value).toBe('Escalate hot leads');
+    expect((screen.getByLabelText('When') as HTMLSelectElement).value).toBe('due_date_passed');
+  });
 });

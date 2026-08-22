@@ -246,6 +246,7 @@ export default function BoardAutomationsView({ boardId, canManage = true }: Boar
       </div>
 
       <AutomationRuleBuilderModal
+        key={building ? `${building.mode}-${building.rule?.id ?? 'new'}` : 'closed'}
         boardId={boardId}
         open={building != null}
         mode={building?.mode ?? 'create'}

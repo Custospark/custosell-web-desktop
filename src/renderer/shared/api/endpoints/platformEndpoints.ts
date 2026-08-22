@@ -46,6 +46,8 @@ export const PLATFORM = {
     TUTORIAL_UPLOAD_THUMB: (id: number) => `/platform/guide/tutorials/${id}/upload-thumbnail`,
     FAQS: '/platform/guide/faqs',
     FAQ: (id: number) => `/platform/guide/faqs/${id}`,
+    COMMUNITIES: '/platform/guide/communities',
+    COMMUNITY: (id: number) => `/platform/guide/communities/${id}`,
     FEEDBACK: '/platform/guide/feedback',
     FEEDBACK_ITEM: (id: number) => `/platform/guide/feedback/${id}`,
     FEEDBACK_BULK_DELETE: '/platform/guide/feedback/bulk-delete',

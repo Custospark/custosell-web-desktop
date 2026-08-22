@@ -16,6 +16,7 @@ import {
   type CreateGuideFeedbackPayload,
 } from '../../../app/store/offline/guide/completeOfflineGuideFeedback';
 import type {
+  GuideCommunityDto,
   GuideFaqDto,
   GuideFeedbackMineDto,
 } from './GuideTypes';
@@ -24,6 +25,7 @@ export const guideKeys = {
   all: ['guide'] as const,
   tutorials: () => [...guideKeys.all, 'tutorials'] as const,
   faqs: () => [...guideKeys.all, 'faqs'] as const,
+  communities: () => [...guideKeys.all, 'communities'] as const,
   feedbackMine: () => [...guideKeys.all, 'feedback-mine'] as const,
 };
 
@@ -141,6 +143,18 @@ export function useGuideFaqs(options?: { enabled?: boolean }) {
     queryKey: guideKeys.faqs(),
     queryFn: async () => {
       const { data } = await axiosInstance.get<{ data: GuideFaqDto[] }>(GUIDE.FAQS);
+      return data.data;
+    },
+    staleTime: 60_000,
+    enabled: options?.enabled ?? true,
+  });
+}
+
+export function useGuideCommunities(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: guideKeys.communities(),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get<{ data: GuideCommunityDto[] }>(GUIDE.COMMUNITIES);
       return data.data;
     },
     staleTime: 60_000,

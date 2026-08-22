@@ -26,6 +26,52 @@ export interface GuideFaqDto {
   sort_order: number;
 }
 
+export type GuideCommunityPlatform = string;
+
+export interface GuideCommunityDto {
+  uuid: string;
+  name: string;
+  description: string | null;
+  platform: GuideCommunityPlatform;
+  url: string;
+  icon: string | null;
+  sort_order: number;
+}
+
+export interface GuideCommunityAdminDto extends GuideCommunityDto {
+  id: number;
+  is_published: boolean;
+  created_by: number | null;
+  created_at: string | null;
+  updated_at: string | null;
+  deleted_at: string | null;
+}
+
+export interface GuideCommunityPayload {
+  name: string;
+  description?: string | null;
+  platform: GuideCommunityPlatform;
+  url: string;
+  icon?: string | null;
+  sort_order?: number;
+  is_published?: boolean;
+}
+
+/** Known community platforms offered in the admin select (plus a Custom option). */
+export const GUIDE_COMMUNITY_PLATFORMS: { value: string; label: string }[] = [
+  { value: 'whatsapp', label: 'WhatsApp' },
+  { value: 'telegram', label: 'Telegram' },
+  { value: 'discord', label: 'Discord' },
+  { value: 'facebook', label: 'Facebook' },
+  { value: 'x', label: 'X (Twitter)' },
+  { value: 'instagram', label: 'Instagram' },
+  { value: 'youtube', label: 'YouTube' },
+  { value: 'tiktok', label: 'TikTok' },
+  { value: 'linkedin', label: 'LinkedIn' },
+  { value: 'slack', label: 'Slack' },
+  { value: 'other', label: 'Other' },
+];
+
 export interface GuideFaqAdminDto extends GuideFaqDto {
   id: number;
   is_published: boolean;

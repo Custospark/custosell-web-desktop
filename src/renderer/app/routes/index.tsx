@@ -49,6 +49,7 @@ import PlatformUsersPage from '../../modules/platform/PlatformUsersPage';
 import PlatformRolesPage from '../../modules/platform/PlatformRolesPage';
 import PlatformGuideTutorialsPage from '../../modules/platform/PlatformGuideTutorialsPage';
 import PlatformGuideFaqsPage from '../../modules/platform/PlatformGuideFaqsPage';
+import PlatformGuideCommunitiesPage from '../../modules/platform/PlatformGuideCommunitiesPage';
 import PlatformGuideFeedbackPage from '../../modules/platform/PlatformGuideFeedbackPage';
 import PlatformSentMessagesPage from '../../modules/platform/PlatformSentMessagesPage';
 import PlatformManagePlansPage from '../../modules/platform/PlatformManagePlansPage';
@@ -72,6 +73,7 @@ import AccountingSettingsPage from '../../modules/accounting/pages/AccountingSet
 import GuideTutorialsPage from '../../modules/guide/GuideTutorialsPage';
 import GuideFaqsPage from '../../modules/guide/GuideFaqsPage';
 import GuideFeedbackPage from '../../modules/guide/GuideFeedbackPage';
+import CommunitiesPage from '../../modules/guide/CommunitiesPage';
 import GuideContactPage from '../../modules/guide/GuideContactPage';
 import PipelineLayout from '../../modules/pipeline/pages/PipelineLayout';
 import BoardsPage from '../../modules/pipeline/pages/BoardsPage';
@@ -225,6 +227,7 @@ export function AppRoutes() {
             <Route path={ROUTES.GUIDE.TUTORIALS} element={<SuspenseWrapper><GuideTutorialsPage /></SuspenseWrapper>} />
             <Route path={ROUTES.GUIDE.FAQS} element={<SuspenseWrapper><GuideFaqsPage /></SuspenseWrapper>} />
             <Route path={ROUTES.GUIDE.FEEDBACK} element={<SuspenseWrapper><GuideFeedbackPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.GUIDE.COMMUNITIES} element={<SuspenseWrapper><CommunitiesPage /></SuspenseWrapper>} />
             <Route path={ROUTES.GUIDE.CONTACT} element={<SuspenseWrapper><GuideContactPage /></SuspenseWrapper>} />
           </Route>
 
@@ -381,6 +384,7 @@ export function AppRoutes() {
             <Route path={ROUTES.PLATFORM.GUIDE.INDEX} element={<Navigate to={ROUTES.PLATFORM.GUIDE.TUTORIALS} replace />} />
             <Route path={ROUTES.PLATFORM.GUIDE.TUTORIALS} element={<SuspenseWrapper><PlatformGuideTutorialsPage /></SuspenseWrapper>} />
             <Route path={ROUTES.PLATFORM.GUIDE.FAQS} element={<SuspenseWrapper><PlatformGuideFaqsPage /></SuspenseWrapper>} />
+            <Route path={ROUTES.PLATFORM.GUIDE.COMMUNITIES} element={<SuspenseWrapper><PlatformGuideCommunitiesPage /></SuspenseWrapper>} />
             <Route path={ROUTES.PLATFORM.GUIDE.FEEDBACK} element={<SuspenseWrapper><PlatformGuideFeedbackPage /></SuspenseWrapper>} />
           </Route>
         </Route>

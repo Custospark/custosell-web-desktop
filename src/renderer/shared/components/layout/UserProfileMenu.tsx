@@ -6,8 +6,9 @@ import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import ModuleLauncherModal from './ModuleLauncherModal';
 import { Modal } from '../../components/modals/Modal';
 import { LinkedAccountsManager } from '../../components/account/LinkedAccountsManager';
+import CommunitiesModal from '../../components/account/CommunitiesModal';
 import {
-  User, LogOut, Clock, BookOpen, HelpCircle, MessageSquareText, Bell, Sparkles, LayoutGrid, Shield, Link2,
+  User, LogOut, Clock, BookOpen, HelpCircle, MessageSquareText, Bell, Sparkles, LayoutGrid, Shield, Link2, Users,
 } from 'lucide-react';
 
 interface UserProfileMenuProps {
@@ -29,9 +30,10 @@ export function UserProfileMenu({
   const user = useAppSelector((s) => s.auth.user);
   const [appsOpen, setAppsOpen] = useState(false);
   const [linkedAccountsOpen, setLinkedAccountsOpen] = useState(false);
+  const [communitiesOpen, setCommunitiesOpen] = useState(false);
 
   if (typeof document === 'undefined') return null;
-  if (!open && !appsOpen && !linkedAccountsOpen) return null;
+  if (!open && !appsOpen && !linkedAccountsOpen && !communitiesOpen) return null;
 
   return createPortal(
     <>
@@ -85,6 +87,15 @@ export function UserProfileMenu({
           >
             <Link2 className="w-4 h-4 shrink-0" />
             Linked Accounts
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => { onClose(); setCommunitiesOpen(true); }}
+            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+          >
+            <Users className="w-4 h-4 shrink-0" />
+            Communities
           </button>
           <button
             type="button"
@@ -181,6 +192,7 @@ export function UserProfileMenu({
           <LinkedAccountsManager embedded onClose={() => setLinkedAccountsOpen(false)} />
         </div>
       </Modal>
+      <CommunitiesModal open={communitiesOpen} onClose={() => setCommunitiesOpen(false)} />
     </>,
     document.body,
   );

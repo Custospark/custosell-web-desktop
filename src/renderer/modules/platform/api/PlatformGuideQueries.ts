@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { axiosInstance } from '../../../app/api/axiosConfig';
 import { PLATFORM } from '../../../shared/api/endpoints/platformEndpoints';
 import type {
+  GuideCommunityAdminDto,
+  GuideCommunityPayload,
   GuideFaqAdminDto,
   GuideFaqPayload,
   GuideFeedbackAdminDetailDto,
@@ -15,6 +17,7 @@ export const platformGuideKeys = {
   all: ['platform-guide'] as const,
   tutorials: (params?: Record<string, string>) => [...platformGuideKeys.all, 'tutorials', params ?? {}] as const,
   faqs: (params?: Record<string, string>) => [...platformGuideKeys.all, 'faqs', params ?? {}] as const,
+  communities: (params?: Record<string, string>) => [...platformGuideKeys.all, 'communities', params ?? {}] as const,
   feedback: (params?: Record<string, string>) => [...platformGuideKeys.all, 'feedback', params ?? {}] as const,
   feedbackDetail: (id: number | null) => [...platformGuideKeys.all, 'feedback-detail', id] as const,
 };
@@ -148,6 +151,55 @@ export function useDeletePlatformGuideFaq() {
   return useMutation({
     mutationFn: async (id: number) => {
       await axiosInstance.delete(PLATFORM.GUIDE.FAQ(id));
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: platformGuideKeys.all }),
+  });
+}
+
+export function usePlatformGuideCommunities(params: Record<string, string> = {}) {
+  return useQuery({
+    queryKey: platformGuideKeys.communities(params),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get<{ data: GuideCommunityAdminDto[] }>(PLATFORM.GUIDE.COMMUNITIES, { params });
+      return data.data;
+    },
+    staleTime: 30_000,
+  });
+}
+
+export function useCreatePlatformGuideCommunity() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: GuideCommunityPayload) => {
+      const { data } = await axiosInstance.post<{ data: GuideCommunityAdminDto; message?: string }>(
+        PLATFORM.GUIDE.COMMUNITIES,
+        payload,
+      );
+      return data;
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: platformGuideKeys.all }),
+  });
+}
+
+export function useUpdatePlatformGuideCommunity() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, payload }: { id: number; payload: Partial<GuideCommunityPayload> }) => {
+      const { data } = await axiosInstance.put<{ data: GuideCommunityAdminDto; message?: string }>(
+        PLATFORM.GUIDE.COMMUNITY(id),
+        payload,
+      );
+      return data;
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: platformGuideKeys.all }),
+  });
+}
+
+export function useDeletePlatformGuideCommunity() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      await axiosInstance.delete(PLATFORM.GUIDE.COMMUNITY(id));
     },
     onSuccess: () => void qc.invalidateQueries({ queryKey: platformGuideKeys.all }),
   });

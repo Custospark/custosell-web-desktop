@@ -14,6 +14,8 @@ import { Button } from '../../../shared/components/buttons/Button';
 import { Modal } from '../../../shared/components/modals/Modal';
 import { cn } from '../../../shared/utils/cn';
 import { buildStaffModulesPayload } from '../../../shared/utils/moduleAccess';
+import { getPlanBusinessCatalog } from '../../../shared/components/layout/moduleLauncherCatalog';
+import { useAppSelector } from '../../../app/store/hooks/useApp';
 import {
   useCreateHrEmployee,
   useCreateHrEmployeeWithAccount,
@@ -76,6 +78,7 @@ export function HrAddEmployeeModal({ open, onClose }: HrAddEmployeeModalProps) {
 
   const roles = accountOptions?.roles ?? [];
   const saving = createEmployee.isPending || createWithAccount.isPending;
+  const user = useAppSelector((s) => s.auth.user);
 
   function resetAndClose() {
     setCreateLogin(false);
@@ -96,13 +99,20 @@ export function HrAddEmployeeModal({ open, onClose }: HrAddEmployeeModalProps) {
 
     if (createLogin) {
       if (loginForm.password !== loginForm.password_confirmation) return;
+      // Plan catalog only - full-access flags ride along when their workspace is granted.
+      const planSet = new Set(getPlanBusinessCatalog(user));
+      const modules = loginForm.modules.filter((m) => planSet.has(m));
       await createWithAccount.mutateAsync({
         ...base,
         email: loginForm.email.trim(),
         password: loginForm.password,
         password_confirmation: loginForm.password_confirmation,
         role_id: loginForm.role_id ? Number(loginForm.role_id) : null,
-        modules: buildStaffModulesPayload(loginForm.modules, false, loginForm.hrFullAccess),
+        modules: buildStaffModulesPayload(
+          modules,
+          loginForm.estimatesFullAccess && modules.includes('estimates'),
+          loginForm.hrFullAccess && modules.includes('hr'),
+        ),
       });
     } else {
       await createEmployee.mutateAsync(base);

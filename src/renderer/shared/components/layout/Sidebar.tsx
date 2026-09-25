@@ -25,6 +25,7 @@ import {
   isSidebarSubItemActive,
   resolveAccessibleNavGroups,
 } from './resolveAccessibleNavLeaves';
+import { useStoreVisibilityVersion } from './storeAppVisibility';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -48,7 +49,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
   const user = useAppSelector((s) => s.auth.user);
   const planModules = usePlanAccessibleModules();
-  const navGroups = useMemo(() => resolveAccessibleNavGroups(user, planModules), [user, planModules]);
+  const visibilityVersion = useStoreVisibilityVersion();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const navGroups = useMemo(() => resolveAccessibleNavGroups(user, planModules), [user, planModules, visibilityVersion]);
   const allSubRoutes = useMemo(
     () => (user?.is_platform_admin ? [...baseSubRoutes, ...platformSubRoutes] : baseSubRoutes),
     [user?.is_platform_admin],

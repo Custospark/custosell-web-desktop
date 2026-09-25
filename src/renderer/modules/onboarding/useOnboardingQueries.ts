@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import type { Dispatch, UnknownAction } from '@reduxjs/toolkit';
 import axiosInstance from '../../app/api/axiosConfig';
+import { store } from '../../app/store/store';
 import { useAppDispatch, useAppSelector } from '../../app/store/hooks/useApp';
 import { setUser, type AuthUser } from '../../app/store/slices/authSlice';
 import { accountKeys } from '../../shared/api/account/AccountQueries';
@@ -128,14 +129,19 @@ export function useUpdateOnboarding() {
 
   return useMutation({
     mutationFn: async (payload: OnboardingAction) => {
-      const local = applyOnboardingLocally(dispatch, qc, user, localStateForAction(payload));
+      // Always merge onto the live store user, never the hook-render closure:
+      // an app-save immediately before this refreshes modules/preferences, and
+      // merging a stale snapshot would wipe those picks from state.
+      const currentUser = store.getState().auth.user ?? user;
+      const local = applyOnboardingLocally(dispatch, qc, currentUser, localStateForAction(payload));
 
       // Sync in the background - never block tour start / offline replay
       void axiosInstance.patch('/auth/onboarding', payload).then(({ data }) => {
         const state = data.data as OnboardingState;
         qc.setQueryData(onboardingKeys.state(), state);
         if (data.user) {
-          const merged = { ...(user ?? {}), ...(data.user as AuthUser), onboarding: state };
+          const latest = store.getState().auth.user ?? {};
+          const merged = { ...latest, ...(data.user as AuthUser), onboarding: state };
           dispatch(setUser(merged));
           qc.setQueryData(accountKeys.profile(), merged);
         }

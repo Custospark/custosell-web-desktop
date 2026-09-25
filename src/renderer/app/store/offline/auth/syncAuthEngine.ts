@@ -28,9 +28,30 @@ function extractActivePlans(userData: AuthUser | null | undefined): Plan[] {
   return userData?.active_plans ?? [];
 }
 
+/**
+ * True when a live session exists for a DIFFERENT email than the queued auth
+ * payload. Replaying then would yank the user into another account, so the
+ * stale mutation is failed instead of applied. No current user, or the same
+ * email (refresh / offline-login upgrade), always proceeds.
+ */
+function isSupersededByLiveSession(queuedEmail: string | null | undefined): boolean {
+  const currentEmail = store.getState().auth.user?.email?.toLowerCase() ?? null;
+  const queued = (queuedEmail ?? '').trim().toLowerCase();
+  if (!currentEmail || !queued) return false;
+  return currentEmail !== queued;
+}
+
 async function processAuthRegister(m: QueuedMutation): Promise<boolean> {
   const payload = m.data as BusinessRegisterRequest;
   const authRecord = await localAuthStore.getByMutationId(m.id);
+
+  // Never let a stale replay hijack a different live session - the user must
+  // remain logged in as whoever they currently are.
+  if (isSupersededByLiveSession(payload.email)) {
+    await mutationQueue.markFailed(m.id, 'Superseded by a newer sign-in - keeping current session');
+    if (authRecord) await localAuthStore.markFailed(authRecord.localId, 'Superseded by a newer sign-in');
+    return false;
+  }
 
   try {
     await mutationQueue.markSyncing(m.id);
@@ -78,6 +99,13 @@ async function processAuthRegister(m: QueuedMutation): Promise<boolean> {
 
 async function processAuthLogin(m: QueuedMutation): Promise<boolean> {
   const payload = m.data as LoginRequest;
+
+  // Never let a stale replay hijack a different live session - the user must
+  // remain logged in as whoever they currently are.
+  if (isSupersededByLiveSession(payload.email)) {
+    await mutationQueue.markFailed(m.id, 'Superseded by a newer sign-in - keeping current session');
+    return false;
+  }
 
   try {
     await mutationQueue.markSyncing(m.id);

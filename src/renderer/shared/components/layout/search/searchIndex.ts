@@ -9,6 +9,7 @@ import type { SearchableNavItem } from './searchTypes';
 import { ROUTES } from '../../../../app/routes/constants/shared.paths';
 import { useGuideCommunities } from '../../../../modules/guide/api/GuideQueries';
 import type { GuideCommunityDto } from '../../../../modules/guide/api/GuideTypes';
+import { getHiddenStoreApps, useStoreVisibilityVersion } from '../storeAppVisibility';
 
 /** One entry per sidebar module (group) - routes to the module's landing page. */
 function groupEntries(group: SidebarNavGroup): SearchableNavItem[] {
@@ -58,9 +59,15 @@ export function buildSearchIndex(groups: SidebarNavGroup[]): SearchableNavItem[]
 export function useSearchIndex(): SearchableNavItem[] {
   const user = useAppSelector((s) => s.auth.user);
   const { data: communities = [] } = useGuideCommunities();
+  const visibilityVersion = useStoreVisibilityVersion();
   return useMemo(() => {
     const planModules = getPlanAccessibleModules(user);
     const navItems = buildSearchIndex(resolveAccessibleNavGroups(user, planModules));
+
+    // Hidden Everyday apps stay out of search too (sidebar intersection).
+    if (getHiddenStoreApps(user).has('guide')) {
+      return navItems;
+    }
 
     // Company-wide communities page + each live community as a searchable term.
     const guideItems: SearchableNavItem[] = [
@@ -86,5 +93,6 @@ export function useSearchIndex(): SearchableNavItem[] {
     ];
 
     return [...navItems, ...guideItems];
-  }, [user, communities]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, communities, visibilityVersion]);
 }

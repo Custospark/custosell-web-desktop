@@ -17,6 +17,7 @@ import {
   hasSubscriptionAccess,
 } from '../../shared/utils/moduleAccess';
 import { TOOL_DESCRIPTIONS } from './toolDescriptions';
+import { useStoreVisibilityVersion } from '../../shared/components/layout/storeAppVisibility';
 
 /** Icons for paid personal-plan tools that are locked while access lapses. */
 const LOCKED_ICONS: Record<string, ElementType> = {
@@ -71,6 +72,7 @@ export default function YourToolsPage() {
   const user = useAppSelector((s) => s.auth.user);
   const navigate = useNavigate();
   const planModules = usePlanAccessibleModules();
+  const visibilityVersion = useStoreVisibilityVersion();
   const subscription = user?.business?.subscription;
   const status = subscription?.status ?? null;
   const config = status ? STATUS_CONFIG[status] : null;
@@ -101,7 +103,8 @@ export default function YourToolsPage() {
       icon: g.icon,
       to: g.subItems[0].to,
     }));
-  }, [user, planModules]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, planModules, visibilityVersion]);
 
   const visibleTools = availableTools.slice(0, 6);
   const hasMore = availableTools.length > 6;

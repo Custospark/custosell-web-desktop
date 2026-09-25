@@ -1,6 +1,6 @@
 import { cn } from '../../utils/cn';
 import LogoImage from '../../assets/LogoImage';
-import { TAGLINE } from '../../brand/custosellBrand';
+import { PRODUCT_NAME, TAGLINE } from '../../brand/custosellBrand';
 
 interface CustosellBrandLockupProps {
   /** Show the tagline underneath the product name. */
@@ -14,7 +14,7 @@ interface CustosellBrandLockupProps {
 }
 
 /**
- * Custosell product lockup - logo + gradient wordmark (+ optional tagline),
+ * Custosell ERP product lockup - logo + gradient wordmark (+ optional tagline),
  * mirroring Custocare's `BrandName` treatment. Used in the sidebar header and
  * the top navbar so branding stays consistent.
  */
@@ -43,7 +43,7 @@ export function CustosellBrandLockup({
             nameClassName,
           )}
         >
-          Custosell
+          {PRODUCT_NAME}
         </span>
         {showTagline && (
           <span

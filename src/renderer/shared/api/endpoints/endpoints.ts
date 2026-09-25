@@ -3,7 +3,7 @@ export { GUIDE } from './guideEndpoints';
 export { QUICK_NOTES } from './quickNotesEndpoints';
 export { LINKED_ACCOUNTS } from './linkedAccountsEndpoints';
 
-export const AUTH = { REGISTER: '/auth/register', LOGIN: '/auth/login', LOGOUT: '/auth/logout', ME: '/auth/me', PROFILE: '/auth/profile', VERIFY_SEND: '/auth/verify/send', VERIFY: '/auth/verify', TWO_FACTOR: '/auth/two-factor', ACTIVITY: '/auth/activity', PASSWORD_INITIATE: '/auth/password/initiate', PASSWORD_CONFIRM: '/auth/password/confirm', PROFILE_INITIATE: '/auth/profile/initiate', PROFILE_CONFIRM: '/auth/profile/confirm' };
+export const AUTH = { REGISTER: '/auth/register', LOGIN: '/auth/login', LOGOUT: '/auth/logout', ME: '/auth/me', PROFILE: '/auth/profile', STORE_VISIBILITY: '/auth/store-visibility', VERIFY_SEND: '/auth/verify/send', VERIFY: '/auth/verify', TWO_FACTOR: '/auth/two-factor', ACTIVITY: '/auth/activity', PASSWORD_INITIATE: '/auth/password/initiate', PASSWORD_CONFIRM: '/auth/password/confirm', PROFILE_INITIATE: '/auth/profile/initiate', PROFILE_CONFIRM: '/auth/profile/confirm' };
 export const PLANS = '/plans';
 export const BUSINESSES = {
   REGISTER: '/businesses/register',

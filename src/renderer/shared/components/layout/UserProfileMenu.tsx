@@ -104,7 +104,7 @@ export function UserProfileMenu({
             className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
           >
             <LayoutGrid className="w-4 h-4 shrink-0" />
-            Apps
+            Custosell Apps
           </button>
           <Link
             to={ROUTES.GUIDE.TUTORIALS}

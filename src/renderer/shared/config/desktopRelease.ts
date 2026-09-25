@@ -4,7 +4,7 @@ declare const __APP_VERSION__: string;
 export const DESKTOP_RELEASE = {
   githubOwner: 'Custospark',
   githubRepo: 'custosell-web-desktop',
-  productName: 'Custosell',
+  productName: 'Custosell ERP',
 } as const;
 
 export function getDesktopAppVersion(): string {

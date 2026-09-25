@@ -18,6 +18,7 @@ import {
   type SidebarNavGroup,
   type SidebarSubItem,
 } from './sidebarNavGroups';
+import { isStoreAppHidden } from './storeAppVisibility';
 
 export interface AccessibleNavLeaf extends SidebarSubItem {
   groupLabel: string;
@@ -39,6 +40,10 @@ export function resolveAccessibleNavGroups(
   const businessGroups = baseNavGroups.filter((group) => {
     const moduleSlug = NAV_GROUP_MODULE[group.label];
     if (!moduleSlug) return true;
+    // Visibility layer (Custosell Apps): unchecked apps stay out of the
+    // sidebar, no exemptions. Grants decide what you *can* open; this decides
+    // what you *see*. The sidebar only ever shows enabled apps.
+    if (isStoreAppHidden(user, moduleSlug)) return false;
     if (group.label === 'Projects & Estimates') {
       if (!hasModule('estimates')) return false;
       return hasEstimatesBoardsAccess(user);

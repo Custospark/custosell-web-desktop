@@ -13,6 +13,7 @@ import {
   resolveAccessibleNavLeaves,
 } from './resolveAccessibleNavLeaves';
 import { AppMobileMoreSheet } from './AppMobileMoreSheet';
+import { useStoreVisibilityVersion } from './storeAppVisibility';
 import { isOnlineOnlyNavTarget, onlineOnlyHoverMessage } from './onlineOnlyNav';
 import { useNetworkStatus } from '../../../app/store/hooks/useNetworkStatus';
 import { usePlanAccessibleModules } from '../../utils/usePlanAccessibleModules';
@@ -32,7 +33,9 @@ export function AppMobileTabBar() {
   const { isCompletelyOffline } = useNetworkStatus();
 
   const planModules = usePlanAccessibleModules();
-  const leaves = useMemo(() => resolveAccessibleNavLeaves(user, planModules), [user, planModules]);
+  const visibilityVersion = useStoreVisibilityVersion();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const leaves = useMemo(() => resolveAccessibleNavLeaves(user, planModules), [user, planModules, visibilityVersion]);
   // Pin Products (Inventory) then Orders (Sales) when both are available - the two
   // most-used destinations, ordered so Orders sits right after Products. Fall back
   // to the first accessible leaves otherwise.

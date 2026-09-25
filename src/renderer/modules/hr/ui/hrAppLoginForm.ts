@@ -6,6 +6,8 @@ export interface HrAppLoginFormState {
   password_confirmation: string;
   role_id: string;
   modules: BusinessModuleSlug[];
+  /** Nested under `estimates` - never auto-enabled when toggling Projects & Estimates. */
+  estimatesFullAccess: boolean;
   /** Nested under `hr` - never auto-enabled when toggling HR. */
   hrFullAccess: boolean;
 }
@@ -16,5 +18,6 @@ export const emptyAppLoginForm = (): HrAppLoginFormState => ({
   password_confirmation: '',
   role_id: '',
   modules: ['sales'],
+  estimatesFullAccess: false,
   hrFullAccess: false,
 });

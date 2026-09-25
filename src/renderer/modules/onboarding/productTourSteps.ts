@@ -90,8 +90,8 @@ const CLOSING_STEPS: ProductTourStep[] = [
   {
     id: 'modules-owner',
     target: 'sidebar-settings-modules',
-    title: 'Module access',
-    body: 'Owners turn modules on for the team here. Intent never changes permissions for you.',
+    title: 'Custosell Apps',
+    body: 'Pick which apps you see here. Changes affect only your own account - staff access is managed in Staff.',
     expandGroup: 'Settings',
     icon: Settings,
     tone: 'bg-slate-100 text-slate-600 ring-slate-200',

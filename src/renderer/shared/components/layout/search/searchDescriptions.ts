@@ -90,7 +90,7 @@ export const NAV_ITEM_DESCRIPTIONS: Record<string, string> = {
   [ROUTES.SETTINGS.STAFF]: 'Invite and manage staff members.',
   [ROUTES.SETTINGS.ROLES]: 'Define roles and permissions.',
   [ROUTES.SETTINGS.LOCATIONS]: 'Manage branches and per-branch operations.',
-  [ROUTES.SETTINGS.MODULES]: 'Control module access for staff.',
+  [ROUTES.SETTINGS.MODULES]: 'Pick which apps you see in your workspace.',
   [ROUTES.SETTINGS.SUBSCRIPTION]: 'Manage your plan and subscription.',
   [ROUTES.SETTINGS.DATA_EXPORT]: 'Export your business data.',
 

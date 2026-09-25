@@ -4,6 +4,7 @@ import {
   ShoppingCart,
   Package,
   Users,
+  Compass,
   Kanban,
   FileSpreadsheet,
   Receipt,
@@ -33,6 +34,7 @@ export type LauncherModuleSlug =
   | BusinessModuleSlug
   | 'account'
   | 'guide'
+  | 'discover'
   | 'platform'
   | 'guide_settings';
 
@@ -98,6 +100,15 @@ export const MODULE_LAUNCHER_CATALOG: ModuleLauncherItem[] = [
     tone: TONE.sky,
     section: 'workspace',
     getRoute: () => ROUTES.CUSTOMERS.INDEX,
+  },
+  {
+    slug: 'discover',
+    label: 'Online Shopping',
+    description: 'Browse & order',
+    icon: Compass,
+    tone: TONE.amber,
+    section: 'workspace',
+    getRoute: () => ROUTES.DISCOVER,
   },
   {
     slug: 'pipeline',
@@ -208,6 +219,22 @@ export const MODULE_LAUNCHER_CATALOG: ModuleLauncherItem[] = [
     getRoute: () => ROUTES.PLATFORM.GUIDE.TUTORIALS,
   },
 ];
+
+/** Business modules the plan actually offers (from plan_features), always including settings.
+ *  Never derived from the currently-enabled set, so toggling a module off keeps its tile available. */
+export function getPlanBusinessCatalog(user: AuthUser | null | undefined): BusinessModuleSlug[] {
+  const features = user?.business?.subscription?.plan_features as
+    | Record<string, boolean>
+    | undefined;
+  if (!features) return [...BUSINESS_MODULE_SLUGS];
+  const result: BusinessModuleSlug[] = [];
+  for (const slug of BUSINESS_MODULE_SLUGS) {
+    if (slug === 'settings' || features[slug] === true) {
+      result.push(slug);
+    }
+  }
+  return result;
+}
 
 /**
  * Modules shown in the launcher for this user:

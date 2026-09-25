@@ -11,10 +11,10 @@ export default function LogoImage({ className = '', size = 'md' }: LogoImageProp
   return (
     <img
       src={logo}
-      alt="Custosell"
+      alt="Custosell ERP"
       className={`${sizeClasses[size]} w-auto cursor-pointer transition-all duration-300 hover:scale-105 active:scale-95 ${className}`}
-      title="Custosell"
-      aria-label="Custosell Logo"
+      title="Custosell ERP"
+      aria-label="Custosell ERP Logo"
     />
   );
 }

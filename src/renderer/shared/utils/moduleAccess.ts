@@ -116,28 +116,6 @@ function storedBusinessModules(user: AuthUser): BusinessModuleSlug[] {
   return normalized;
 }
 
-/** Modules an owner may grant to staff - full business catalog. */
-export function assignableStaffModuleSlugs(owner: AuthUser | null | undefined): BusinessModuleSlug[] {
-  void owner;
-  return [...BUSINESS_MODULE_SLUGS];
-}
-
-/** Staff modules intersected with what the owner currently allows - for forms and display. */
-export function intersectStaffModulesWithOwner(
-  staffModules: readonly string[] | null | undefined,
-  owner: AuthUser | null | undefined,
-): BusinessModuleSlug[] {
-  const allowed = new Set(assignableStaffModuleSlugs(owner));
-  const normalized = (staffModules ?? []).filter((m): m is BusinessModuleSlug =>
-    (BUSINESS_MODULE_SLUGS as readonly string[]).includes(m),
-  );
-  const filtered = normalized.filter((m) => allowed.has(m));
-  if (filtered.includes('customers') && !filtered.includes('sales')) {
-    filtered.push('sales');
-  }
-  return filtered;
-}
-
 /** Owner sidebar/API modules - settings is always included. */
 export function resolvedOwnerBusinessModules(user: AuthUser): BusinessModuleSlug[] {
   const stored = storedBusinessModules(user);

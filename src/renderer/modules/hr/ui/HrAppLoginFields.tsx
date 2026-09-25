@@ -1,11 +1,12 @@
 import { Eye, EyeOff, KeyRound, LayoutGrid, Mail, Shield } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { cn } from '../../../shared/utils/cn';
 import {
-  BUSINESS_MODULE_SLUGS,
   MODULE_LABELS,
   type BusinessModuleSlug,
 } from '../../../shared/utils/moduleAccess';
+import { getPlanBusinessCatalog } from '../../../shared/components/layout/moduleLauncherCatalog';
+import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { HrFormSection, HrIconField, hrInputClass, hrSelectClass } from './hrFormFields';
 import type { HrAppLoginFormState } from './hrAppLoginForm';
 
@@ -37,6 +38,9 @@ export function HrAppLoginFields({
 }: HrAppLoginFieldsProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const user = useAppSelector((s) => s.auth.user);
+  // Same plan catalog as Settings → Staff - never the owner's personal picks.
+  const assignableModules = useMemo(() => getPlanBusinessCatalog(user), [user]);
 
   function toggleModule(slug: BusinessModuleSlug) {
     const has = value.modules.includes(slug);
@@ -44,8 +48,9 @@ export function HrAppLoginFields({
     onChange({
       ...value,
       modules: next,
-      // Removing HR clears full access; enabling HR does not auto-enable full.
+      // Removing a workspace clears its full access; enabling never auto-enables full.
       hrFullAccess: slug === 'hr' && has ? false : value.hrFullAccess,
+      estimatesFullAccess: slug === 'estimates' && has ? false : value.estimatesFullAccess,
     });
   }
 
@@ -137,7 +142,7 @@ export function HrAppLoginFields({
         description="Choose which parts of Custosell they can open. You can change this later in Settings → Staff."
       >
         <div className="grid gap-2 sm:grid-cols-2">
-          {BUSINESS_MODULE_SLUGS.map((slug) => (
+          {assignableModules.map((slug) => (
             <label
               key={slug}
               className={cn(
@@ -157,6 +162,24 @@ export function HrAppLoginFields({
             </label>
           ))}
         </div>
+        {value.modules.includes('estimates') && (
+          <div className="mt-3 rounded-lg border border-indigo-100 bg-indigo-50/60 p-3">
+            <label className="flex cursor-pointer items-start gap-3">
+              <input
+                type="checkbox"
+                checked={value.estimatesFullAccess}
+                onChange={(e) => onChange({ ...value, estimatesFullAccess: e.target.checked })}
+                className="mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              />
+              <span>
+                <span className="block text-sm font-medium text-gray-800">Full Projects &amp; Estimates workspace</span>
+                <span className="mt-0.5 block text-xs text-gray-600">
+                  Optional. Leave unchecked for project boards only - full unlocks estimates, projects, insights, templates, and costing.
+                </span>
+              </span>
+            </label>
+          </div>
+        )}
         {value.modules.includes('hr') && (
           <div className="mt-3 rounded-lg border border-indigo-100 bg-indigo-50/60 p-3">
             <label className="flex cursor-pointer items-start gap-3">

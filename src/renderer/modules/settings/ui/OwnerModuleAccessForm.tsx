@@ -158,10 +158,10 @@ export default function OwnerModuleAccessForm() {
         console.warn('[Modules] Failed to persist module access to local session:', err);
       }
       void queryClient.invalidateQueries({ queryKey: staffKeys.list() });
-      showToast('success', 'Module access updated');
+      showToast('success', 'Apps updated');
     },
     onError: (err) => {
-      showToast('error', sanitizeErrorMessage(err, 'Could not update module access'));
+      showToast('error', sanitizeErrorMessage(err, 'Could not update apps'));
     },
   });
 
@@ -180,9 +180,9 @@ export default function OwnerModuleAccessForm() {
             <LayoutGrid className="h-5 w-5 text-white sm:h-6 sm:w-6" />
           </div>
           <div className="min-w-0">
-            <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Module access</h1>
+            <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Custosell Apps</h1>
 <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-500">
-  Pick which workspaces you see. Changes here only affect your own account - not your team. Staff access is managed in Staff.
+  Pick which apps you see. Changes here only affect your own account - not your team. Staff access is managed in Staff.
 </p>
           </div>
         </div>
@@ -199,7 +199,7 @@ export default function OwnerModuleAccessForm() {
             onClick={() => saveMutation.mutate()}
             loading={saveMutation.isPending}
             disabled={saveDisabled}
-            title={isDirty ? 'Save module access' : 'No changes to save'}
+            title={isDirty ? 'Save apps' : 'No changes to save'}
           >
             Save changes
           </Button>
@@ -310,7 +310,7 @@ export default function OwnerModuleAccessForm() {
             onClick={() => saveMutation.mutate()}
             loading={saveMutation.isPending}
             disabled={saveDisabled}
-            title={isDirty ? 'Save module access' : 'No changes to save'}
+            title={isDirty ? 'Save apps' : 'No changes to save'}
           >
             Save changes
           </Button>

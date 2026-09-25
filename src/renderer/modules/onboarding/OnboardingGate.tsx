@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNetworkStatus } from '../../app/store/hooks/useNetworkStatus';
 import { useAppSelector } from '../../app/store/hooks/useApp';
-import { IntentOnboardingModal } from './IntentOnboardingModal';
+import ModuleLauncherModal from '../../shared/components/layout/ModuleLauncherModal';
 import { ProductTour } from './ProductTour';
 import { TourCelebration } from './TourCelebration';
 import { useOnboardingState } from './useOnboardingQueries';
 
 const INTENT_DELAY_MS = 5_000;
 
-/** Mounts with intent closed, then opens after a short settle delay. */
+/** Mounts with the picker closed, then opens after a short settle delay. */
 function DelayedIntentModal() {
   const [ready, setReady] = useState(false);
 
@@ -17,7 +17,7 @@ function DelayedIntentModal() {
     return () => window.clearTimeout(t);
   }, []);
 
-  return <IntentOnboardingModal open={ready} />;
+  return <ModuleLauncherModal open={ready} welcome onClose={() => { /* intent completes or tour runs */ }} />;
 }
 
 /** Owner intent + product tour after auth. Tour works online and offline. */
@@ -59,7 +59,7 @@ export function OnboardingGate() {
       {showIntent
         ? (
           isCompletelyOffline
-            ? <IntentOnboardingModal open key={`intent-offline-${userId ?? 'anon'}`} />
+            ? <ModuleLauncherModal open welcome onClose={() => { /* intent completes or tour runs */ }} key={`intent-offline-${userId ?? 'anon'}`} />
             : <DelayedIntentModal key={`intent-${userId ?? 'anon'}`} />
         )
         : null}

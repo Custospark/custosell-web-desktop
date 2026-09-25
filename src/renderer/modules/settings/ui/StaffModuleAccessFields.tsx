@@ -103,7 +103,7 @@ export function StaffModuleAccessFields({
           </div>
         )}
         {!modulesLocked && modules.length === 0 && (
-          <p className="text-xs text-amber-700 mt-3">No business modules selected - they will only see Account and Guide.</p>
+          <p className="text-xs text-amber-700 mt-3">No business modules selected - they will only see Account, Guide and Online Shopping.</p>
         )}
       </div>
     </div>

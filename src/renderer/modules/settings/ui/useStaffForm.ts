@@ -25,16 +25,12 @@ import {
   parseInternationalPhone,
 } from '../../../shared/utils/phoneNumber';
 import {
-  assignableStaffModuleSlugs,
   buildStaffModulesPayload,
-  BUSINESS_MODULE_SLUGS,
-  intersectStaffModulesWithOwner,
-  isBusinessOwner,
   staffHasFullEstimatesModule,
   staffHasFullHrModule,
   type BusinessModuleSlug,
 } from '../../../shared/utils/moduleAccess';
-import { usePlanAccessibleModules } from '../../../shared/utils/usePlanAccessibleModules';
+import { getPlanBusinessCatalog } from '../../../shared/components/layout/moduleLauncherCatalog';
 import { useToast } from '../../../app/contexts/useToast';
 import { sanitizeErrorMessage } from '../../../app/store/offline/core/offlineQueryUtils';
 
@@ -92,7 +88,12 @@ function hydrateFormFromStaff(
 ): { form: StaffFormState; countryCode: CountryCode } {
   const parsedPhone = parseInternationalPhone(staff.phone);
   const ownerAccount = isBusinessOwnerStaff(staff.id, businessOwnerId);
-  let staffModules = intersectStaffModulesWithOwner(staff.modules, authUser);
+  // Staff pick from the whole plan catalog - never narrowed to what the owner
+  // personally enabled in their own Custosell Apps.
+  const planCatalog = getPlanBusinessCatalog(authUser);
+  let staffModules = (staff.modules ?? []).filter((m): m is BusinessModuleSlug =>
+    planCatalog.includes(m as BusinessModuleSlug),
+  );
   if (ownerAccount && !staffModules.includes('settings')) {
     staffModules = [...staffModules, 'settings'];
   }
@@ -239,30 +240,18 @@ export function useStaffForm(open: boolean, staff: StaffWithSyncMeta | null | un
   const emailLocked = Boolean(accountRules?.isBusinessOwner);
   const settingsRequired = Boolean(accountRules?.isBusinessOwner);
   const modulesLocked = false;
-  const planModules = usePlanAccessibleModules();
+  // Every module the business plan allows - independent of the owner's own picks.
   const assignableModules = useMemo(
-    () => {
-      let base: BusinessModuleSlug[];
-      if (authUser && isBusinessOwner(authUser)) {
-        base = assignableStaffModuleSlugs(authUser);
-      } else {
-        base = [...BUSINESS_MODULE_SLUGS];
-      }
-      return planModules
-        ? base.filter((m) => planModules.includes(m) || !BUSINESS_MODULE_SLUGS.includes(m))
-        : base;
-    },
-    [authUser, planModules],
+    () => getPlanBusinessCatalog(authUser),
+    [authUser],
   );
 
   useEffect(() => {
     if (!open || modulesLocked) return;
     queueMicrotask(() => {
+      const planSet = new Set<BusinessModuleSlug>(getPlanBusinessCatalog(authUser));
       setForm((prev) => {
-        let allowed = intersectStaffModulesWithOwner(prev.modules, authUser);
-        if (planModules) {
-          allowed = allowed.filter((m) => planModules.includes(m) || !BUSINESS_MODULE_SLUGS.includes(m));
-        }
+        let allowed = prev.modules.filter((m) => planSet.has(m));
         if (settingsRequired && !allowed.includes('settings')) {
           allowed = [...allowed, 'settings'];
         }
@@ -279,7 +268,7 @@ export function useStaffForm(open: boolean, staff: StaffWithSyncMeta | null | un
         return { ...prev, modules: allowed, estimatesFullAccess, hrFullAccess };
       });
     });
-  }, [authUser, assignableModules, modulesLocked, open, planModules, settingsRequired]);
+  }, [authUser, assignableModules, modulesLocked, open, settingsRequired]);
 
   const toggleModule = useCallback((module: BusinessModuleSlug) => {
     if (modulesLocked) return;

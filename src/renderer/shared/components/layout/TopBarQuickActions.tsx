@@ -5,6 +5,8 @@ import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { cn } from '../../utils/cn';
 import { HeaderNotifications } from './HeaderNotifications';
 import { HeaderQuickNav } from './HeaderQuickNav';
+import { AppStoreCoachmark } from './AppStoreCoachmark';
+import { useAppSelector } from '../../../app/store/hooks/useApp';
 import ModuleLauncherModal from './ModuleLauncherModal';
 
 const iconBtn =
@@ -22,6 +24,9 @@ const appStoreBtn =
  */
 export function TopBarQuickActions() {
   const [appsOpen, setAppsOpen] = useState(false);
+  const user = useAppSelector((s) => s.auth.user);
+  const firstName = user?.name?.trim().split(/\s+/)[0] ?? null;
+  const onboardingActive = Boolean(user?.onboarding?.needs_intent || user?.onboarding?.needs_tour);
 
   return (
     <div className="flex flex-shrink-0 items-center gap-1 sm:gap-1.5">
@@ -33,6 +38,7 @@ export function TopBarQuickActions() {
         onClick={() => setAppsOpen(true)}
         title="Custosell Apps"
         aria-label="Custosell Apps"
+        data-tour="header-app-store"
         className={cn(appStoreBtn)}
       >
         <LayoutGrid className="h-4 w-4 shrink-0" aria-hidden />
@@ -59,6 +65,13 @@ export function TopBarQuickActions() {
       </span>
 
       <ModuleLauncherModal open={appsOpen} onClose={() => setAppsOpen(false)} />
+      <AppStoreCoachmark
+        userId={user?.id}
+        firstName={firstName}
+        onboardingActive={onboardingActive}
+        paused={appsOpen}
+        onOpenStore={() => setAppsOpen(true)}
+      />
     </div>
   );
 }

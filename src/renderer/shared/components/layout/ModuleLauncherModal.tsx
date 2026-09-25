@@ -159,9 +159,9 @@ export default function ModuleLauncherModal({ open, onClose, welcome = false }: 
       title={welcome ? undefined : title}
       subtitle={welcome ? undefined : subtitle}
       titleCentered
-      size="xl"
+      size="2xl"
       bodyClassName={welcome ? 'px-0 py-0' : 'flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-3 sm:px-6 sm:py-4'}
-      panelClassName={welcome ? 'overflow-hidden' : undefined}
+      panelClassName={welcome ? 'overflow-hidden' : 'h-[85vh]'}
       hideCloseButton={welcome}
       closeOnEscape={!welcome}
     >

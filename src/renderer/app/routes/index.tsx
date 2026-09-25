@@ -166,13 +166,17 @@ function SuspenseWrapper({ children }: { children: React.ReactNode }) {
 export function AppRoutes() {
   return (
     <Routes>
-      {/* Immersive storefront - outside PublicRoute so logged-in sidebar links are not bounced to dashboard */}
-      <Route path={ROUTES.DISCOVER} element={<SuspenseWrapper><DiscoverLayout /></SuspenseWrapper>}>
-        <Route index element={<SuspenseWrapper><DiscoverPage /></SuspenseWrapper>} />
-        <Route path="my-orders" element={<SuspenseWrapper><MyOrdersPage /></SuspenseWrapper>} />
-        <Route path="wishlist" element={<SuspenseWrapper><WishlistPage /></SuspenseWrapper>} />
-        <Route path="favorites" element={<SuspenseWrapper><FavoritesPage /></SuspenseWrapper>} />
-        <Route path="shop/:slug" element={<SuspenseWrapper><ShopPage /></SuspenseWrapper>} />
+      {/* Immersive storefront - outside PublicRoute so logged-in sidebar links are not bounced to dashboard.
+          Visibility-guarded for business users hiding Online Shopping; shoppers
+          without a business and logged-out visitors always pass through. */}
+      <Route element={<ModuleAccessMiddleware module="discover" />}>
+        <Route path={ROUTES.DISCOVER} element={<SuspenseWrapper><DiscoverLayout /></SuspenseWrapper>}>
+          <Route index element={<SuspenseWrapper><DiscoverPage /></SuspenseWrapper>} />
+          <Route path="my-orders" element={<SuspenseWrapper><MyOrdersPage /></SuspenseWrapper>} />
+          <Route path="wishlist" element={<SuspenseWrapper><WishlistPage /></SuspenseWrapper>} />
+          <Route path="favorites" element={<SuspenseWrapper><FavoritesPage /></SuspenseWrapper>} />
+          <Route path="shop/:slug" element={<SuspenseWrapper><ShopPage /></SuspenseWrapper>} />
+        </Route>
       </Route>
 
       {/* Public booking - outside PublicRoute so logged-in sidebar users can preview */}

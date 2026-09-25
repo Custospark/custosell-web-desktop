@@ -6,7 +6,6 @@ import type { AuthUser } from '../../../app/store/slices/authSlice';
 import {
   BUSINESS_MODULE_SLUGS,
   buildStaffModulesPayload,
-  getDefaultRoute,
   getPlanAccessibleModules,
   isBusinessOwner,
   ownerInitialEstimatesFullAccess,
@@ -18,6 +17,7 @@ import {
 import {
   MODULE_LAUNCHER_CATALOG,
   getLauncherModulesForUser,
+  getNextVisibleAppRoute,
   getPlanBusinessCatalog,
   sortLauncherModules,
   type ModuleLauncherItem,
@@ -397,21 +397,14 @@ export function useAppStoreState(open: boolean, onClose: () => void) {
       showToast('success', 'Apps updated');
       handleClose();
       // If the current page's app was just hidden, open the default page of
-      // the next visible module instead of stranding the user.
+      // the next visible module (same helper as the route guard).
       const currentUser = savedUser ?? user;
       const currentSlug = resolveModuleForPath(location.pathname);
       if (currentSlug && currentUser) {
+        const hiddenSet = new Set(hiddenDefaults);
         const planSet = new Set(getPlanAccessibleModules(currentUser));
-        const isVisible = (slug: string) => planSet.has(slug) && !hiddenDefaults.has(slug);
-        if (!isVisible(currentSlug)) {
-          const order = MODULE_LAUNCHER_CATALOG.map((item) => item.slug);
-          const start = order.indexOf(currentSlug);
-          const rotation = start >= 0 ? [...order.slice(start + 1), ...order.slice(0, start)] : order;
-          const nextSlug = rotation.find(isVisible);
-          const nextItem = nextSlug
-            ? MODULE_LAUNCHER_CATALOG.find((item) => item.slug === nextSlug)
-            : undefined;
-          const fallback = nextItem ? nextItem.getRoute(currentUser) : getDefaultRoute(currentUser);
+        if (!planSet.has(currentSlug) || hiddenSet.has(currentSlug)) {
+          const fallback = getNextVisibleAppRoute(currentUser, hiddenSet, currentSlug);
           if (fallback !== location.pathname) {
             navigate(fallback);
           }
@@ -429,7 +422,7 @@ export function useAppStoreState(open: boolean, onClose: () => void) {
     } finally {
       setSaving(false);
     }
-  }, [handleClose, hiddenDefaults, persistStaged, showToast]);
+  }, [handleClose, hiddenDefaults, location.pathname, navigate, persistStaged, showToast, user]);
 
   const title = 'Custosell Apps';
   const subtitle = 'Pick the apps you need - check to show, uncheck to hide';

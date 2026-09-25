@@ -24,8 +24,10 @@ import {
   MODULE_LABELS,
   canAccessModule,
   getAccessibleModules,
+  getDefaultRoute,
   getEstimatesModuleDefaultRoute,
   getHrModuleDefaultRoute,
+  getPlanAccessibleModules,
   hasEstimatesBoardsAccess,
   type BusinessModuleSlug,
 } from '../../utils/moduleAccess';
@@ -279,4 +281,27 @@ export function sortLauncherModules(items: ModuleLauncherItem[]): ModuleLauncher
     const bi = businessOrder.get(b.slug) ?? tailOrder[b.slug] ?? 150;
     return ai - bi;
   });
+}
+
+/**
+ * Default page of the next visible app after `currentSlug` (catalog order,
+ * wrapping around). Visibility = plan-granted and not hidden. Falls back to
+ * the default route when nothing else is visible - callers must not redirect
+ * when the result equals the current path (prevents loops).
+ */
+export function getNextVisibleAppRoute(
+  user: AuthUser | null | undefined,
+  hidden: Set<string>,
+  currentSlug: string,
+): string {
+  const planSet = new Set(getPlanAccessibleModules(user));
+  const isVisible = (slug: string) => planSet.has(slug) && !hidden.has(slug);
+  const order = MODULE_LAUNCHER_CATALOG.map((item) => item.slug);
+  const start = order.indexOf(currentSlug as LauncherModuleSlug);
+  const rotation = start >= 0 ? [...order.slice(start + 1), ...order.slice(0, start)] : order;
+  const nextSlug = rotation.find(isVisible);
+  const nextItem = nextSlug
+    ? MODULE_LAUNCHER_CATALOG.find((item) => item.slug === nextSlug)
+    : undefined;
+  return nextItem ? nextItem.getRoute(user) : getDefaultRoute(user);
 }

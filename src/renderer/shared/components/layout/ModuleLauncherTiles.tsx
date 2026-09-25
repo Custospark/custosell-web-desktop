@@ -40,11 +40,11 @@ export function CircularCheck({
     <span
       aria-hidden
       className={cn(
-        'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors',
+        'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-150',
         checked
-          ? 'border-blue-600 bg-blue-600 text-white'
+          ? 'scale-105 border-blue-600 bg-blue-600 text-white shadow-sm shadow-blue-300'
           : 'border-slate-300 bg-white text-transparent',
-        locked && 'border-slate-300 bg-slate-100',
+        locked && 'scale-100 border-slate-300 bg-slate-100 shadow-none',
         disabled && 'opacity-60',
       )}
     >
@@ -145,9 +145,9 @@ export function StoreModuleTile({
         'transition-all duration-150 ease-out',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40',
         checked
-          ? 'border-blue-300 bg-blue-50/60 ring-1 ring-blue-200/60'
+          ? 'border-blue-400 bg-blue-50 ring-1 ring-blue-300/70 shadow-md shadow-blue-200/60'
           : 'border-gray-200/90 hover:border-blue-200 hover:shadow',
-        changed && 'border-amber-300 ring-2 ring-amber-400/60',
+        changed && 'border-indigo-300 ring-2 ring-indigo-400/60',
         (locked || disabled) && 'cursor-not-allowed',
         !locked && !disabled && 'cursor-pointer active:scale-[0.99]',
       )}

@@ -332,12 +332,24 @@ export default function ModuleLauncherModal({ open, onClose, welcome = false }: 
               </>
             ) : (
               <>
-                <p className="min-w-0 flex-1 text-xs text-slate-500">
-                  {anythingDirty
-                    ? `Unsaved changes: ${showCount > 0 ? `${showCount} to show` : ''}${showCount > 0 && hideCount > 0 ? ', ' : ''}${hideCount > 0 ? `${hideCount} to hide` : ''}.`
-                    : isOwner
-                      ? 'Workspace apps save to your account - Everyday apps sync across your devices.'
-                      : 'Hidden apps stay hidden on all your devices.'}{' '}
+            <p className="min-w-0 flex-1 text-xs text-slate-500">
+              {anythingDirty ? (
+                <span className="inline-flex flex-wrap items-center gap-1.5">
+                  <span className="font-semibold text-slate-700">Unsaved:</span>
+                  {showCount > 0 && (
+                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 font-semibold tabular-nums text-emerald-700">
+                      {showCount} to show
+                    </span>
+                  )}
+                  {hideCount > 0 && (
+                    <span className="rounded-full bg-rose-100 px-2 py-0.5 font-semibold tabular-nums text-rose-700">
+                      {hideCount} to hide
+                    </span>
+                  )}
+                </span>
+              ) : isOwner
+                ? 'Workspace apps save to your account - Everyday apps sync across your devices.'
+                : 'Hidden apps stay hidden on all your devices.'}{' '}
                   {isOwner && (
                     <Link
                       to={ROUTES.SETTINGS.MODULES}
@@ -361,12 +373,12 @@ export default function ModuleLauncherModal({ open, onClose, welcome = false }: 
                     onClick={() => void handleSaveAndClose()}
                     disabled={!anythingDirty || saving || isCompletelyOffline}
                     title={isCompletelyOffline ? 'Reconnect to save' : anythingDirty ? 'Save apps' : 'No changes to save'}
-                    className={cn(
-                      'rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors',
-                      !anythingDirty || saving || isCompletelyOffline
-                        ? 'cursor-not-allowed bg-slate-300'
-                        : 'bg-blue-600 hover:bg-blue-700',
-                    )}
+              className={cn(
+                'rounded-lg px-4 py-2 text-sm font-semibold text-white transition-all',
+                !anythingDirty || saving || isCompletelyOffline
+                  ? 'cursor-not-allowed bg-slate-300 shadow-sm'
+                  : 'bg-blue-600 px-5 shadow-lg shadow-blue-500/30 hover:bg-blue-700 active:scale-[0.98]',
+              )}
                   >
                     {saving ? 'Saving…' : 'Save changes'}
                   </button>

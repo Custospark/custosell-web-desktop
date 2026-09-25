@@ -106,7 +106,7 @@ export const MODULE_LAUNCHER_CATALOG: ModuleLauncherItem[] = [
     label: 'Online Shopping',
     description: 'Browse & order',
     icon: Compass,
-    tone: TONE.amber,
+    tone: TONE.orange,
     section: 'workspace',
     getRoute: () => ROUTES.DISCOVER,
   },

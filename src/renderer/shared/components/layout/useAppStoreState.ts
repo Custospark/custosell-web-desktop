@@ -2,9 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAppDispatch, useAppSelector } from '../../../app/store/hooks/useApp';
+import type { AuthUser } from '../../../app/store/slices/authSlice';
 import {
   BUSINESS_MODULE_SLUGS,
   buildStaffModulesPayload,
+  getDefaultRoute,
+  getPlanAccessibleModules,
   isBusinessOwner,
   ownerInitialEstimatesFullAccess,
   ownerInitialHrFullAccess,
@@ -374,25 +377,46 @@ export function useAppStoreState(open: boolean, onClose: () => void) {
   // hung request can never lock the tiles or the Save button.
   // persistStaged is the single write path behind Save changes AND the
   // onboarding finish - same legs, same sequencing, same convergence.
-  // persistStaged is the single write path behind Save changes AND the
-  // onboarding finish - same legs, same sequencing, same convergence.
-  const persistStaged = useCallback(async (): Promise<void> => {
-    await withSaveTimeout(saveStoreApps(
+  // Returns the fresh server user so callers resolve from server truth.
+  const persistStaged = useCallback(async (): Promise<AuthUser | null> => {
+    const result = await withSaveTimeout(saveStoreApps(
       {
         ...(isOwner && isDirty ? { modules: resolvedModules } : {}),
         ...(visibilityDirty ? { hidden: [...hiddenDefaults], userId: user?.id } : {}),
       },
       { dispatch, queryClient },
     ));
+    return result.user;
   }, [dispatch, hiddenDefaults, isDirty, isOwner, queryClient, resolvedModules, user, visibilityDirty]);
 
   const handleSaveAndClose = useCallback(async () => {
     setSaving(true);
     try {
-      await persistStaged();
+      const savedUser = await persistStaged();
       setBaselineHidden(new Set(hiddenDefaults));
       showToast('success', 'Apps updated');
       handleClose();
+      // If the current page's app was just hidden, open the default page of
+      // the next visible module instead of stranding the user.
+      const currentUser = savedUser ?? user;
+      const currentSlug = resolveModuleForPath(location.pathname);
+      if (currentSlug && currentUser) {
+        const planSet = new Set(getPlanAccessibleModules(currentUser));
+        const isVisible = (slug: string) => planSet.has(slug) && !hiddenDefaults.has(slug);
+        if (!isVisible(currentSlug)) {
+          const order = MODULE_LAUNCHER_CATALOG.map((item) => item.slug);
+          const start = order.indexOf(currentSlug);
+          const rotation = start >= 0 ? [...order.slice(start + 1), ...order.slice(0, start)] : order;
+          const nextSlug = rotation.find(isVisible);
+          const nextItem = nextSlug
+            ? MODULE_LAUNCHER_CATALOG.find((item) => item.slug === nextSlug)
+            : undefined;
+          const fallback = nextItem ? nextItem.getRoute(currentUser) : getDefaultRoute(currentUser);
+          if (fallback !== location.pathname) {
+            navigate(fallback);
+          }
+        }
+      }
     } catch (err) {
       const timedOut = err instanceof Error && err.message === 'Save timed out';
       showToast(

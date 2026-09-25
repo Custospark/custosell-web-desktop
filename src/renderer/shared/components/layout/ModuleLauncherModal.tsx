@@ -336,16 +336,9 @@ export default function ModuleLauncherModal({ open, onClose, welcome = false }: 
               {anythingDirty ? (
                 <span className="inline-flex flex-wrap items-center gap-1.5">
                   <span className="font-semibold text-slate-700">Unsaved:</span>
-                  {showCount > 0 && (
-                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 font-semibold tabular-nums text-emerald-700">
-                      {showCount} to show
-                    </span>
-                  )}
-                  {hideCount > 0 && (
-                    <span className="rounded-full bg-rose-100 px-2 py-0.5 font-semibold tabular-nums text-rose-700">
-                      {hideCount} to hide
-                    </span>
-                  )}
+                  <span className="rounded-full bg-indigo-100 px-2 py-0.5 font-semibold tabular-nums text-indigo-700">
+                    {showCount + hideCount} change{(showCount + hideCount) === 1 ? '' : 's'}
+                  </span>
                 </span>
               ) : isOwner
                 ? 'Workspace apps save to your account - Everyday apps sync across your devices.'

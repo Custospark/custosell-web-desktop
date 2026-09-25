@@ -291,7 +291,6 @@ export function useAppStoreState(open: boolean, onClose: () => void) {
     ),
     [hiddenDefaults, personalCatalog],
   );
-  const enabledCount = checkedSlugs.size;
   const planModuleCount = storeCatalog.length;
 
   const handleClose = useCallback(() => {
@@ -347,11 +346,14 @@ export function useAppStoreState(open: boolean, onClose: () => void) {
   const title = 'Custosell Apps';
   const subtitle = 'Pick the apps you need - check to show, uncheck to hide';
   const searchPlaceholder = 'Search apps…';
+  // Cumulative on-counts: staged workspace picks plus staged Everyday picks.
+  const everydayOn = EVERYDAY_SLUGS.filter((slug) => !hiddenDefaults.has(slug)).length;
+  const everydayTotal = EVERYDAY_SLUGS.length;
   const countLabel = isOwner
-    ? `${enabledCount}/${planModuleCount} on`
+    ? `${checkedSlugs.size + everydayOn}/${planModuleCount + everydayTotal} on`
     : isPersonal
-      ? `${personalChecked.size}/${personalCatalog.length} on`
-      : `${staffChecked.size}/${staffWorkspace.length} on`;
+      ? `${personalChecked.size + everydayOn}/${personalCatalog.length + everydayTotal} on`
+      : `${staffChecked.size + everydayOn}/${staffWorkspace.length + everydayTotal} on`;
   const emptyLabel = query.trim() ? 'No apps match your search.' : 'Nothing else is available on your account.';
   const workspaceLabel = isOwner ? 'Apps' : 'Your workspace';
 

@@ -262,7 +262,7 @@ export default function ModuleLauncherModal({ open, onClose, welcome = false }: 
           </button>
         )}
 
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1 scrollbar-thin">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-1 scrollbar-thin">
             {empty ? (
               <p className="py-10 text-center text-sm text-gray-500">
                 {emptyLabel}

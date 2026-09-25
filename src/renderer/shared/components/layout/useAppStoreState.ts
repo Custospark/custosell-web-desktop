@@ -167,8 +167,13 @@ export function useAppStoreState(open: boolean, onClose: () => void) {
 
   const togglePersonalApp = stageAppToggle;
 
-  /** Staged-vs-saved diffs - Save changes applies all of these in a single go. */
-  const stagedBusinessSet = useMemo(() => new Set<string>(resolvedModules), [resolvedModules]);
+  /** Staged-vs-saved diffs - Save changes applies all of these in a single go.
+   *  Business legs only exist for owners (everyone else toggles visibility);
+   *  without that scoping, non-owners would see a phantom diff on open. */
+  const stagedBusinessSet = useMemo(
+    () => new Set<string>(isOwner ? resolvedModules : []),
+    [isOwner, resolvedModules],
+  );
   const baselineBusinessSet = useMemo(() => new Set<string>(baselineBusiness), [baselineBusiness]);
   const businessAdded = useMemo(
     () => [...stagedBusinessSet].filter((m) => !baselineBusinessSet.has(m)),
@@ -253,16 +258,24 @@ export function useAppStoreState(open: boolean, onClose: () => void) {
   const filtered = isOwner ? storeFiltered : navFiltered;
 
   // Staff workspace apps toggle through synced visibility (grants stay owner-managed).
+  const staffAll = useMemo(() => {
+    if (isOwner || isPersonal) return [] as string[];
+    return accessible
+      .filter(
+        (item) =>
+          item.section === 'workspace'
+          && !EVERYDAY_SLUGS.includes(item.slug as ToggleableDefaultApp),
+      )
+      .map((item) => item.slug);
+  }, [accessible, isOwner, isPersonal]);
   const staffWorkspace = useMemo(() => {
     if (isOwner || isPersonal) return [];
     const q = query.trim().toLowerCase();
     return accessible.filter(
       (item) =>
-        item.section === 'workspace'
-        && !EVERYDAY_SLUGS.includes(item.slug as ToggleableDefaultApp)
-        && matchesQuery(item, q),
+        staffAll.includes(item.slug) && matchesQuery(item, q),
     );
-  }, [accessible, isOwner, isPersonal, matchesQuery, query]);
+  }, [accessible, isOwner, isPersonal, matchesQuery, query, staffAll]);
   const staffChecked = useMemo(
     () => new Set<string>(staffWorkspace.map((item) => item.slug).filter((slug) => !hiddenDefaults.has(slug))),
     [hiddenDefaults, staffWorkspace],
@@ -291,6 +304,55 @@ export function useAppStoreState(open: boolean, onClose: () => void) {
     ),
     [hiddenDefaults, personalCatalog],
   );
+
+  // Global Select all across normal apps + Everyday. Owners drive workspace
+  // apps through module grants (settings can never be cleared); everyone else
+  // drives everything through synced visibility.
+  const selectAllSlugs = useMemo<string[]>(() => {
+    const business = isOwner ? planCatalog : isPersonal
+      ? personalCatalog.map((item) => item.slug)
+      : staffAll;
+    return [...business, ...EVERYDAY_SLUGS];
+  }, [isOwner, isPersonal, planCatalog, personalCatalog, staffAll]);
+  const isSlugChecked = useCallback((slug: string): boolean => (
+    isOwner ? checkedSlugs.has(slug) : !hiddenDefaults.has(slug)
+  ), [checkedSlugs, hiddenDefaults, isOwner]);
+  const selectAllChecked = useMemo(
+    () => selectAllSlugs.length > 0 && selectAllSlugs.every(isSlugChecked),
+    [selectAllSlugs, isSlugChecked],
+  );
+  const selectAllCount = useMemo(
+    () => selectAllSlugs.filter(isSlugChecked).length,
+    [selectAllSlugs, isSlugChecked],
+  );
+  const toggleSelectAll = useCallback(() => {
+    // Owners only ever stage Everyday slugs in the hidden set - workspace
+    // apps travel through module grants instead.
+    const hiddenTargets = isOwner ? [...EVERYDAY_SLUGS] : selectAllSlugs;
+    if (selectAllChecked) {
+      if (isOwner) {
+        setModules(['settings']);
+        setEstimatesFullAccess(false);
+        setHrFullAccess(false);
+      }
+      setHiddenDefaults((prev) => {
+        const next = new Set(prev);
+        for (const slug of hiddenTargets) {
+          if (slug !== 'settings') next.add(slug);
+        }
+        return next;
+      });
+    } else {
+      if (isOwner) {
+        setModules(withRequiredSettings(planCatalog));
+      }
+      setHiddenDefaults((prev) => {
+        const next = new Set(prev);
+        for (const slug of hiddenTargets) next.delete(slug);
+        return next;
+      });
+    }
+  }, [selectAllChecked, selectAllSlugs, isOwner, planCatalog]);
   const planModuleCount = storeCatalog.length;
 
   const handleClose = useCallback(() => {
@@ -310,6 +372,8 @@ export function useAppStoreState(open: boolean, onClose: () => void) {
 
   // Local saving flag (not mutation state) - always reset in finally, so a
   // hung request can never lock the tiles or the Save button.
+  // persistStaged is the single write path behind Save changes AND the
+  // onboarding finish - same legs, same sequencing, same convergence.
   // persistStaged is the single write path behind Save changes AND the
   // onboarding finish - same legs, same sequencing, same convergence.
   const persistStaged = useCallback(async (): Promise<void> => {
@@ -391,6 +455,10 @@ export function useAppStoreState(open: boolean, onClose: () => void) {
     stageAppToggle,
     toggleEveryday,
     togglePersonalApp,
+    toggleSelectAll,
+    selectAllChecked,
+    selectAllCount,
+    selectAllTotal: selectAllSlugs.length,
     handleClose,
     handleSelect,
     handleSaveAndClose,

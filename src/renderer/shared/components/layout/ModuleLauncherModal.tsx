@@ -11,7 +11,7 @@ import { sanitizeErrorMessage } from '../../../app/store/offline/core/offlineQue
 import { PRODUCT_NAME } from '../../brand/custosellBrand';
 import { ONBOARDING_INTENT_IDS, type OnboardingIntentId } from '../../../modules/onboarding/onboardingTypes';
 import { useUpdateOnboarding } from '../../../modules/onboarding/useOnboardingQueries';
-import { ModuleGrid, SectionHeading, StoreModuleGrid } from './ModuleLauncherTiles';
+import { CircularCheck, ModuleGrid, SectionHeading, StoreModuleGrid } from './ModuleLauncherTiles';
 import { CustosellLoader } from '../loading/CustosellLoader';
 import { useAppStoreState } from './useAppStoreState';
 
@@ -69,6 +69,10 @@ export default function ModuleLauncherModal({ open, onClose, welcome = false }: 
     stageAppToggle,
     toggleEveryday,
     togglePersonalApp,
+    toggleSelectAll,
+    selectAllChecked,
+    selectAllCount,
+    selectAllTotal,
     handleClose,
     handleSelect,
     handleSaveAndClose,
@@ -238,10 +242,25 @@ export default function ModuleLauncherModal({ open, onClose, welcome = false }: 
                 className="w-full rounded-xl border border-indigo-200/80 bg-indigo-50/30 py-2 pl-10 pr-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/25"
               />
             </div>
-            <p className="shrink-0 text-sm text-gray-600 sm:text-right">
-              {countLabel}
-            </p>
-          </div>
+          <p className="shrink-0 text-sm text-gray-600 sm:text-right">
+            {countLabel}
+          </p>
+        </div>
+
+        {!empty && (
+          <button
+            type="button"
+            onClick={toggleSelectAll}
+            aria-pressed={selectAllChecked}
+            className="flex shrink-0 items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-left transition-colors hover:border-indigo-200"
+          >
+            <CircularCheck checked={selectAllChecked} />
+            <span className="min-w-0 flex-1 text-sm font-semibold text-slate-900">Select all</span>
+            <span className="shrink-0 text-xs tabular-nums text-slate-500">
+              {selectAllCount} of {selectAllTotal} selected
+            </span>
+          </button>
+        )}
 
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1 scrollbar-thin">
             {empty ? (

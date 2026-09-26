@@ -10,7 +10,7 @@ import type { AuthUser } from '../../../app/store/slices/authSlice';
 import { useToast } from '../../../app/contexts/useToast';
 import { AUTH } from '../../../shared/api/endpoints/endpoints';
 import { Button } from '../../../shared/components/buttons/Button';
-import { MODULE_LAUNCHER_CATALOG } from '../../../shared/components/layout/moduleLauncherCatalog';
+import { MODULE_LAUNCHER_CATALOG, getPlanBusinessCatalog } from '../../../shared/components/layout/moduleLauncherCatalog';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { updateStoredAuthUser } from '../../../app/store/offline/auth/secureStorage';
 import { sanitizeErrorMessage } from '../../../app/store/offline/core/offlineQueryUtils';
@@ -52,24 +52,6 @@ const OWNER_MODULE_TILES = BUSINESS_MODULE_SLUGS.map((slug) => {
   }
   return item;
 });
-
-/** Business modules the owner's plan actually offers (from plan_features), always including settings.
- *  Never derived from the currently-enabled set, so toggling a module off keeps its tile available. */
-function getPlanBusinessCatalog(user: AuthUser | null | undefined): BusinessModuleSlug[] {
-  const features = user?.business?.subscription?.plan_features as
-    | Record<string, boolean>
-    | undefined;
-  if (!features) {
-    return [...BUSINESS_MODULE_SLUGS];
-  }
-  const result: BusinessModuleSlug[] = [];
-  for (const slug of BUSINESS_MODULE_SLUGS) {
-    if (slug === 'settings' || features[slug] === true) {
-      result.push(slug);
-    }
-  }
-  return result;
-}
 
 export default function OwnerModuleAccessForm() {
   const dispatch = useAppDispatch();

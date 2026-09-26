@@ -16,6 +16,7 @@ import {
   CircleUser,
   GraduationCap,
   Shield,
+  ReceiptText,
 } from 'lucide-react';
 import type { AuthUser } from '../../../app/store/slices/authSlice';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
@@ -185,6 +186,15 @@ export const MODULE_LAUNCHER_CATALOG: ModuleLauncherItem[] = [
     getRoute: () => ROUTES.SETTINGS.BUSINESS,
   },
   {
+    slug: 'efris',
+    label: MODULE_LABELS.efris,
+    description: 'URA fiscal receipts',
+    icon: ReceiptText,
+    tone: TONE.teal,
+    section: 'workspace',
+    getRoute: () => ROUTES.EFRIS.OVERVIEW,
+  },
+  {
     slug: 'account',
     label: 'Account',
     description: 'Profile and alerts',
@@ -231,7 +241,8 @@ export function getPlanBusinessCatalog(user: AuthUser | null | undefined): Busin
   if (!features) return [...BUSINESS_MODULE_SLUGS];
   const result: BusinessModuleSlug[] = [];
   for (const slug of BUSINESS_MODULE_SLUGS) {
-    if (slug === 'settings' || features[slug] === true) {
+    // settings + pilot-phase efris bypass plan gating (paid gating lands later).
+    if (slug === 'settings' || slug === 'efris' || features[slug] === true) {
       result.push(slug);
     }
   }

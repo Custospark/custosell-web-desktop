@@ -9,6 +9,7 @@ import {
   IdCard, CalendarDays, Wallet, ClipboardCheck, Building, LineChart, Target, Layers,
   Store, Truck, PackageCheck, Compass, ShoppingBag, Download,
   CreditCard,
+  ReceiptText,
   DollarSign,
   Gift,
   GitBranch,
@@ -52,6 +53,7 @@ export const baseSubRoutes = [
   ROUTES.ACCOUNTING.FIXED_ASSETS,
   ROUTES.FORECASTING.OVERVIEW, ROUTES.FORECASTING.BUDGETS,
   ROUTES.FORECASTING.KPIS, ROUTES.FORECASTING.SCENARIOS,
+  ROUTES.EFRIS.INDEX, ROUTES.EFRIS.OVERVIEW,
   ROUTES.GUIDE.TUTORIALS, ROUTES.GUIDE.FAQS, ROUTES.GUIDE.COMMUNITIES, ROUTES.GUIDE.FEEDBACK, ROUTES.GUIDE.CONTACT,
   ROUTES.ACCOUNT.NOTIFICATIONS, ROUTES.ACCOUNT.PROFILE, ROUTES.REFERRAL,
   ROUTES.NOTES.INDEX,
@@ -228,6 +230,13 @@ export const baseNavGroups: SidebarNavGroup[] = [
       { to: ROUTES.FORECASTING.BUDGETS, label: 'Budgets', icon: Layers },
       { to: ROUTES.FORECASTING.KPIS, label: 'KPIs', icon: Target },
       { to: ROUTES.FORECASTING.SCENARIOS, label: 'Scenarios', icon: TrendingUp },
+    ],
+  },
+  {
+    icon: ReceiptText,
+    label: 'EFRIS',
+    subItems: [
+      { to: ROUTES.EFRIS.OVERVIEW, label: 'Overview', icon: LayoutDashboard },
     ],
   },
   {

@@ -1,95 +1,23 @@
 import type { AuthUser } from '../../app/store/slices/authSlice';
-import { ROUTES } from '../../app/routes/constants/shared.paths';
+import {
+  BUSINESS_MODULE_SLUGS,
+  MODULE_DEFAULT_ROUTES,
+  OWNER_LANDING_PRIORITY,
+  STAFF_LANDING_PRIORITY,
+  type BusinessModuleSlug,
+} from './moduleCatalog';
+
+export {
+  BUSINESS_MODULE_SLUGS,
+  MODULE_DEFAULT_ROUTES,
+  MODULE_LABELS,
+  NAV_GROUP_MODULE,
+  type BusinessModuleSlug,
+} from './moduleCatalog';
 
 export const ESTIMATES_FULL_MODULE = 'estimates_full';
 
 export const HR_FULL_MODULE = 'hr_full';
-
-export const BUSINESS_MODULE_SLUGS = [
-  'dashboard',
-  'sales',
-  'inventory',
-  'customers',
-  'pipeline',
-  'estimates',
-  'expenses',
-  'accounting',
-  'forecasting',
-  'documents',
-  'hr',
-  'settings',
-] as const;
-
-export type BusinessModuleSlug = (typeof BUSINESS_MODULE_SLUGS)[number];
-
-export const MODULE_LABELS: Record<BusinessModuleSlug, string> = {
-  dashboard: 'Dashboard',
-  sales: 'Sales',
-  inventory: 'Inventory & Supply Chain',
-  customers: 'Customers',
-  pipeline: 'Sales Funnel',
-  estimates: 'Projects & Estimates',
-  expenses: 'Income & Expenses',
-  accounting: 'Accounting',
-  forecasting: 'Forecasting',
-  documents: 'Documents',
-  hr: 'HR & Payroll',
-  settings: 'Settings',
-};
-
-export const MODULE_DEFAULT_ROUTES: Record<string, string> = {
-  dashboard: ROUTES.DASHBOARD,
-  sales: ROUTES.SALES.NEW,
-  inventory: ROUTES.INVENTORY.OVERVIEW,
-  customers: ROUTES.CUSTOMERS.INDEX,
-  pipeline: ROUTES.PIPELINE.BOARDS,
-  estimates: ROUTES.ESTIMATES.INDEX,
-  expenses: ROUTES.EXPENSES.OVERVIEW,
-  accounting: ROUTES.ACCOUNTING.RATIOS,
-  forecasting: ROUTES.FORECASTING.OVERVIEW,
-  documents: ROUTES.DOCUMENTS.INDEX,
-  hr: ROUTES.HR.OVERVIEW,
-  settings: ROUTES.SETTINGS.BUSINESS,
-  account: ROUTES.ACCOUNT.NOTIFICATIONS,
-  guide: ROUTES.GUIDE.TUTORIALS,
-  discover: ROUTES.DISCOVER,
-  // Personal modules
-  pipeline_personal: ROUTES.PIPELINE.BOARDS,
-  accounting_personal: ROUTES.ACCOUNTING.RATIOS,
-  your_tools: ROUTES.YOUR_TOOLS,
-};
-
-const OWNER_LANDING_PRIORITY: BusinessModuleSlug[] = [
-  'dashboard', 'sales', 'inventory', 'customers', 'pipeline', 'estimates', 'expenses', 'accounting', 'forecasting', 'documents', 'hr', 'settings',
-];
-
-const STAFF_LANDING_PRIORITY: BusinessModuleSlug[] = [
-  'sales', 'dashboard', 'inventory', 'customers', 'pipeline', 'estimates', 'expenses', 'accounting', 'forecasting', 'documents', 'hr', 'settings',
-];
-
-/** Nav group label → module slug for business-scoped sidebar groups. */
-export const NAV_GROUP_MODULE: Record<string, BusinessModuleSlug | 'account' | 'guide' | 'discover' | 'platform' | 'guide_settings'> = {
-  Dashboard: 'dashboard',
-  Sales: 'sales',
-  Inventory: 'inventory',
-  'Inventory & Supply Chain': 'inventory',
-  Customers: 'customers',
-  'Sales Funnel': 'pipeline',
-  'Projects & Estimates': 'estimates',
-  Estimates: 'estimates',
-  Expenses: 'expenses',
-  'Income & Expenses': 'expenses',
-  Accounting: 'accounting',
-  Forecasting: 'forecasting',
-  Documents: 'documents',
-  'HR & Payroll': 'hr',
-  Settings: 'settings',
-  Account: 'account',
-  'Custosell Guide': 'guide',
-  'Online Shopping': 'discover',
-  Platform: 'platform',
-  'Guide Settings': 'guide_settings',
-};
 
 /** Shopping accounts (storefront_buyer) - Discover-only buyers, no workspace. */
 export function isStorefrontBuyer(user: AuthUser | null | undefined): boolean {
@@ -211,7 +139,8 @@ export function getPlanAccessibleModules(user: AuthUser | null | undefined): str
 
   return accessible.filter((mod) => {
     if (!(BUSINESS_MODULE_SLUGS as readonly string[]).includes(mod)) return true;
-    if (mod === 'settings' || mod === 'your_tools') return true;
+    // settings + pilot-phase efris bypass plan gating (paid gating lands later).
+    if (mod === 'settings' || mod === 'efris' || mod === 'your_tools') return true;
     return features[mod] === true;
   });
 }
@@ -440,6 +369,7 @@ export function resolveModuleForPath(pathname: string): string | null {
   if (pathname.startsWith('/expenses')) return 'expenses';
   if (pathname.startsWith('/accounting')) return 'accounting';
   if (pathname.startsWith('/forecasting')) return 'forecasting';
+  if (pathname.startsWith('/efris')) return 'efris';
   if (pathname.startsWith('/documents')) return 'documents';
   if (pathname.startsWith('/hr')) return 'hr';
   return null;

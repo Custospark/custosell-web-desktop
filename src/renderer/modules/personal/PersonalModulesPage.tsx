@@ -52,6 +52,7 @@ const TOOL_ORDER = [
   'Accounting',
   'Documents',
   'Forecasting',
+  'EFRIS',
   'HR & Payroll',
   'Custosell Guide',
   'Account',

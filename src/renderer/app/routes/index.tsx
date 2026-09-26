@@ -124,6 +124,7 @@ const ForecastingBudgetsPage = lazy(() => import('../../modules/forecasting/page
 const ForecastingBudgetDetailPage = lazy(() => import('../../modules/forecasting/pages/ForecastingBudgetDetailPage'));
 const ForecastingKpisPage = lazy(() => import('../../modules/forecasting/pages/ForecastingKpisPage'));
 const ForecastingScenariosPage = lazy(() => import('../../modules/forecasting/pages/ForecastingScenariosPage'));
+const EfrisOverviewPage = lazy(() => import('../../modules/efris/EfrisOverviewPage'));
 
 const PublicBookingPage = lazy(() => import('../../modules/pipeline/pages/PublicBookingPage'));
 const PublicBookingCheckPage = lazy(() => import('../../modules/pipeline/pages/PublicBookingCheckPage'));
@@ -349,6 +350,10 @@ export function AppRoutes() {
               <Route path="/forecasting/budgets/:budgetId" element={<SuspenseWrapper><ForecastingBudgetDetailPage /></SuspenseWrapper>} />
               <Route path={ROUTES.FORECASTING.KPIS} element={<SuspenseWrapper><ForecastingKpisPage /></SuspenseWrapper>} />
               <Route path={ROUTES.FORECASTING.SCENARIOS} element={<SuspenseWrapper><ForecastingScenariosPage /></SuspenseWrapper>} />
+            </Route>
+            <Route element={<ModuleAccessMiddleware module="efris" />}>
+              <Route path={ROUTES.EFRIS.INDEX} element={<Navigate to={ROUTES.EFRIS.OVERVIEW} replace />} />
+              <Route path={ROUTES.EFRIS.OVERVIEW} element={<SuspenseWrapper><EfrisOverviewPage /></SuspenseWrapper>} />
             </Route>
           </Route>
           <Route element={<ModuleAccessMiddleware module="settings" />}>

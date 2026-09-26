@@ -23,7 +23,7 @@ export const ROUTES = {
   /** Public share handle for a single product - redirects to SHOP_PRODUCT (see ShopShareRedirect). */
   SHOP_PRODUCT_SHARE: (slug: string, productSlug: string) => `/@${slug}/p/${encodeURIComponent(productSlug)}`,
   DASHBOARD: '/dashboard',
-  SALES: { INDEX: '/sales', NEW: '/sales/new', ORDERS: '/sales/orders', HISTORY: '/sales/history', REFUNDS: '/sales/refunds', MY_SHIFT: '/sales/my-shift' },
+  EFRIS: { INDEX: '/efris', OVERVIEW: '/efris/overview' },  SALES: { INDEX: '/sales', NEW: '/sales/new', ORDERS: '/sales/orders', HISTORY: '/sales/history', REFUNDS: '/sales/refunds', MY_SHIFT: '/sales/my-shift' },
   INVENTORY: {
     INDEX: '/inventory',
     OVERVIEW: '/inventory/overview',

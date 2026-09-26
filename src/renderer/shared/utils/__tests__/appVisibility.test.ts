@@ -109,6 +109,27 @@ describe('everyday app visibility', () => {
     expect(labels).toContain('Online Shopping');
   });
 
+  it('shows the EFRIS app when granted and hides it when unchecked', () => {
+    const base = staffUser([]);
+    const owner: AuthUser = {
+      ...base,
+      is_business_owner: true,
+      modules: ['dashboard', 'sales', 'settings', 'efris'],
+      business: { ...(base.business as object), owner_id: 9 },
+      preferences: {},
+    } as unknown as AuthUser;
+    const shown = resolveAccessibleNavGroups(owner, getPlanAccessibleModules(owner));
+    expect(shown.map((g) => g.label)).toContain('EFRIS');
+
+    const hidden: AuthUser = {
+      ...owner,
+      preferences: { hidden_store_apps: ['efris'] },
+    } as unknown as AuthUser;
+    expect(
+      resolveAccessibleNavGroups(hidden, getPlanAccessibleModules(hidden)).map((g) => g.label),
+    ).not.toContain('EFRIS');
+  });
+
   it('keeps everyday groups when nothing is hidden', () => {
     const user = staffUser([]);
     const groups = resolveAccessibleNavGroups(user, getPlanAccessibleModules(user));

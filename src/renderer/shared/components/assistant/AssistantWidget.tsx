@@ -163,7 +163,7 @@ export function AssistantWidget() {
         onClick={() => setOpen((v) => !v)}
         aria-label={open ? 'Close assistant' : 'Chat with Custosell Assistant'}
         aria-expanded={open}
-        className="fixed bottom-20 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full shadow-lg ring-2 ring-white transition-all active:scale-95 sm:bottom-6 sm:right-6"
+        className="fixed bottom-20 right-4 z-[9000] flex h-12 w-12 items-center justify-center rounded-full shadow-lg ring-2 ring-white transition-all active:scale-95 sm:bottom-6 sm:right-6"
       >
         {open ? (
           <span className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg shadow-blue-500/30 hover:bg-blue-700">
@@ -182,7 +182,7 @@ export function AssistantWidget() {
       {open && (
         <section
           aria-label="Chat with Custosell Assistant"
-          className="fixed right-0 top-0 z-40 flex h-dvh min-h-0 w-full flex-col overflow-hidden bg-white shadow-2xl sm:w-[420px] sm:border-l sm:border-gray-200"
+          className="fixed right-0 top-0 z-[9000] flex h-dvh min-h-0 w-full flex-col overflow-hidden bg-white shadow-2xl sm:w-[420px] sm:border-l sm:border-gray-200"
         >
           <header className="flex shrink-0 items-center gap-2.5 border-b border-gray-200 bg-slate-900 px-4 py-3 text-white">
             <AssistantLockup size="md" />

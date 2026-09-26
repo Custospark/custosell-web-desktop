@@ -9,6 +9,7 @@ import { NAV_GROUP_MODULE, resolveModuleForPath } from '../../utils/moduleAccess
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { usePlanAccessibleModules } from '../../utils/usePlanAccessibleModules';
 import { resolveAccessibleNavGroups } from '../layout/resolveAccessibleNavLeaves';
+import { getUserFirstName } from '../../utils/userDisplayName';
 import {
   useAssistantChat,
   abortAssistantChat,
@@ -63,6 +64,8 @@ export function AssistantWidget() {
         : 'business';
   const copy = SEGMENT_COPY[segment];
   const user = useAppSelector((s) => s.auth.user);
+  // Named welcome for signed-in users; guests keep the generic intro.
+  const greetingName = isAuthenticated ? getUserFirstName(user?.name, '') : '';
   const planModules = usePlanAccessibleModules();
   const groupLabels = useMemo(
     () => resolveAccessibleNavGroups(user, planModules).map((group) => group.label),
@@ -365,6 +368,7 @@ export function AssistantWidget() {
               messages={messages}
               prompts={prompts}
               intro={copy.intro}
+              greetingName={greetingName || null}
               isPending={chat.isPending}
               error={error}
               listRef={listRef}

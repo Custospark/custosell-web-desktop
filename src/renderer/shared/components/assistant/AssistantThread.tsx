@@ -8,6 +8,7 @@ interface AssistantThreadProps {
   messages: AssistantMessage[];
   prompts: string[];
   intro: string;
+  greetingName?: string | null;
   isPending: boolean;
   error: string | null;
   listRef: RefObject<HTMLDivElement | null>;
@@ -19,6 +20,7 @@ export function AssistantThread({
   messages,
   prompts,
   intro,
+  greetingName,
   isPending,
   error,
   listRef,
@@ -30,6 +32,11 @@ export function AssistantThread({
       {messages.length === 0 ? (
         <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
           <AssistantLockup size="lg" />
+          {greetingName && (
+            <p className="max-w-[30ch] text-base font-semibold text-gray-900">
+              Good to have you back, {greetingName}.
+            </p>
+          )}
           <p className="max-w-[30ch] text-sm text-gray-500">
             {intro}
           </p>

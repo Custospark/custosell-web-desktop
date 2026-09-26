@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Bot, ChevronsRight, Mail, Phone, RotateCcw, Send, Sparkles, X } from 'lucide-react';
 import { useAppContext } from '../../../app/contexts/AppContext';
 import { CUSTOSELL_SUPPORT } from '../../../modules/guide/guideSupportConfig';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
+import { usePlanAccessibleModules } from '../../utils/usePlanAccessibleModules';
+import { resolveAccessibleNavGroups } from '../layout/resolveAccessibleNavLeaves';
 import { useAssistantChat, type AssistantMessage } from '../../api/assistant/AssistantQueries';
 import custosellLogo from '../../assets/custosell-logo.png';
 import oscarAvatar from '../../assets/oscar.webp';
@@ -33,6 +35,23 @@ const GUEST_PROMPTS = [
 ];
 
 type AssistantSegment = 'business' | 'personal' | 'shopping' | 'guest';
+
+/** Starter prompt per sidebar group - only visible modules ever suggest. */
+const GROUP_PROMPTS: Record<string, string[]> = {
+  Dashboard: ['How is my business doing today?'],
+  Sales: ['How did sales do today?', 'Show recent sales'],
+  'Inventory & Supply Chain': ['What is low on stock?', 'Find a product'],
+  Customers: ['Who are my top customers?'],
+  'Online Shopping': ['Show me new arrivals'],
+  'Sales Funnel': ['Which deals need follow-up?'],
+  'Projects & Estimates': ['What projects are active?'],
+  'Income & Expenses': ['Where did money go this month?'],
+  Accounting: ['How healthy are my books?'],
+  Forecasting: ['What is my cash outlook?'],
+  Documents: ['What files were added lately?'],
+  'HR & Payroll': ['Who is on leave?', 'How many people do we have?'],
+  EFRIS: ['Are my receipts fiscalized?'],
+};
 
 const SEGMENT_COPY: Record<
   AssistantSegment,
@@ -119,11 +138,63 @@ export function AssistantWidget() {
         ? 'personal'
         : 'business';
   const copy = SEGMENT_COPY[segment];
-  const prompts = copy.prompts;
+  const user = useAppSelector((s) => s.auth.user);
+  const planModules = usePlanAccessibleModules();
+  const groupLabels = useMemo(
+    () => resolveAccessibleNavGroups(user, planModules).map((group) => group.label),
+    [user, planModules],
+  );
+  // Pool: prompts of visible sidebar modules first, segment fallbacks fill up.
+  // Hidden or ungranted apps never suggest themselves.
+  const promptPool = useMemo(() => {
+    const pool = groupLabels.flatMap((label) => GROUP_PROMPTS[label] ?? []);
+    for (const fallback of copy.prompts) {
+      if (!pool.includes(fallback)) pool.push(fallback);
+    }
+    return pool;
+  }, [groupLabels, copy]);
+  // Fresh random 3 every time the empty state shows - never the same twice.
+  const [prompts, setPrompts] = useState<string[]>([]);
+  useEffect(() => {
+    if (!open || messages.length > 0 || promptPool.length === 0) return;
+    queueMicrotask(() => {
+      const shuffled = [...promptPool];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      setPrompts(shuffled.slice(0, 3));
+    });
+  }, [open, messages.length, promptPool]);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, chat.isPending]);
+
+  // Follow-ups like popular AI tools: rank pool prompts by word overlap with
+  // the last question, excluding anything already asked. Never suggests
+  // hidden or ungranted apps - the pool only ever holds visible modules.
+  const followUps = useMemo(() => {
+    if (messages.length === 0 || chat.isPending) return [];
+    const hasAssistantReply = [...messages].reverse().some((m) => m.role === 'assistant');
+    if (!hasAssistantReply) return [];
+    const asked = new Set(
+      messages.filter((m) => m.role === 'user').map((m) => m.content.trim().toLowerCase()),
+    );
+    const lastUser = [...messages].reverse().find((m) => m.role === 'user');
+    const tokens = new Set(
+      (lastUser?.content.toLowerCase().match(/[a-z]+/g) ?? []).filter((t) => t.length > 3),
+    );
+    return promptPool
+      .filter((p) => !asked.has(p.trim().toLowerCase()))
+      .map((p) => {
+        const words = p.toLowerCase().match(/[a-z]+/g) ?? [];
+        return { p, score: words.filter((w) => tokens.has(w)).length };
+      })
+      .sort((a, b) => b.score - a.score || promptPool.indexOf(a.p) - promptPool.indexOf(b.p))
+      .slice(0, 3)
+      .map((s) => s.p);
+  }, [messages, chat.isPending, promptPool]);
 
   function send(content: string): boolean {
     const text = content.trim();
@@ -304,6 +375,21 @@ export function AssistantWidget() {
               </div>
             )}
           </div>
+
+          {followUps.length > 0 && !error && (
+            <div className="flex shrink-0 gap-1.5 overflow-x-auto border-t border-gray-100 bg-white px-3 py-2">
+              {followUps.map((prompt) => (
+                <button
+                  key={prompt}
+                  type="button"
+                  onClick={() => send(prompt)}
+                  className="shrink-0 whitespace-nowrap rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-xs font-medium text-indigo-700 transition-colors hover:border-indigo-300 hover:bg-indigo-50"
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
+          )}
 
           <form onSubmit={onSubmit} className="flex shrink-0 items-end gap-2 border-t border-gray-200 bg-white px-3 py-2.5">
             <textarea

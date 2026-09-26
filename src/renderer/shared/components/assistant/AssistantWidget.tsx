@@ -86,7 +86,7 @@ function AssistantLockup({ size }: { size: 'md' | 'lg' }) {
 
 function AiBadge() {
   return (
-    <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-indigo-500/25 px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-indigo-100 ring-1 ring-inset ring-indigo-300/40">
+    <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-indigo-50 px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-indigo-700 ring-1 ring-inset ring-indigo-200">
       <Sparkles className="h-2.5 w-2.5" aria-hidden />
       AI
     </span>
@@ -193,14 +193,14 @@ export function AssistantWidget() {
           aria-label="Chat with Custosell Assistant"
           className="fixed right-0 top-0 z-[9000] flex h-dvh min-h-0 w-full flex-col overflow-hidden bg-white sm:w-[420px] sm:border-l sm:border-gray-200"
         >
-          <header className="flex shrink-0 items-center gap-2.5 border-b border-gray-200 bg-slate-900 px-4 py-3 text-white">
+          <header className="flex shrink-0 items-center gap-2.5 border-b border-gray-200 bg-white px-4 py-3">
             <AssistantLockup size="md" />
             <div className="min-w-0 flex-1">
-              <h2 className="flex items-center gap-1.5 truncate text-sm font-semibold">
+              <h2 className="flex items-center gap-1.5 truncate text-sm font-semibold text-gray-900">
                 Custosell Assistant
                 <AiBadge />
               </h2>
-              <p className="truncate text-[11px] text-slate-300">
+              <p className="truncate text-[11px] text-gray-500">
                 {isAuthenticated ? `AI assistant for ${PRODUCT_NAME}` : 'AI product guide'} · replies instantly
               </p>
             </div>
@@ -208,17 +208,17 @@ export function AssistantWidget() {
               type="button"
               onClick={() => setOpen(false)}
               aria-label="Close assistant"
-              className="rounded-md p-1 text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+              className="rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
             >
               <X className="h-4 w-4" aria-hidden />
             </button>
           </header>
 
-          <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-slate-50 px-3 py-3">
+          <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-gray-50 px-3 py-3">
             {messages.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
                 <AssistantLockup size="lg" />
-                <p className="max-w-[30ch] text-sm text-slate-500">
+                <p className="max-w-[30ch] text-sm text-gray-500">
                   {copy.intro}
                 </p>
                 <div className="flex flex-wrap justify-center gap-1.5">
@@ -246,17 +246,17 @@ export function AssistantWidget() {
                     </p>
                   ) : (
                     <div key={index} className="flex max-w-[90%] items-start gap-1.5 self-start">
-                      <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white ring-1 ring-slate-200">
+                      <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white ring-1 ring-gray-200">
                         <Bot className="h-3.5 w-3.5" aria-hidden />
                       </span>
-                      <p className="whitespace-pre-wrap rounded-xl bg-white px-3 py-2 text-sm leading-relaxed text-slate-800 shadow-sm ring-1 ring-slate-200">
+                      <p className="whitespace-pre-wrap rounded-xl bg-white px-3 py-2 text-sm leading-relaxed text-gray-800 shadow-sm ring-1 ring-gray-200">
                         {message.content}
                       </p>
                     </div>
                   )
                 ))}
                 {chat.isPending && (
-                  <p aria-live="polite" className="self-start rounded-xl bg-white px-3 py-2 text-sm text-slate-500 shadow-sm ring-1 ring-slate-200">
+                  <p aria-live="polite" className="self-start rounded-xl bg-white px-3 py-2 text-sm text-gray-500 shadow-sm ring-1 ring-gray-200">
                     <span className="inline-flex gap-1">
                       <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-indigo-400" />
                       <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-indigo-400 [animation-delay:150ms]" />
@@ -324,18 +324,18 @@ export function AssistantWidget() {
               placeholder={copy.input}
               aria-label="Ask Custosell Assistant"
               maxLength={2000}
-              className="max-h-32 min-h-[4.5rem] min-w-0 flex-1 resize-none overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/25"
+              className="max-h-32 min-h-[4.5rem] min-w-0 flex-1 resize-none overflow-y-auto rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/25"
             />
             <button
               type="submit"
               disabled={!draft.trim() || chat.isPending}
               aria-label="Send message"
-              className="flex h-9 w-9 shrink-0 items-center justify-center self-end rounded-lg bg-blue-600 text-white transition-all hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+              className="flex h-9 w-9 shrink-0 items-center justify-center self-end rounded-lg bg-blue-600 text-white transition-all hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
             >
               <Send className="h-4 w-4" aria-hidden />
             </button>
           </form>
-          <p className="shrink-0 border-t border-gray-100 bg-white px-3 py-1.5 text-center text-[10px] text-slate-400">
+          <p className="shrink-0 border-t border-gray-100 bg-white px-3 py-1.5 text-center text-[10px] text-gray-400">
             AI assistant - verify important figures before acting on them.
           </p>
         </section>

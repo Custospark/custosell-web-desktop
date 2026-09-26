@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Bot, Send, Sparkles, X } from 'lucide-react';
+import { Bot, Mail, Phone, RotateCcw, Send, Sparkles, X } from 'lucide-react';
 import { PRODUCT_NAME } from '../../brand/custosellBrand';
+import { CUSTOSELL_SUPPORT } from '../../../modules/guide/guideSupportConfig';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { useAssistantChat, type AssistantMessage } from '../../api/assistant/AssistantQueries';
 import custosellLogo from '../../assets/custosell-logo.png';
@@ -130,6 +131,15 @@ export function AssistantWidget() {
     return true;
   }
 
+  function resendLast() {
+    if (chat.isPending) return;
+    const lastUser = [...messages].reverse().find((m) => m.role === 'user');
+    if (!lastUser) return;
+    setError(null);
+    chat.mutate(messages, {
+      onSuccess: (reply) => setMessages((prev) => [...prev, { role: 'assistant', content: reply }].slice(-20)),
+      onError: (err) => setError(err.message),
+    });
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (send(draft)) {
@@ -244,9 +254,40 @@ export function AssistantWidget() {
                   </p>
                 )}
                 {error && (
-                  <p role="alert" className="self-stretch rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-                    {error}
-                  </p>
+                  <div role="alert" className="self-stretch rounded-xl border border-red-200 bg-red-50 px-3 py-2.5">
+                    <p className="text-xs font-medium text-red-700">{error}</p>
+                    <button
+                      type="button"
+                      onClick={resendLast}
+                      disabled={chat.isPending}
+                      className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <RotateCcw className="h-3.5 w-3.5" aria-hidden />
+                      {chat.isPending ? 'Retrying…' : 'Retry'}
+                    </button>
+                    <div className="mt-2.5 border-t border-red-200/70 pt-2.5">
+                      <p className="text-[11px] font-bold uppercase tracking-wide text-gray-700">
+                        Quick Support
+                      </p>
+                      <a
+                        href={`mailto:${CUSTOSELL_SUPPORT.email}`}
+                        className="mt-1.5 flex items-center gap-2 text-xs font-medium text-blue-700 hover:underline"
+                      >
+                        <Mail className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                        {CUSTOSELL_SUPPORT.email}
+                      </a>
+                      {CUSTOSELL_SUPPORT.phones.map((phone) => (
+                        <a
+                          key={phone.tel}
+                          href={`tel:${phone.tel}`}
+                          className="mt-1.5 flex items-center gap-2 text-xs font-medium text-blue-700 hover:underline"
+                        >
+                          <Phone className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                          {phone.display}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
             )}

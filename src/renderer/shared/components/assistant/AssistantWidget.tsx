@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Bot, ChevronsRight, Mail, Phone, RotateCcw, Send, Sparkles, X } from 'lucide-react';
-import { ROUTES } from '../../../app/routes/constants/shared.paths';
-import { useLocation } from 'react-router-dom';
 import { useAppContext } from '../../../app/contexts/AppContext';
 import { CUSTOSELL_SUPPORT } from '../../../modules/guide/guideSupportConfig';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
@@ -43,25 +41,25 @@ const SEGMENT_COPY: Record<
   business: {
     input: 'Ask about your business…',
     intro:
-      'I am Oscar, your AI assistant. Ask about sales, stock, invoices - or anything else in Custosell.',
+      'I am Oscar, your AI agent. Ask about sales, stock, invoices - or anything else in Custosell.',
     prompts: BUSINESS_PROMPTS,
   },
   personal: {
     input: 'Ask about your workspace…',
     intro:
-      'I am Oscar, your AI assistant. Ask about your workspace, tools, or plans.',
+      'I am Oscar, your AI agent. Ask about your workspace, tools, or plans.',
     prompts: PERSONAL_PROMPTS,
   },
   shopping: {
     input: 'Ask about shopping…',
     intro:
-      'I am Oscar, your AI assistant. Ask about placing orders, tracking, or paying.',
+      'I am Oscar, your AI agent. Ask about placing orders, tracking, or paying.',
     prompts: SHOPPING_PROMPTS,
   },
   guest: {
     input: 'Ask how Custosell works…',
     intro:
-      'I am Oscar, your AI assistant. Ask how Custosell works - features, pricing, getting started.',
+      'I am Oscar, your AI agent. Ask how Custosell works - features, pricing, getting started.',
     prompts: GUEST_PROMPTS,
   },
 };
@@ -96,20 +94,6 @@ function AiBadge() {
 
 export function AssistantWidget() {
   const { state, dispatch } = useAppContext();
-  const location = useLocation();
-  // Public shells (landing, auth, booking) use the taller auth header rhythm;
-  // the app shell matches its own top bar instead.
-  const onPublicShell =
-    location.pathname === ROUTES.HOME
-    || location.pathname === ROUTES.LOGIN
-    || location.pathname === ROUTES.REGISTER
-    || location.pathname === ROUTES.FORGOT_PASSWORD
-    || location.pathname === ROUTES.RESET_PASSWORD
-    || location.pathname === ROUTES.VERIFY_CODE
-    || location.pathname === ROUTES.PRICING
-    || location.pathname === ROUTES.PRIVACY
-    || location.pathname === ROUTES.PUBLIC_FAQS
-    || location.pathname.startsWith('/book');
   const open = state.assistantOpen;
   const setOpen = (value: boolean | ((prev: boolean) => boolean)) => {
     if (typeof value === 'function') {
@@ -185,7 +169,7 @@ export function AssistantWidget() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        aria-label={open ? 'Close assistant' : 'Chat with Oscar, your AI assistant'}
+        aria-label={open ? 'Close assistant' : 'Chat with Custosell AI Agent'}
         aria-expanded={open}
         className="fixed bottom-20 right-4 z-[9000] flex h-12 w-12 items-center justify-center rounded-full shadow-lg ring-2 ring-white transition-all active:scale-95 sm:bottom-6 sm:right-6"
       >
@@ -205,24 +189,18 @@ export function AssistantWidget() {
 
       {open && (
         <section
-          aria-label="Chat with Oscar, your AI assistant"
+          aria-label="Chat with Custosell AI Agent"
           className="fixed right-0 top-0 z-[9000] flex h-dvh min-h-0 w-full flex-col overflow-hidden bg-white sm:w-[420px] sm:border-l sm:border-gray-200"
         >
-          <header
-            className={
-              onPublicShell
-                ? 'flex h-[68px] shrink-0 items-center gap-2.5 overflow-hidden border-b border-gray-200 bg-white px-5 sm:px-6'
-                : 'flex h-16 shrink-0 items-center gap-2.5 overflow-hidden border-b border-gray-200 bg-white px-2 sm:h-[52px] sm:px-4 xl:h-14'
-            }
-          >
+          <header className="flex shrink-0 items-center gap-2.5 border-b border-gray-200 bg-white px-5 py-4 sm:px-6">
             <AssistantLockup size="md" />
             <div className="min-w-0 flex-1">
               <h2 className="flex items-center gap-1.5 truncate text-sm font-semibold text-gray-900">
-                Oscar
+                Custosell AI Agent
                 <AiBadge />
               </h2>
               <p className="truncate text-[11px] text-gray-500">
-                Custosell AI Assistant
+                I am Oscar — ask me anything
               </p>
             </div>
             <button
@@ -345,7 +323,7 @@ export function AssistantWidget() {
                 }
               }}
               placeholder={copy.input}
-              aria-label="Ask Oscar, your AI assistant"
+              aria-label="Ask Custosell AI Agent"
               maxLength={2000}
               className="max-h-32 min-h-[4.5rem] min-w-0 flex-1 resize-none overflow-y-auto rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/25"
             />
@@ -359,7 +337,7 @@ export function AssistantWidget() {
             </button>
           </form>
           <p className="shrink-0 border-t border-gray-100 bg-white px-3 py-1.5 text-center text-[10px] text-gray-400">
-            AI assistant - verify important figures before acting on them.
+            AI agent - verify important figures before acting on them.
           </p>
         </section>
       )}

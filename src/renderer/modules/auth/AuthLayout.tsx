@@ -7,7 +7,6 @@ import {
   PRODUCT_NAME,
   SUPPORTING_LINE,
   TAGLINE,
-  TAGLINE_SHORT,
 } from '../../shared/brand/custosellBrand';
 import { AUTH_HERO_IMAGES } from './authHeroImages';
 import { useAssistantPushClass } from '../../shared/components/layout/useAssistantPush';
@@ -47,9 +46,6 @@ export function AuthLayout({ title, subtitle, subtitleClassName, heroImage, hero
 
           <div className="max-w-md space-y-5">
             <div>
-              <p className="text-white text-xs font-semibold uppercase tracking-[0.2em] mb-3">
-                {TAGLINE_SHORT}
-              </p>
               <h1 className="text-3xl xl:text-4xl font-bold text-white mb-3 leading-tight">
                 {TAGLINE}
               </h1>
@@ -116,9 +112,6 @@ export function AuthLayout({ title, subtitle, subtitleClassName, heroImage, hero
               <img src={image} alt="" className="absolute inset-0 w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-blue-950/95 via-blue-900/55 to-blue-900/25" />
               <div className="absolute inset-x-0 bottom-0 p-5">
-                <p className="text-white text-[11px] font-semibold uppercase tracking-[0.18em] mb-1.5">
-                  {TAGLINE_SHORT}
-                </p>
                 <p className="text-white text-lg font-bold leading-snug">{TAGLINE}</p>
                 <p className="text-blue-100/80 text-xs mt-2 line-clamp-2">{description}</p>
               </div>

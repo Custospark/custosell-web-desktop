@@ -5,9 +5,6 @@ export const PRODUCT_NAME = 'Custosell ERP';
 /** Primary tagline (UI, auth, footer). */
 export const TAGLINE = 'Smarter Operations. Powered by AI.';
 
-/** Short lockup where space is tight. */
-export const TAGLINE_SHORT = 'Business OS';
-
 /** Document / OG title: "Custosell ERP - Smarter Operations. Powered by AI." */
 export const DOCUMENT_TITLE = `${PRODUCT_NAME} - ${TAGLINE}`;
 

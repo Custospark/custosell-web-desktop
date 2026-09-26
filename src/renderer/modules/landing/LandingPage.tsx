@@ -10,7 +10,6 @@ import {
 import {
   PRODUCT_NAME,
   TAGLINE,
-  TAGLINE_SHORT,
 } from '../../shared/brand/custosellBrand';
 import { LANDING_MODULES } from './landingModules';
 import TestimonialCarousel from './ui/TestimonialCarousel';
@@ -110,15 +109,8 @@ export default function LandingPage() {
               <span className="text-xs font-semibold text-white sm:text-sm">Work smarter, grow faster</span>
             </motion.div>
 
-            {/* Brand + tagline stack - tight so Custosell and Business OS read as one unit */}
+            {/* Brand + tagline stack */}
             <div className="space-y-1.5 sm:space-y-2">
-              <motion.p
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-[11px] font-bold uppercase tracking-[0.18em] text-blue-600 sm:text-xs sm:tracking-widest"
-              >
-                {TAGLINE_SHORT}
-              </motion.p>
               <motion.h1
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}

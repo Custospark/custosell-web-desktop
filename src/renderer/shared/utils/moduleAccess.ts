@@ -1,4 +1,5 @@
 import type { AuthUser } from '../../app/store/slices/authSlice';
+import { ROUTES } from '../../app/routes/constants/shared.paths';
 import {
   BUSINESS_MODULE_SLUGS,
   MODULE_DEFAULT_ROUTES,

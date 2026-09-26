@@ -7,6 +7,7 @@ import { AppProvider } from './app/contexts/AppContext';
 import { ToastProvider } from './app/contexts/ToastContext';
 import { ConfirmProvider } from './shared/components/Feedback/ConfirmProvider';
 import NetworkOfflineOverlay from './shared/components/Errors/NetworkOfflineOverlay';
+import { AssistantWidget } from './shared/components/assistant/AssistantWidget';
 import { AppRoutes } from './app/routes';
 import { AuthBootstrap } from './app/components/AuthBootstrap';
 import { LogoutProvider } from './app/contexts/LogoutContext';
@@ -46,6 +47,7 @@ function App() {
             <AppProvider>
               <ToastProvider>
               <NetworkOfflineOverlay />
+              <AssistantWidget />
               <ConfirmProvider>
                   <AuthBootstrap>
                     <AppRoutes />

@@ -211,8 +211,8 @@ export function AssistantWidget() {
           <header
             className={
               onPublicShell
-                ? 'flex shrink-0 items-center gap-2.5 border-b border-gray-200 bg-white px-5 py-4 sm:px-6'
-                : 'flex h-16 shrink-0 items-center gap-2.5 border-b border-gray-200 bg-white px-2 sm:h-[52px] sm:px-4 xl:h-14'
+                ? 'flex h-[68px] shrink-0 items-center gap-2.5 overflow-hidden border-b border-gray-200 bg-white px-5 sm:px-6'
+                : 'flex h-16 shrink-0 items-center gap-2.5 overflow-hidden border-b border-gray-200 bg-white px-2 sm:h-[52px] sm:px-4 xl:h-14'
             }
           >
             <AssistantLockup size="md" />

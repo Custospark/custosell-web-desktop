@@ -200,7 +200,7 @@ export function AssistantWidget() {
                 <AiBadge />
               </h2>
               <p className="truncate text-[11px] text-gray-500">
-                I am Oscar — ask me anything
+                I am Oscar, ask me about Custosell.
               </p>
             </div>
             <button

@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Bot, Mail, Phone, RotateCcw, Send, Sparkles, X } from 'lucide-react';
+import { Bot, ChevronsRight, Mail, Phone, RotateCcw, Send, Sparkles, X } from 'lucide-react';
 import { PRODUCT_NAME } from '../../brand/custosellBrand';
+import { ROUTES } from '../../../app/routes/constants/shared.paths';
+import { useLocation } from 'react-router-dom';
 import { useAppContext } from '../../../app/contexts/AppContext';
 import { CUSTOSELL_SUPPORT } from '../../../modules/guide/guideSupportConfig';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
@@ -95,6 +97,20 @@ function AiBadge() {
 
 export function AssistantWidget() {
   const { state, dispatch } = useAppContext();
+  const location = useLocation();
+  // Public shells (landing, auth, booking) use the taller auth header rhythm;
+  // the app shell matches its own top bar instead.
+  const onPublicShell =
+    location.pathname === ROUTES.HOME
+    || location.pathname === ROUTES.LOGIN
+    || location.pathname === ROUTES.REGISTER
+    || location.pathname === ROUTES.FORGOT_PASSWORD
+    || location.pathname === ROUTES.RESET_PASSWORD
+    || location.pathname === ROUTES.VERIFY_CODE
+    || location.pathname === ROUTES.PRICING
+    || location.pathname === ROUTES.PRIVACY
+    || location.pathname === ROUTES.PUBLIC_FAQS
+    || location.pathname.startsWith('/book');
   const open = state.assistantOpen;
   const setOpen = (value: boolean | ((prev: boolean) => boolean)) => {
     if (typeof value === 'function') {
@@ -193,7 +209,13 @@ export function AssistantWidget() {
           aria-label="Chat with Custosell Assistant"
           className="fixed right-0 top-0 z-[9000] flex h-dvh min-h-0 w-full flex-col overflow-hidden bg-white sm:w-[420px] sm:border-l sm:border-gray-200"
         >
-          <header className="flex shrink-0 items-center gap-2.5 border-b border-gray-200 bg-white px-5 py-4 sm:px-6">
+          <header
+            className={
+              onPublicShell
+                ? 'flex shrink-0 items-center gap-2.5 border-b border-gray-200 bg-white px-5 py-4 sm:px-6'
+                : 'flex h-16 shrink-0 items-center gap-2.5 border-b border-gray-200 bg-white px-2 sm:h-[52px] sm:px-4 xl:h-14'
+            }
+          >
             <AssistantLockup size="md" />
             <div className="min-w-0 flex-1">
               <h2 className="flex items-center gap-1.5 truncate text-sm font-semibold text-gray-900">
@@ -207,10 +229,12 @@ export function AssistantWidget() {
             <button
               type="button"
               onClick={() => setOpen(false)}
-              aria-label="Close assistant"
+              aria-label="Hide assistant"
+              title="Hide assistant"
               className="rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
             >
-              <X className="h-4 w-4" aria-hidden />
+              <X className="h-4 w-4 lg:hidden" aria-hidden />
+              <ChevronsRight className="hidden h-4 w-4 lg:block" aria-hidden />
             </button>
           </header>
 

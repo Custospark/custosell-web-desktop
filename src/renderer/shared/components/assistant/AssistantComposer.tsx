@@ -71,7 +71,7 @@ export function AssistantComposer({
               onClick={onStop}
               aria-label="Stop generating"
               title="Stop generating"
-              className="absolute bottom-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-gray-800 text-white transition-colors hover:bg-gray-900"
+              className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-gray-800 text-white transition-colors hover:bg-gray-900"
             >
               <Square className="h-3.5 w-3.5 fill-current" aria-hidden />
             </button>
@@ -81,7 +81,7 @@ export function AssistantComposer({
               disabled={!draft.trim()}
               aria-label="Send message"
               title="Send message"
-              className="absolute bottom-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white transition-all hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+              className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-blue-600 text-white transition-all hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
             >
               <Send className="h-3.5 w-3.5" aria-hidden />
             </button>

@@ -118,25 +118,25 @@ export const SEGMENT_COPY: Record<
   business: {
     input: 'Ask about your business or anything you want on Custosell…',
     intro:
-      'I am Oscar, your AI agent. Ask about sales, stock, invoices - or anything else in Custosell.',
+      'I am Oscar, your AI agent. Ask about sales, stock, invoices - or anything else on Custosell.',
     prompts: BUSINESS_PROMPTS,
   },
   personal: {
     input: 'Ask about your workspace or anything you want on Custosell…',
     intro:
-      'I am Oscar, your AI agent. Ask about your workspace, tools, or plans.',
+      'I am Oscar, your AI agent. Ask about your workspace, tools, plans - or anything else on Custosell.',
     prompts: PERSONAL_PROMPTS,
   },
   shopping: {
     input: 'Ask about shopping or anything you want on Custosell…',
     intro:
-      'I am Oscar, your AI agent. Ask about placing orders, tracking, or paying.',
+      'I am Oscar, your AI agent. Ask about placing orders, tracking, paying - or anything else on Custosell.',
     prompts: SHOPPING_PROMPTS,
   },
   guest: {
     input: 'Ask anything you want about Custosell…',
     intro:
-      'I am Oscar, your AI agent. Ask how Custosell works - features, pricing, getting started.',
+      'I am Oscar, your AI agent. Ask how Custosell works - features, pricing, getting started - or anything else.',
     prompts: GUEST_PROMPTS,
   },
 };

@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Bot, ChevronsRight, Mail, Phone, RotateCcw, Send, Sparkles, X } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import { useAppContext } from '../../../app/contexts/AppContext';
+import { NAV_GROUP_MODULE, resolveModuleForPath } from '../../utils/moduleAccess';
 import { CUSTOSELL_SUPPORT } from '../../../modules/guide/guideSupportConfig';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { usePlanAccessibleModules } from '../../utils/usePlanAccessibleModules';
@@ -153,19 +155,32 @@ export function AssistantWidget() {
     }
     return pool;
   }, [groupLabels, copy]);
-  // Fresh random 3 every time the empty state shows - never the same twice.
+  // Route-detected: prompts executable in the module the user is standing in.
+  const location = useLocation();
+  const currentSlug = resolveModuleForPath(location.pathname);
+  const currentModulePrompts = useMemo(() => {
+    const labels = groupLabels.filter((label) => NAV_GROUP_MODULE[label] === currentSlug);
+    return new Set(labels.flatMap((label) => GROUP_PROMPTS[label] ?? []));
+  }, [groupLabels, currentSlug]);
+  function shuffle<T>(items: T[]): T[] {
+    const shuffled = [...items];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }
+  // Fresh random 3 every time the empty state shows - current module first,
+  // then the rest shuffled. Never the same twice.
   const [prompts, setPrompts] = useState<string[]>([]);
   useEffect(() => {
     if (!open || messages.length > 0 || promptPool.length === 0) return;
     queueMicrotask(() => {
-      const shuffled = [...promptPool];
-      for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-      }
-      setPrompts(shuffled.slice(0, 3));
+      const current = shuffle([...currentModulePrompts].filter((p) => promptPool.includes(p)));
+      const rest = shuffle(promptPool.filter((p) => !currentModulePrompts.has(p)));
+      setPrompts([...current, ...rest].slice(0, 3));
     });
-  }, [open, messages.length, promptPool]);
+  }, [open, messages.length, promptPool, currentModulePrompts]);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
@@ -189,12 +204,13 @@ export function AssistantWidget() {
       .filter((p) => !asked.has(p.trim().toLowerCase()))
       .map((p) => {
         const words = p.toLowerCase().match(/[a-z]+/g) ?? [];
-        return { p, score: words.filter((w) => tokens.has(w)).length };
+        const overlap = words.filter((w) => tokens.has(w)).length;
+        return { p, score: overlap + (currentModulePrompts.has(p) ? 2 : 0) };
       })
       .sort((a, b) => b.score - a.score || promptPool.indexOf(a.p) - promptPool.indexOf(b.p))
       .slice(0, 3)
       .map((s) => s.p);
-  }, [messages, chat.isPending, promptPool]);
+  }, [messages, chat.isPending, promptPool, currentModulePrompts]);
 
   function send(content: string): boolean {
     const text = content.trim();

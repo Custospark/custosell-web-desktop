@@ -185,7 +185,7 @@ export function AssistantWidget() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        aria-label={open ? 'Close assistant' : 'Chat with Custosell AI Assistant'}
+        aria-label={open ? 'Close assistant' : 'Chat with Oscar, your AI assistant'}
         aria-expanded={open}
         className="fixed bottom-20 right-4 z-[9000] flex h-12 w-12 items-center justify-center rounded-full shadow-lg ring-2 ring-white transition-all active:scale-95 sm:bottom-6 sm:right-6"
       >
@@ -205,7 +205,7 @@ export function AssistantWidget() {
 
       {open && (
         <section
-          aria-label="Chat with Custosell AI Assistant"
+          aria-label="Chat with Oscar, your AI assistant"
           className="fixed right-0 top-0 z-[9000] flex h-dvh min-h-0 w-full flex-col overflow-hidden bg-white sm:w-[420px] sm:border-l sm:border-gray-200"
         >
           <header
@@ -218,11 +218,11 @@ export function AssistantWidget() {
             <AssistantLockup size="md" />
             <div className="min-w-0 flex-1">
               <h2 className="flex items-center gap-1.5 truncate text-sm font-semibold text-gray-900">
-                Custosell AI Assistant
+                Oscar
                 <AiBadge />
               </h2>
               <p className="truncate text-[11px] text-gray-500">
-                Your AI assistant
+                Custosell AI Assistant
               </p>
             </div>
             <button
@@ -345,7 +345,7 @@ export function AssistantWidget() {
                 }
               }}
               placeholder={copy.input}
-              aria-label="Ask Custosell AI Assistant"
+              aria-label="Ask Oscar, your AI assistant"
               maxLength={2000}
               className="max-h-32 min-h-[4.5rem] min-w-0 flex-1 resize-none overflow-y-auto rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/25"
             />

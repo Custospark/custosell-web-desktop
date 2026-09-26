@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Bot, ChevronsRight, Mail, Phone, RotateCcw, Send, Sparkles, X } from 'lucide-react';
-import { PRODUCT_NAME } from '../../brand/custosellBrand';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { useLocation } from 'react-router-dom';
 import { useAppContext } from '../../../app/contexts/AppContext';
@@ -44,25 +43,25 @@ const SEGMENT_COPY: Record<
   business: {
     input: 'Ask about your business…',
     intro:
-      'I am Custosell Assistant, trained on your business - live stock, sales and invoices. Oscar and the team back me up when I get stuck.',
+      'I am Oscar, your AI assistant. Ask about sales, stock, invoices - or anything else in Custosell.',
     prompts: BUSINESS_PROMPTS,
   },
   personal: {
     input: 'Ask about your workspace…',
     intro:
-      'I am Custosell Assistant - ask about your tools, plans, or how things work. Oscar and the team back me up when I get stuck.',
+      'I am Oscar, your AI assistant. Ask about your workspace, tools, or plans.',
     prompts: PERSONAL_PROMPTS,
   },
   shopping: {
     input: 'Ask about shopping…',
     intro:
-      'I am Custosell Assistant - ask about placing orders, tracking, or paying. Oscar and the team back me up when I get stuck.',
+      'I am Oscar, your AI assistant. Ask about placing orders, tracking, or paying.',
     prompts: SHOPPING_PROMPTS,
   },
   guest: {
     input: 'Ask how Custosell works…',
     intro:
-      'I am Custosell Assistant, built by Oscar\u2019s team. Ask how Custosell works - features, pricing, getting started.',
+      'I am Oscar, your AI assistant. Ask how Custosell works - features, pricing, getting started.',
     prompts: GUEST_PROMPTS,
   },
 };
@@ -186,7 +185,7 @@ export function AssistantWidget() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        aria-label={open ? 'Close assistant' : 'Chat with Custosell Assistant'}
+        aria-label={open ? 'Close assistant' : 'Chat with Custosell AI Assistant'}
         aria-expanded={open}
         className="fixed bottom-20 right-4 z-[9000] flex h-12 w-12 items-center justify-center rounded-full shadow-lg ring-2 ring-white transition-all active:scale-95 sm:bottom-6 sm:right-6"
       >
@@ -206,7 +205,7 @@ export function AssistantWidget() {
 
       {open && (
         <section
-          aria-label="Chat with Custosell Assistant"
+          aria-label="Chat with Custosell AI Assistant"
           className="fixed right-0 top-0 z-[9000] flex h-dvh min-h-0 w-full flex-col overflow-hidden bg-white sm:w-[420px] sm:border-l sm:border-gray-200"
         >
           <header
@@ -219,11 +218,11 @@ export function AssistantWidget() {
             <AssistantLockup size="md" />
             <div className="min-w-0 flex-1">
               <h2 className="flex items-center gap-1.5 truncate text-sm font-semibold text-gray-900">
-                Custosell Assistant
+                Custosell AI Assistant
                 <AiBadge />
               </h2>
               <p className="truncate text-[11px] text-gray-500">
-                {isAuthenticated ? `AI assistant for ${PRODUCT_NAME}` : 'AI product guide'} · replies instantly
+                Your AI assistant
               </p>
             </div>
             <button
@@ -346,7 +345,7 @@ export function AssistantWidget() {
                 }
               }}
               placeholder={copy.input}
-              aria-label="Ask Custosell Assistant"
+              aria-label="Ask Custosell AI Assistant"
               maxLength={2000}
               className="max-h-32 min-h-[4.5rem] min-w-0 flex-1 resize-none overflow-y-auto rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/25"
             />

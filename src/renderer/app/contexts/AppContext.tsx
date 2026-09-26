@@ -9,6 +9,8 @@ interface AppState {
   systemStatus: 'online' | 'offline';
   /** Immersive content mode: app chrome (sidebar, nav, footer, banners) hidden, content only. */
   contentFullscreen: boolean;
+  /** Assistant drawer open - large screens yield layout space instead of overlaying. */
+  assistantOpen: boolean;
 }
 
 type AppAction =
@@ -19,6 +21,8 @@ type AppAction =
   | { type: 'SET_MOBILE_MORE_OPEN'; payload: boolean }
   | { type: 'TOGGLE_MOBILE_MORE' }
   | { type: 'TOGGLE_THEME' }
+  | { type: 'TOGGLE_ASSISTANT' }
+  | { type: 'SET_ASSISTANT_OPEN'; payload: boolean }
   | { type: 'SET_SYSTEM_STATUS'; payload: 'online' | 'offline' }
   | { type: 'SET_CONTENT_FULLSCREEN'; payload: boolean };
 
@@ -31,6 +35,7 @@ const initialState: AppState = {
   theme: 'light',
   systemStatus: 'online',
   contentFullscreen: false,
+  assistantOpen: false,
 };
 
 function appReducer(state: AppState, action: AppAction): AppState {
@@ -66,6 +71,10 @@ function appReducer(state: AppState, action: AppAction): AppState {
       };
     case 'TOGGLE_THEME':
       return { ...state, theme: state.theme === 'light' ? 'dark' : 'light' };
+    case 'TOGGLE_ASSISTANT':
+      return { ...state, assistantOpen: !state.assistantOpen };
+    case 'SET_ASSISTANT_OPEN':
+      return { ...state, assistantOpen: action.payload };
     case 'SET_SYSTEM_STATUS':
       return { ...state, systemStatus: action.payload };
     case 'SET_CONTENT_FULLSCREEN':

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Bot, Mail, Phone, RotateCcw, Send, Sparkles, X } from 'lucide-react';
 import { PRODUCT_NAME } from '../../brand/custosellBrand';
+import { useAppContext } from '../../../app/contexts/AppContext';
 import { CUSTOSELL_SUPPORT } from '../../../modules/guide/guideSupportConfig';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { useAssistantChat, type AssistantMessage } from '../../api/assistant/AssistantQueries';
@@ -93,7 +94,15 @@ function AiBadge() {
 }
 
 export function AssistantWidget() {
-  const [open, setOpen] = useState(false);
+  const { state, dispatch } = useAppContext();
+  const open = state.assistantOpen;
+  const setOpen = (value: boolean | ((prev: boolean) => boolean)) => {
+    if (typeof value === 'function') {
+      dispatch({ type: 'TOGGLE_ASSISTANT' });
+    } else {
+      dispatch({ type: 'SET_ASSISTANT_OPEN', payload: value });
+    }
+  };
   const [messages, setMessages] = useState<AssistantMessage[]>([]);
   const [draft, setDraft] = useState('');
   const [error, setError] = useState<string | null>(null);

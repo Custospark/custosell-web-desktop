@@ -105,7 +105,7 @@ export function AssistantWidget() {
       {open && (
         <section
           aria-label="Chat with Custosell Assistant"
-          className="fixed inset-x-4 bottom-36 top-24 z-40 flex min-h-0 flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10 sm:inset-x-auto sm:bottom-24 sm:right-6 sm:top-auto sm:h-[520px] sm:max-h-[70vh] sm:w-[380px]"
+          className="fixed left-1/2 top-1/2 z-40 flex min-h-0 w-[min(440px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10 h-[min(600px,calc(100dvh-6rem))]"
         >
           <header className="flex shrink-0 items-center gap-2.5 border-b border-gray-200 bg-slate-900 px-4 py-3 text-white">
             <AssistantLockup size="md" />

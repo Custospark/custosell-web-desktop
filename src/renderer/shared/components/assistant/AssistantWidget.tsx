@@ -140,6 +140,8 @@ export function AssistantWidget() {
       onSuccess: (reply) => setMessages((prev) => [...prev, { role: 'assistant', content: reply }].slice(-20)),
       onError: (err) => setError(err.message),
     });
+  }
+
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (send(draft)) {

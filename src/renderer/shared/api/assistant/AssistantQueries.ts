@@ -35,13 +35,23 @@ export function useAssistantChat() {
   });
 }
 
+/** Backend still names Oscar in places - rewrite to server-worded, actionable copy client-side. */
+function debrandErrorMessage(message: string): string {
+  if (!/oscar/i.test(message)) return message;
+  if (/could not reach/i.test(message)) return 'Could not reach the server, please try again.';
+  if (/busy|limit/i.test(message)) return 'The server is busy right now. Wait a moment and try again.';
+  if (/empty answer|rephras/i.test(message)) return 'The server returned an empty answer. Try rephrasing.';
+  if (/trouble answering/i.test(message)) return 'The server had trouble answering. Try again in a moment.';
+  return 'Could not reach the server, please try again.';
+}
+
 export function assistantErrorMessage(err: unknown): string {
   if (!navigator.onLine || (axios.isAxiosError(err) && !err.response)) {
     return 'You appear to be offline. Your message is kept - try again when reconnected.';
   }
   if (axios.isAxiosError(err)) {
     const backend = (err.response?.data as { message?: string } | undefined)?.message;
-    if (backend) return backend;
+    if (backend) return debrandErrorMessage(backend);
     if (err.response?.status === 429) return 'Too many chats at once. Wait a moment and try again.';
   }
   return 'Could not reach the server, please try again.';

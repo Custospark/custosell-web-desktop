@@ -3,15 +3,15 @@
 export const PRODUCT_NAME = 'Custosell ERP';
 
 /** Primary tagline (UI, auth, footer). */
-export const TAGLINE = 'Your Business Operating System';
+export const TAGLINE = 'Smarter operations. Powered by AI';
 
 /** Short lockup where space is tight. */
 export const TAGLINE_SHORT = 'Business OS';
 
-/** Document / OG title: "Custosell ERP - Your Business Operating System" */
+/** Document / OG title: "Custosell ERP - Smarter operations. Powered by AI" */
 export const DOCUMENT_TITLE = `${PRODUCT_NAME} - ${TAGLINE}`;
 
-/** Compact shell line: "Custosell ERP - Your Business Operating System" */
+/** Compact shell line: "Custosell ERP - Smarter operations. Powered by AI" */
 export const BRAND_LOCKUP = `${PRODUCT_NAME} - ${TAGLINE}`;
 
 /**
@@ -19,7 +19,7 @@ export const BRAND_LOCKUP = `${PRODUCT_NAME} - ${TAGLINE}`;
  * (`supporting_line`).
  */
 export const SUPPORTING_LINE =
-  'Custosell ERP is your Business Operating System - Point of Sale (POS), E-commerce Storefront, Inventory & Supply Chain, Accounting, HR & Payroll, Invoicing, Expenses, Project Management, Sales Pipeline (CRM), Financial Forecasting, and Document Management - all in one connected system that works with or without the internet.';
+  'Custosell ERP delivers smarter operations, powered by AI - Point of Sale (POS), E-commerce Storefront, Inventory & Supply Chain, Accounting, HR & Payroll, Invoicing, Expenses, Project Management, Sales Pipeline (CRM), Financial Forecasting, and Document Management - all in one connected system that works with or without the internet.';
 
 /**
  * Search-engine meta description (meta[name=description], og:description,
@@ -29,7 +29,7 @@ export const SUPPORTING_LINE =
  * Backend `config/brand.php` (`seo_description`).
  */
 export const SEO_DESCRIPTION =
-  'Custosell ERP is your Business Operating System - Point of Sale, E-commerce, Inventory, Accounting, HR & Payroll, Invoicing and CRM in one connected system that works with or without the internet.';
+  'Custosell ERP delivers smarter operations, powered by AI - Point of Sale, E-commerce, Inventory, Accounting, HR & Payroll, Invoicing and CRM in one connected system that works with or without the internet.';
 
 /**
  * Canonical product landing URL used for SEO (og:url, canonical link).

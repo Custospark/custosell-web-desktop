@@ -2,7 +2,7 @@
   "name": "CUSTOSELL",
   "private": true,
   "version": "5.4.3",
-  "description": "Custosell - Your Business Operating System",
+  "description": "Custosell - Smarter operations. Powered by AI",
   "author": "Custospark Company Ltd",
   "type": "module",
   "main": "dist/desktop/main/main.js",

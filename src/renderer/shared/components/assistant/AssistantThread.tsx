@@ -3,6 +3,7 @@ import { Bot, Mail, Phone, RotateCcw } from 'lucide-react';
 import { CUSTOSELL_SUPPORT } from '../../../modules/guide/guideSupportConfig';
 import type { AssistantMessage } from '../../api/assistant/AssistantQueries';
 import { AssistantLockup } from './AssistantBrand';
+import { renderAssistantMessage } from './assistantMessageLinks';
 
 interface AssistantThreadProps {
   messages: AssistantMessage[];
@@ -68,9 +69,9 @@ export function AssistantThread({
                 <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white ring-1 ring-gray-200">
                   <Bot className="h-3.5 w-3.5" aria-hidden />
                 </span>
-                <p className="whitespace-pre-wrap rounded-xl bg-white px-3 py-2 text-sm leading-relaxed text-gray-800 shadow-sm ring-1 ring-gray-200">
-                  {message.content}
-                </p>
+                        <p className="whitespace-pre-wrap rounded-xl bg-white px-3 py-2 text-sm leading-relaxed text-gray-800 shadow-sm ring-1 ring-gray-200">
+                          {renderAssistantMessage(message.content)}
+                        </p>
               </div>
             )
           ))}

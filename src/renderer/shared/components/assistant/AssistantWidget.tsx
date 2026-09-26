@@ -7,10 +7,22 @@ import { useAssistantChat, type AssistantMessage } from '../../api/assistant/Ass
 import custosellLogo from '../../assets/custosell-logo.png';
 import oscarAvatar from '../../assets/oscar.webp';
 
-const MEMBER_PROMPTS = [
+const BUSINESS_PROMPTS = [
   'What is low on stock?',
   'How did sales do today?',
   'What invoices are outstanding?',
+];
+
+const PERSONAL_PROMPTS = [
+  'What can I do in my workspace?',
+  'How do I upgrade my plan?',
+  'How does offline mode work?',
+];
+
+const SHOPPING_PROMPTS = [
+  'How do I place an order?',
+  'How do I track my order?',
+  'How do I pay?',
 ];
 
 const GUEST_PROMPTS = [
@@ -18,6 +30,38 @@ const GUEST_PROMPTS = [
   'How do I get started?',
   'What does it cost?',
 ];
+
+type AssistantSegment = 'business' | 'personal' | 'shopping' | 'guest';
+
+const SEGMENT_COPY: Record<
+  AssistantSegment,
+  { input: string; intro: string; prompts: string[] }
+> = {
+  business: {
+    input: 'Ask about your business…',
+    intro:
+      'I am Custosell Assistant, trained on your business - live stock, sales and invoices. Oscar and the team back me up when I get stuck.',
+    prompts: BUSINESS_PROMPTS,
+  },
+  personal: {
+    input: 'Ask about your workspace…',
+    intro:
+      'I am Custosell Assistant - ask about your tools, plans, or how things work. Oscar and the team back me up when I get stuck.',
+    prompts: PERSONAL_PROMPTS,
+  },
+  shopping: {
+    input: 'Ask about shopping…',
+    intro:
+      'I am Custosell Assistant - ask about placing orders, tracking, or paying. Oscar and the team back me up when I get stuck.',
+    prompts: SHOPPING_PROMPTS,
+  },
+  guest: {
+    input: 'Ask how Custosell works…',
+    intro:
+      'I am Custosell Assistant, built by Oscar\u2019s team. Ask how Custosell works - features, pricing, getting started.',
+    prompts: GUEST_PROMPTS,
+  },
+};
 
 /** Brand mark with Oscar's photo peeking behind - the assistant, backed by a human team. */
 function AssistantLockup({ size }: { size: 'md' | 'lg' }) {
@@ -52,18 +96,29 @@ export function AssistantWidget() {
   const [messages, setMessages] = useState<AssistantMessage[]>([]);
   const [draft, setDraft] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const composerRef = useRef<HTMLTextAreaElement>(null);
   const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
+  const accountType = useAppSelector((s) => s.auth.user?.account_type);
+  const hasBusiness = useAppSelector((s) => s.auth.user?.business_id != null);
   const chat = useAssistantChat();
   const listRef = useRef<HTMLDivElement>(null);
-  const prompts = isAuthenticated ? MEMBER_PROMPTS : GUEST_PROMPTS;
+  const segment: AssistantSegment = !isAuthenticated
+    ? 'guest'
+    : accountType === 'storefront_buyer'
+      ? 'shopping'
+      : accountType === 'personal' || !hasBusiness
+        ? 'personal'
+        : 'business';
+  const copy = SEGMENT_COPY[segment];
+  const prompts = copy.prompts;
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, chat.isPending]);
 
-  function send(content: string) {
+  function send(content: string): boolean {
     const text = content.trim();
-    if (!text || chat.isPending) return;
+    if (!text || chat.isPending) return false;
     const next: AssistantMessage[] = [...messages, { role: 'user', content: text }].slice(-20);
     setMessages(next);
     setDraft('');
@@ -72,11 +127,21 @@ export function AssistantWidget() {
       onSuccess: (reply) => setMessages((prev) => [...prev, { role: 'assistant', content: reply }].slice(-20)),
       onError: (err) => setError(err.message),
     });
+    return true;
   }
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    send(draft);
+    if (send(draft)) {
+      requestAnimationFrame(() => {
+        if (composerRef.current) composerRef.current.style.height = 'auto';
+      });
+    }
+  }
+
+  function growComposer(target: HTMLTextAreaElement) {
+    target.style.height = 'auto';
+    target.style.height = `${Math.min(target.scrollHeight, 128)}px`;
   }
 
   return createPortal(
@@ -105,7 +170,7 @@ export function AssistantWidget() {
       {open && (
         <section
           aria-label="Chat with Custosell Assistant"
-          className="fixed left-1/2 top-1/2 z-40 flex min-h-0 w-[min(440px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10 h-[min(600px,calc(100dvh-6rem))]"
+          className="fixed right-0 top-0 z-40 flex h-dvh min-h-0 w-full flex-col overflow-hidden bg-white shadow-2xl sm:w-[420px] sm:border-l sm:border-gray-200"
         >
           <header className="flex shrink-0 items-center gap-2.5 border-b border-gray-200 bg-slate-900 px-4 py-3 text-white">
             <AssistantLockup size="md" />
@@ -133,9 +198,7 @@ export function AssistantWidget() {
               <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
                 <AssistantLockup size="lg" />
                 <p className="max-w-[30ch] text-sm text-slate-500">
-                  {isAuthenticated
-                    ? 'I am Custosell Assistant, trained on your business - live stock, sales and invoices. Oscar and the team back me up when I get stuck.'
-                    : 'I am Custosell Assistant, built by Oscar\u2019s team. Ask how Custosell works - features, pricing, getting started.'}
+                  {copy.intro}
                 </p>
                 <div className="flex flex-wrap justify-center gap-1.5">
                   {prompts.map((prompt) => (
@@ -189,20 +252,33 @@ export function AssistantWidget() {
             )}
           </div>
 
-          <form onSubmit={onSubmit} className="flex shrink-0 items-center gap-2 border-t border-gray-200 bg-white px-3 py-2.5">
-            <input
+          <form onSubmit={onSubmit} className="flex shrink-0 items-end gap-2 border-t border-gray-200 bg-white px-3 py-2.5">
+            <textarea
+              ref={composerRef}
+              rows={2}
               value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              placeholder={isAuthenticated ? 'Ask about your business…' : 'Ask how Custosell works…'}
+              onChange={(e) => {
+                setDraft(e.target.value);
+                growComposer(e.target);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  onSubmit(e as unknown as React.FormEvent);
+                } else if (e.key === 'Escape') {
+                  setOpen(false);
+                }
+              }}
+              placeholder={copy.input}
               aria-label="Ask Custosell Assistant"
               maxLength={2000}
-              className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/25"
+              className="max-h-32 min-h-[4.5rem] min-w-0 flex-1 resize-none overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/25"
             />
             <button
               type="submit"
               disabled={!draft.trim() || chat.isPending}
               aria-label="Send message"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white transition-all hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+              className="flex h-9 w-9 shrink-0 items-center justify-center self-end rounded-lg bg-blue-600 text-white transition-all hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
             >
               <Send className="h-4 w-4" aria-hidden />
             </button>

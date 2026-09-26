@@ -7,7 +7,7 @@ export function Footer() {
       <span className="text-gray-500 text-center sm:text-left">
         <span className="font-semibold text-blue-600">{PRODUCT_NAME}</span>
         {' '}
-        &mdash;
+        -
         {' '}
         {TAGLINE}
       </span>

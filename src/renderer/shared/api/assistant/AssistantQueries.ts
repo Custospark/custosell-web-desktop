@@ -1,6 +1,8 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import { axiosInstance } from '../../../app/api/axiosConfig';
+import { axiosInstance, queryClient } from '../../../app/api/axiosConfig';
+import { useToast } from '../../../app/contexts/useToast';
+import { sanitizeErrorMessage } from '../../../app/store/offline/core/offlineQueryUtils';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { ASSISTANT } from '../endpoints/endpoints';
 
@@ -10,7 +12,73 @@ export interface AssistantMessage {
 }
 
 interface ChatResponse {
-  data: { reply: string };
+  data: { reply: string; session?: { id: number; title: string } | null };
+}
+
+export interface ChatSession {
+  id: number;
+  title: string;
+  messages_count?: number;
+  updated_at?: string | null;
+}
+
+export interface ChatSessionDetail {
+  id: number;
+  title: string;
+  updated_at?: string | null;
+  messages: AssistantMessage[];
+}
+
+export const assistantSessionKeys = {
+  all: ['assistant-sessions'] as const,
+  list: () => [...assistantSessionKeys.all, 'list'] as const,
+  detail: (id: number) => [...assistantSessionKeys.all, 'detail', id] as const,
+};
+
+/** Session history only exists for signed-in users - guests stay ephemeral. */
+export function useChatSessions(enabled: boolean) {
+  return useQuery({
+    queryKey: assistantSessionKeys.list(),
+    enabled,
+    queryFn: async (): Promise<ChatSession[]> => {
+      const { data } = await axiosInstance.get('/assistant/sessions');
+      return (data?.data ?? []) as ChatSession[];
+    },
+    staleTime: 30_000,
+    retry: 1,
+  });
+}
+
+export function useRenameChatSession() {
+  const { showToast } = useToast();
+  return useMutation({
+    mutationFn: async ({ id, title }: { id: number; title: string }) => {
+      const { data } = await axiosInstance.patch(`/assistant/sessions/${id}`, { title });
+      return data?.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: assistantSessionKeys.list() });
+    },
+    onError: (err) => {
+      showToast('error', sanitizeErrorMessage(err, 'Could not rename chat'));
+    },
+  });
+}
+
+export function useDeleteChatSession() {
+  const { showToast } = useToast();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      await axiosInstance.delete(`/assistant/sessions/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: assistantSessionKeys.list() });
+      showToast('success', 'Chat deleted');
+    },
+    onError: (err) => {
+      showToast('error', sanitizeErrorMessage(err, 'Could not delete chat'));
+    },
+  });
 }
 
 /** Backend proxy keeps the provider key server-side; the app never sees it. */
@@ -22,23 +90,33 @@ export function abortAssistantChat(): void {
   activeChatController = null;
 }
 
+export interface ChatSendPayload {
+  messages: AssistantMessage[];
+  sessionId?: number | null;
+}
+
+export interface ChatSendResult {
+  reply: string;
+  session: { id: number; title: string } | null;
+}
+
 export function useAssistantChat() {
   // Guests (landing/auth) get how-to answers; members get live business data.
   const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
 
-  return useMutation<string, Error, AssistantMessage[]>({
-    mutationFn: async (messages) => {
+  return useMutation<ChatSendResult, Error, ChatSendPayload>({
+    mutationFn: async ({ messages, sessionId }) => {
       const controller = new AbortController();
       activeChatController = controller;
       try {
         const { data } = await axiosInstance.post<ChatResponse>(
           isAuthenticated ? ASSISTANT.CHAT : ASSISTANT.GUIDE,
-          { messages },
+          sessionId ? { messages, session_id: sessionId } : { messages },
           // A full agent turn can span several provider rounds - outlast it
           // instead of aborting a reply the server is still producing.
           { timeout: 240000, signal: controller.signal },
         );
-        return data.data.reply;
+        return { reply: data.data.reply, session: data.data.session ?? null };
       } catch (err) {
         throw new Error(assistantErrorMessage(err), { cause: err });
       } finally {

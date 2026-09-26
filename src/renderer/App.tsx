@@ -47,12 +47,12 @@ function App() {
             <AppProvider>
               <ToastProvider>
               <NetworkOfflineOverlay />
-              <AssistantWidget />
               <ConfirmProvider>
-                  <AuthBootstrap>
-                    <AppRoutes />
-                  </AuthBootstrap>
-                </ConfirmProvider>
+                <AssistantWidget />
+                <AuthBootstrap>
+                  <AppRoutes />
+                </AuthBootstrap>
+              </ConfirmProvider>
               </ToastProvider>
             </AppProvider>
           </LogoutProvider>

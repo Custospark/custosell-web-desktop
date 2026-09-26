@@ -1,0 +1,119 @@
+import type { RefObject } from 'react';
+import { Bot, Mail, Phone, RotateCcw } from 'lucide-react';
+import { CUSTOSELL_SUPPORT } from '../../../modules/guide/guideSupportConfig';
+import type { AssistantMessage } from '../../api/assistant/AssistantQueries';
+import { AssistantLockup } from './AssistantBrand';
+
+interface AssistantThreadProps {
+  messages: AssistantMessage[];
+  prompts: string[];
+  intro: string;
+  isPending: boolean;
+  error: string | null;
+  listRef: RefObject<HTMLDivElement | null>;
+  onSend: (prompt: string) => void;
+  onRetry: () => void;
+}
+
+export function AssistantThread({
+  messages,
+  prompts,
+  intro,
+  isPending,
+  error,
+  listRef,
+  onSend,
+  onRetry,
+}: AssistantThreadProps) {
+  return (
+    <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-gray-50 px-3 py-3">
+      {messages.length === 0 ? (
+        <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
+          <AssistantLockup size="lg" />
+          <p className="max-w-[30ch] text-sm text-gray-500">
+            {intro}
+          </p>
+          <div className="flex flex-wrap justify-center gap-1.5">
+            {prompts.map((prompt) => (
+              <button
+                key={prompt}
+                type="button"
+                onClick={() => onSend(prompt)}
+                className="rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-xs font-medium text-indigo-700 transition-colors hover:border-indigo-300 hover:bg-indigo-50"
+              >
+                {prompt}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {messages.map((message, index) => (
+            message.role === 'user' ? (
+              <p
+                key={index}
+                className="max-w-[85%] self-end whitespace-pre-wrap rounded-xl bg-blue-600 px-3 py-2 text-sm leading-relaxed text-white"
+              >
+                {message.content}
+              </p>
+            ) : (
+              <div key={index} className="flex max-w-[90%] items-start gap-1.5 self-start">
+                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white ring-1 ring-gray-200">
+                  <Bot className="h-3.5 w-3.5" aria-hidden />
+                </span>
+                <p className="whitespace-pre-wrap rounded-xl bg-white px-3 py-2 text-sm leading-relaxed text-gray-800 shadow-sm ring-1 ring-gray-200">
+                  {message.content}
+                </p>
+              </div>
+            )
+          ))}
+          {isPending && (
+            <p aria-live="polite" className="self-start rounded-xl bg-white px-3 py-2 text-sm text-gray-500 shadow-sm ring-1 ring-gray-200">
+              <span className="inline-flex gap-1">
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-indigo-400" />
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-indigo-400 [animation-delay:150ms]" />
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-indigo-400 [animation-delay:300ms]" />
+              </span>
+            </p>
+          )}
+          {error && (
+            <div role="alert" className="self-stretch rounded-xl border border-red-200 bg-red-50 px-3 py-2.5">
+              <p className="text-xs font-medium text-red-700">{error}</p>
+              <button
+                type="button"
+                onClick={onRetry}
+                disabled={isPending}
+                className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <RotateCcw className="h-3.5 w-3.5" aria-hidden />
+                {isPending ? 'Retrying…' : 'Retry'}
+              </button>
+              <div className="mt-2.5 border-t border-red-200/70 pt-2.5">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-gray-700">
+                  Quick Support
+                </p>
+                <a
+                  href={`mailto:${CUSTOSELL_SUPPORT.email}`}
+                  className="mt-1.5 flex items-center gap-2 text-xs font-medium text-blue-700 hover:underline"
+                >
+                  <Mail className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                  {CUSTOSELL_SUPPORT.email}
+                </a>
+                {CUSTOSELL_SUPPORT.phones.map((phone) => (
+                  <a
+                    key={phone.tel}
+                    href={`tel:${phone.tel}`}
+                    className="mt-1.5 flex items-center gap-2 text-xs font-medium text-blue-700 hover:underline"
+                  >
+                    <Phone className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                    {phone.display}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

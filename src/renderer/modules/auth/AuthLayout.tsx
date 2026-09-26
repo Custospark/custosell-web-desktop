@@ -10,6 +10,7 @@ import {
   TAGLINE_SHORT,
 } from '../../shared/brand/custosellBrand';
 import { AUTH_HERO_IMAGES } from './authHeroImages';
+import { useAssistantPushClass } from '../../shared/components/layout/useAssistantPush';
 
 const AUTH_HERO_DESCRIPTION = SUPPORTING_LINE;
 
@@ -30,9 +31,10 @@ const AUTH_HIGHLIGHTS = [
 export function AuthLayout({ title, subtitle, subtitleClassName, heroImage, heroDescription, children }: PropsWithChildren<AuthLayoutProps>) {
   const image = heroImage || AUTH_HERO_IMAGES.login;
   const description = heroDescription || AUTH_HERO_DESCRIPTION;
+  const assistantPush = useAssistantPushClass();
 
   return (
-    <div className="min-h-screen flex bg-gray-50">
+    <div className={`min-h-screen flex bg-gray-50 transition-[padding-right] duration-200 ${assistantPush}`}>
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <img src={image} alt="" className="absolute inset-0 w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-br from-blue-950/95 via-blue-900/85 to-slate-950/80" />

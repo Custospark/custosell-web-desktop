@@ -2,12 +2,14 @@ import { Outlet } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import LogoImage from '../../../shared/assets/LogoImage';
 import { BRAND_LOCKUP, PRODUCT_NAME } from '../../../shared/brand/custosellBrand';
+import { useAssistantPushClass } from '../../../shared/components/layout/useAssistantPush';
 
 export default function BookingLayout() {
   const navigate = useNavigate();
+  const assistantPush = useAssistantPushClass();
 
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
+    <div className={`flex min-h-screen flex-col bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 transition-[padding-right] duration-200 ${assistantPush}`}>
       <header className="border-b border-gray-100 bg-white/70 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
           <button type="button" onClick={() => navigate('/')} className="flex items-center gap-2.5 transition-opacity hover:opacity-80">

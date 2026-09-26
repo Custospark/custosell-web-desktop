@@ -13,6 +13,7 @@ import {
 import { cn } from '../../shared/utils/cn';
 import { LandingMobileTabBar } from './ui/LandingMobileTabBar';
 import { scrollLandingToTop } from './ui/landingMobileNav';
+import { useAssistantPushClass } from '../../shared/components/layout/useAssistantPush';
 
 const navLinks = [
   { label: 'Home', path: ROUTES.HOME, icon: Home },
@@ -26,6 +27,7 @@ export default function LandingLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { showToast } = useToast();
+  const assistantPush = useAssistantPushClass();
 
   useEffect(() => {
     scrollLandingToTop();
@@ -35,8 +37,7 @@ export default function LandingLayout() {
     navigate(action === 'login' ? ROUTES.LOGIN : ROUTES.REGISTER);
   };
 
-  const handleDownload = () => {
-    const link = document.createElement('a');
+  const handleDownload = () => {    const link = document.createElement('a');
     link.href = getWindowsInstallerDownloadUrl();
     link.download = getWindowsInstallerFileName();
     link.style.display = 'none';
@@ -47,7 +48,7 @@ export default function LandingLayout() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-b from-white via-blue-50/30 to-white">
+    <div className={cn('flex min-h-screen flex-col bg-gradient-to-b from-white via-blue-50/30 to-white transition-[padding-right] duration-200', assistantPush)}>
       <header className="sticky top-0 z-50 border-b border-slate-200/60 bg-white/80 backdrop-blur-xl transition-all duration-300">
         <nav className="mx-auto flex max-w-7xl items-center justify-between px-3 py-3 sm:px-6 sm:py-4" aria-label="Main navigation">
           <motion.div

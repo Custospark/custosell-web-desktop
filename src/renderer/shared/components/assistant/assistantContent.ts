@@ -26,24 +26,24 @@ export type AssistantSegment = 'business' | 'personal' | 'shopping' | 'guest';
 
 /** Input hint per active route - falls back to the account-type default. */
 export const PLACEHOLDER_BY_SLUG: Record<string, string> = {
-  dashboard: 'Ask about your business…',
-  sales: 'Ask about sales…',
-  inventory: 'Ask about stock…',
-  customers: 'Ask about customers…',
-  pipeline: 'Ask about deals…',
-  estimates: 'Ask about projects…',
-  expenses: 'Ask about money…',
-  accounting: 'Ask about your books…',
-  forecasting: 'Ask about the future…',
-  documents: 'Ask about files…',
-  hr: 'Ask about people…',
-  efris: 'Ask about fiscal receipts…',
-  discover: 'Ask about shopping…',
-  account: 'Ask about your account…',
-  guide: 'Ask for help…',
-  settings: 'Ask about settings…',
-  platform: 'Ask about the platform…',
-  your_tools: 'Ask about your tools…',
+  dashboard: 'Ask about your business or anything you want on Custosell…',
+  sales: 'Ask about this sale or anything you want on Custosell…',
+  inventory: 'Ask about this product or anything you want on Custosell…',
+  customers: 'Ask about these customers or anything you want on Custosell…',
+  pipeline: 'Ask about these deals or anything you want on Custosell…',
+  estimates: 'Ask about these estimates or anything you want on Custosell…',
+  expenses: 'Ask about these expenses or anything you want on Custosell…',
+  accounting: 'Ask about your books or anything you want on Custosell…',
+  forecasting: 'Ask about your forecast or anything you want on Custosell…',
+  documents: 'Ask about these files or anything you want on Custosell…',
+  hr: 'Ask about your team or anything you want on Custosell…',
+  efris: 'Ask about these receipts or anything you want on Custosell…',
+  discover: 'Ask about shopping or anything you want on Custosell…',
+  account: 'Ask about your account or anything you want on Custosell…',
+  guide: 'Ask for help or anything you want on Custosell…',
+  settings: 'Ask about settings or anything you want on Custosell…',
+  platform: 'Ask about the platform or anything you want on Custosell…',
+  your_tools: 'Ask about your tools or anything you want on Custosell…',
 };
 
 export const GROUP_PROMPTS: Record<string, string[]> = {
@@ -66,47 +66,47 @@ export const GROUP_PROMPTS: Record<string, string[]> = {
 export const VIEW_CONTEXTS: { match: RegExp; placeholder: string; prompts: string[] }[] = [
   {
     match: /^\/sales\/new/,
-    placeholder: 'Ask about this sale…',
+    placeholder: 'Ask about this sale or anything you want on Custosell…',
     prompts: ['How do I apply a discount here?', 'Which payment methods can I take?'],
   },
   {
     match: /^\/(sales\/(history|orders)|invoices)/,
-    placeholder: 'Ask about these records…',
+    placeholder: 'Ask about these records or anything you want on Custosell…',
     prompts: ['Total these up for me', 'Which was the biggest?'],
   },
   {
     match: /^\/customers/,
-    placeholder: 'Ask about these customers…',
+    placeholder: 'Ask about these customers or anything you want on Custosell…',
     prompts: ['Who bought the most?', 'Find a customer'],
   },
   {
     match: /^\/inventory/,
-    placeholder: 'Ask about this list…',
+    placeholder: 'Ask about these products or anything you want on Custosell…',
     prompts: ['Which of these are low on stock?', 'Find the priciest item'],
   },
   {
     match: /^\/expenses/,
-    placeholder: 'Ask about these expenses…',
+    placeholder: 'Ask about these expenses or anything you want on Custosell…',
     prompts: ['Where did the money go?', 'Total this period for me'],
   },
   {
     match: /^\/pipeline/,
-    placeholder: 'Ask about these boards…',
+    placeholder: 'Ask about these deals or anything you want on Custosell…',
     prompts: ['Which deals need follow-up?'],
   },
   {
     match: /^\/estimates/,
-    placeholder: 'Ask about these estimates…',
+    placeholder: 'Ask about these estimates or anything you want on Custosell…',
     prompts: ['How many estimates are draft?', 'Show me active projects'],
   },
   {
     match: /^\/hr\//,
-    placeholder: 'Ask about the team…',
+    placeholder: 'Ask about your team or anything you want on Custosell…',
     prompts: ['Who is on leave?', 'How many people do we have?'],
   },
   {
     match: /^\/documents/,
-    placeholder: 'Ask about these files…',
+    placeholder: 'Ask about these files or anything you want on Custosell…',
     prompts: ['How many files do we have?'],
   },
 ];
@@ -116,25 +116,25 @@ export const SEGMENT_COPY: Record<
   { input: string; intro: string; prompts: string[] }
 > = {
   business: {
-    input: 'Ask about your business…',
+    input: 'Ask about your business or anything you want on Custosell…',
     intro:
       'I am Oscar, your AI agent. Ask about sales, stock, invoices - or anything else in Custosell.',
     prompts: BUSINESS_PROMPTS,
   },
   personal: {
-    input: 'Ask about your workspace…',
+    input: 'Ask about your workspace or anything you want on Custosell…',
     intro:
       'I am Oscar, your AI agent. Ask about your workspace, tools, or plans.',
     prompts: PERSONAL_PROMPTS,
   },
   shopping: {
-    input: 'Ask about shopping…',
+    input: 'Ask about shopping or anything you want on Custosell…',
     intro:
       'I am Oscar, your AI agent. Ask about placing orders, tracking, or paying.',
     prompts: SHOPPING_PROMPTS,
   },
   guest: {
-    input: 'Ask how Custosell works…',
+    input: 'Ask anything you want about Custosell…',
     intro:
       'I am Oscar, your AI agent. Ask how Custosell works - features, pricing, getting started.',
     prompts: GUEST_PROMPTS,

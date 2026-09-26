@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Bot, ChevronsRight, Mail, Phone, RotateCcw, Send, Sparkles, X } from 'lucide-react';
+import { Bot, ChevronsRight, Mail, Phone, RotateCcw, Send, Sparkles, Square, X } from 'lucide-react';
+import axios from 'axios';
 import { useLocation } from 'react-router-dom';
 import { useAppContext } from '../../../app/contexts/AppContext';
 import { NAV_GROUP_MODULE, resolveModuleForPath } from '../../utils/moduleAccess';
@@ -8,7 +9,7 @@ import { CUSTOSELL_SUPPORT } from '../../../modules/guide/guideSupportConfig';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { usePlanAccessibleModules } from '../../utils/usePlanAccessibleModules';
 import { resolveAccessibleNavGroups } from '../layout/resolveAccessibleNavLeaves';
-import { useAssistantChat, type AssistantMessage } from '../../api/assistant/AssistantQueries';
+import { useAssistantChat, abortAssistantChat, type AssistantMessage } from '../../api/assistant/AssistantQueries';
 import custosellLogo from '../../assets/custosell-logo.png';
 import oscarAvatar from '../../assets/oscar.webp';
 
@@ -38,7 +39,27 @@ const GUEST_PROMPTS = [
 
 type AssistantSegment = 'business' | 'personal' | 'shopping' | 'guest';
 
-/** Starter prompt per sidebar group - only visible modules ever suggest. */
+/** Input hint per active route - falls back to the account-type default. */
+const PLACEHOLDER_BY_SLUG: Record<string, string> = {
+  dashboard: 'Ask about your business…',
+  sales: 'Ask about sales…',
+  inventory: 'Ask about stock…',
+  customers: 'Ask about customers…',
+  pipeline: 'Ask about deals…',
+  estimates: 'Ask about projects…',
+  expenses: 'Ask about money…',
+  accounting: 'Ask about your books…',
+  forecasting: 'Ask about the future…',
+  documents: 'Ask about files…',
+  hr: 'Ask about people…',
+  efris: 'Ask about fiscal receipts…',
+  discover: 'Ask about shopping…',
+  account: 'Ask about your account…',
+  guide: 'Ask for help…',
+  settings: 'Ask about settings…',
+  platform: 'Ask about the platform…',
+  your_tools: 'Ask about your tools…',
+};
 const GROUP_PROMPTS: Record<string, string[]> = {
   Dashboard: ['How is my business doing today?'],
   Sales: ['How did sales do today?', 'Show recent sales'],
@@ -54,6 +75,55 @@ const GROUP_PROMPTS: Record<string, string[]> = {
   'HR & Payroll': ['Who is on leave?', 'How many people do we have?'],
   EFRIS: ['Are my receipts fiscalized?'],
 };
+
+/** Table/view-aware context: what the user is literally looking at. Checked before module-level. */
+const VIEW_CONTEXTS: { match: RegExp; placeholder: string; prompts: string[] }[] = [
+  {
+    match: /^\/sales\/new/,
+    placeholder: 'Ask about this sale…',
+    prompts: ['How do I apply a discount here?', 'Which payment methods can I take?'],
+  },
+  {
+    match: /^\/(sales\/(history|orders)|invoices)/,
+    placeholder: 'Ask about these records…',
+    prompts: ['Total these up for me', 'Which was the biggest?'],
+  },
+  {
+    match: /^\/customers/,
+    placeholder: 'Ask about these customers…',
+    prompts: ['Who bought the most?', 'Find a customer'],
+  },
+  {
+    match: /^\/inventory/,
+    placeholder: 'Ask about this list…',
+    prompts: ['Which of these are low on stock?', 'Find the priciest item'],
+  },
+  {
+    match: /^\/expenses/,
+    placeholder: 'Ask about these expenses…',
+    prompts: ['Where did the money go?', 'Total this period for me'],
+  },
+  {
+    match: /^\/pipeline/,
+    placeholder: 'Ask about these boards…',
+    prompts: ['Which deals need follow-up?'],
+  },
+  {
+    match: /^\/estimates/,
+    placeholder: 'Ask about these estimates…',
+    prompts: ['How many estimates are draft?', 'Show me active projects'],
+  },
+  {
+    match: /^\/hr\//,
+    placeholder: 'Ask about the team…',
+    prompts: ['Who is on leave?', 'How many people do we have?'],
+  },
+  {
+    match: /^\/documents/,
+    placeholder: 'Ask about these files…',
+    prompts: ['How many files do we have?'],
+  },
+];
 
 const SEGMENT_COPY: Record<
   AssistantSegment,
@@ -158,10 +228,18 @@ export function AssistantWidget() {
   // Route-detected: prompts executable in the module the user is standing in.
   const location = useLocation();
   const currentSlug = resolveModuleForPath(location.pathname);
+  const routePlaceholder = currentSlug ? PLACEHOLDER_BY_SLUG[currentSlug] : undefined;
+  // Table/view-aware: the exact list on screen wins over module-level.
+  const viewContext = useMemo(
+    () => VIEW_CONTEXTS.find((view) => view.match.test(location.pathname)) ?? null,
+    [location.pathname],
+  );
+  const placeholder = viewContext?.placeholder ?? routePlaceholder ?? copy.input;
   const currentModulePrompts = useMemo(() => {
+    if (viewContext) return new Set(viewContext.prompts);
     const labels = groupLabels.filter((label) => NAV_GROUP_MODULE[label] === currentSlug);
     return new Set(labels.flatMap((label) => GROUP_PROMPTS[label] ?? []));
-  }, [groupLabels, currentSlug]);
+  }, [groupLabels, currentSlug, viewContext]);
   function shuffle<T>(items: T[]): T[] {
     const shuffled = [...items];
     for (let i = shuffled.length - 1; i > 0; i--) {
@@ -176,7 +254,8 @@ export function AssistantWidget() {
   useEffect(() => {
     if (!open || messages.length > 0 || promptPool.length === 0) return;
     queueMicrotask(() => {
-      const current = shuffle([...currentModulePrompts].filter((p) => promptPool.includes(p)));
+      // Context (table/view, else module) leads; the user is looking at it.
+      const current = shuffle([...currentModulePrompts]);
       const rest = shuffle(promptPool.filter((p) => !currentModulePrompts.has(p)));
       setPrompts([...current, ...rest].slice(0, 3));
     });
@@ -212,6 +291,12 @@ export function AssistantWidget() {
       .map((s) => s.p);
   }, [messages, chat.isPending, promptPool, currentModulePrompts]);
 
+  /** A cancelled send is intentional - stay silent so the user can just send another. */
+  function ignoreCancel(err: unknown): boolean {
+    const cause = (err as Error | null)?.cause;
+    return axios.isAxiosError(cause) && cause.code === 'ERR_CANCELED';
+  }
+
   function send(content: string): boolean {
     const text = content.trim();
     if (!text || chat.isPending) return false;
@@ -221,7 +306,9 @@ export function AssistantWidget() {
     setError(null);
     chat.mutate(next, {
       onSuccess: (reply) => setMessages((prev) => [...prev, { role: 'assistant', content: reply }].slice(-20)),
-      onError: (err) => setError(err.message),
+      onError: (err) => {
+        if (!ignoreCancel(err)) setError(err.message);
+      },
     });
     return true;
   }
@@ -233,7 +320,9 @@ export function AssistantWidget() {
     setError(null);
     chat.mutate(messages, {
       onSuccess: (reply) => setMessages((prev) => [...prev, { role: 'assistant', content: reply }].slice(-20)),
-      onError: (err) => setError(err.message),
+      onError: (err) => {
+        if (!ignoreCancel(err)) setError(err.message);
+      },
     });
   }
 
@@ -424,19 +513,31 @@ export function AssistantWidget() {
                   setOpen(false);
                 }
               }}
-              placeholder={copy.input}
+              placeholder={placeholder}
               aria-label="Ask Custosell AI Agent"
               maxLength={2000}
               className="max-h-32 min-h-[4.5rem] min-w-0 flex-1 resize-none overflow-y-auto rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/25"
             />
-            <button
-              type="submit"
-              disabled={!draft.trim() || chat.isPending}
-              aria-label="Send message"
-              className="flex h-9 w-9 shrink-0 items-center justify-center self-end rounded-lg bg-blue-600 text-white transition-all hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
-            >
-              <Send className="h-4 w-4" aria-hidden />
-            </button>
+            {chat.isPending ? (
+              <button
+                type="button"
+                onClick={() => abortAssistantChat()}
+                aria-label="Stop generating"
+                title="Stop generating"
+                className="flex h-9 w-9 shrink-0 items-center justify-center self-end rounded-lg bg-gray-800 text-white transition-colors hover:bg-gray-900"
+              >
+                <Square className="h-4 w-4 fill-current" aria-hidden />
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={!draft.trim()}
+                aria-label="Send message"
+                className="flex h-9 w-9 shrink-0 items-center justify-center self-end rounded-lg bg-blue-600 text-white transition-all hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+              >
+                <Send className="h-4 w-4" aria-hidden />
+              </button>
+            )}
           </form>
           <p className="shrink-0 border-t border-gray-100 bg-white px-3 py-1.5 text-center text-[10px] text-gray-400">
             AI agent - verify important figures before acting on them.

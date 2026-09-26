@@ -14,22 +14,37 @@ interface ChatResponse {
 }
 
 /** Backend proxy keeps the provider key server-side; the app never sees it. */
+let activeChatController: AbortController | null = null;
+
+/** Abort the in-flight reply (Stop button). The next error surfaces as a cancel, never a failure card. */
+export function abortAssistantChat(): void {
+  activeChatController?.abort();
+  activeChatController = null;
+}
+
 export function useAssistantChat() {
   // Guests (landing/auth) get how-to answers; members get live business data.
   const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
 
   return useMutation<string, Error, AssistantMessage[]>({
     mutationFn: async (messages) => {
+      const controller = new AbortController();
+      activeChatController = controller;
       try {
         const { data } = await axiosInstance.post<ChatResponse>(
           isAuthenticated ? ASSISTANT.CHAT : ASSISTANT.GUIDE,
           { messages },
-          // Free-tier models answer slowly - outlast them instead of timing out.
-          { timeout: 90000 },
+          // A full agent turn can span several provider rounds - outlast it
+          // instead of aborting a reply the server is still producing.
+          { timeout: 240000, signal: controller.signal },
         );
         return data.data.reply;
       } catch (err) {
         throw new Error(assistantErrorMessage(err), { cause: err });
+      } finally {
+        if (activeChatController === controller) {
+          activeChatController = null;
+        }
       }
     },
   });

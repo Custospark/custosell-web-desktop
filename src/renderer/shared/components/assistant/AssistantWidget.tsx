@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Bot, ChevronsRight, History, SquarePen, X } from 'lucide-react';
 import axios from 'axios';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'react-router-dom';
@@ -23,7 +22,7 @@ import {
 import { useConfirm } from '../Feedback/ConfirmContext';
 import { sanitizeErrorMessage } from '../../../app/store/offline/core/offlineQueryUtils';
 import { axiosInstance } from '../../../app/api/axiosConfig';
-import oscarAvatar from '../../assets/oscar.webp';
+import { AssistantFab } from './AssistantFab';
 import {
   GROUP_PROMPTS,
   PLACEHOLDER_BY_SLUG,
@@ -31,7 +30,15 @@ import {
   VIEW_CONTEXTS,
   type AssistantSegment,
 } from './assistantContent';
-import { AiBadge, AssistantLockup } from './AssistantBrand';
+import { useAssistantSend } from './useAssistantSend';
+import { AssistantHeader } from './AssistantHeader';
+import {
+  clearActiveSessionId,
+  loadActiveSessionId,
+  loadGuestThread,
+  saveActiveSessionId,
+  saveGuestThread,
+} from './assistantThreadStore';
 import { AssistantSessionsPanel } from './AssistantSessionsPanel';
 import { AssistantThread } from './AssistantThread';
 import { AssistantComposer } from './AssistantComposer';
@@ -160,19 +167,33 @@ export function AssistantWidget() {
   const renameSession = useRenameChatSession();
   const deleteSession = useDeleteChatSession();
   const [view, setView] = useState<'chat' | 'sessions'>('chat');
+  const [expanded, setExpanded] = useState(false);
   const [activeSessionId, setActiveSessionId] = useState<number | null>(null);
   const [openingSession, setOpeningSession] = useState(false);
   const [renamingId, setRenamingId] = useState<number | null>(null);
   const [renameTitle, setRenameTitle] = useState('');
 
+  // Thread continuity: members resume their server-side session id,
+  // guests keep their thread in this browser only (never on the server).
+  // The server also merges stored turns into the model context, so
+  // follow-ups keep working even when the client sends the latest turn.
   function adoptSession(session: { id: number; title: string } | null) {
     if (!session) return;
     setActiveSessionId(session.id);
+    const id = user?.id;
+    if (id != null) {
+      saveActiveSessionId(id, session.id);
+    }
     void queryClient.invalidateQueries({ queryKey: assistantSessionKeys.list() });
   }
 
   function newChat() {
     setActiveSessionId(null);
+    setEditingIndex(null);
+    const id = user?.id;
+    if (id != null) {
+      clearActiveSessionId(id);
+    }
     setMessages([]);
     setError(null);
     setDraft('');
@@ -193,6 +214,49 @@ export function AssistantWidget() {
       setOpeningSession(false);
     }
   }
+
+  useEffect(() => {
+    if (isAuthenticated || messages.length > 0) return;
+    const cached = loadGuestThread();
+    if (cached) {
+      Promise.resolve(cached).then((thread) => {
+        setMessages(thread);
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (isAuthenticated) return;
+    saveGuestThread(messages);
+  }, [messages, isAuthenticated]);
+
+  // Signed-in members resume their server-side chat instead of starting
+  // over. Silent: a stale id clears itself via the store helper.
+  const userId = user?.id;
+  useEffect(() => {
+    if (!isAuthenticated || userId == null || messages.length > 0) return;
+    const id = loadActiveSessionId(userId);
+    if (id === null) return;
+    let cancelled = false;
+    axiosInstance
+      .get<{ data: ChatSessionDetail }>(`/assistant/sessions/${id}`)
+      .then(({ data }) => {
+        if (cancelled) return;
+        setActiveSessionId(data.data.id);
+        setMessages(data.data.messages ?? []);
+        setError(null);
+        setView('chat');
+      })
+      .catch(() => {
+        if (cancelled) return;
+        clearActiveSessionId(userId);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, userId]);
 
   async function removeSession(id: number, title: string) {
     const ok = await confirm({
@@ -218,54 +282,68 @@ export function AssistantWidget() {
     );
   }
 
-  function send(content: string): boolean {
-    const text = content.trim();
-    if (!text || chat.isPending) return false;
-    const next: AssistantMessage[] = [...messages, { role: 'user' as const, content: text }].slice(-20);
-    setMessages(next);
-    setDraft('');
-    setError(null);
-    chat.mutate(
-      { messages: next, sessionId: isAuthenticated ? activeSessionId : undefined },
-      {
-        onSuccess: (result) => {
-          setMessages((prev) => [...prev, { role: 'assistant' as const, content: result.reply }].slice(-20));
-          adoptSession(result.session);
-        },
-        onError: (err) => {
-          if (!ignoreCancel(err)) setError(err.message);
-        },
-      },
-    );
-    return true;
+  // Turn counter shared with the send hook: stopping bumps it so a late
+  // provider response can never resurrect a killed turn.
+  const generationRef = useRef(0);
+
+  const { send, submitMessages, resendLast, regenerate } = useAssistantSend({
+    chat,
+    messages,
+    setMessages,
+    setDraft,
+    setError,
+    isAuthenticated,
+    activeSessionId,
+    adoptSession,
+    ignoreCancel,
+    generationRef,
+  });
+
+  /** Stop kills the request, drops pending UI instantly, and voids late arrivals. */
+  function stopGenerating() {
+    abortAssistantChat();
+    generationRef.current += 1;
+    chat.reset();
   }
 
-  function resendLast() {
-    if (chat.isPending) return;
-    const lastUser = [...messages].reverse().find((m) => m.role === 'user');
-    if (!lastUser) return;
-    setError(null);
-    chat.mutate(
-      { messages, sessionId: isAuthenticated ? activeSessionId : undefined },
-      {
-        onSuccess: (result) => {
-          setMessages((prev) => [...prev, { role: 'assistant' as const, content: result.reply }].slice(-20));
-          adoptSession(result.session);
-        },
-        onError: (err) => {
-          if (!ignoreCancel(err)) setError(err.message);
-        },
-      },
-    );
+  // Editing a sent message branches the thread: submit drops everything
+  // from the edited message on and resends, like popular AI tools.
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+
+  function startEdit(index: number) {
+    const target = messages[index];
+    if (!target || target.role !== 'user' || chat.isPending) return;
+    setEditingIndex(index);
+    setDraft(target.content);
+    requestAnimationFrame(() => {
+      composerRef.current?.focus();
+      if (composerRef.current) growComposer(composerRef.current);
+    });
+  }
+
+  function cancelEdit() {
+    setEditingIndex(null);
+    setDraft('');
   }
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (send(draft)) {
-      requestAnimationFrame(() => {
-        if (composerRef.current) composerRef.current.style.height = 'auto';
-      });
+    if (editingIndex !== null) {
+      if (submitMessages(messages.slice(0, editingIndex), draft)) {
+        setEditingIndex(null);
+        resetComposerHeight();
+      }
+      return;
     }
+    if (send(draft)) {
+      resetComposerHeight();
+    }
+  }
+
+  function resetComposerHeight() {
+    requestAnimationFrame(() => {
+      if (composerRef.current) composerRef.current.style.height = 'auto';
+    });
   }
 
   function growComposer(target: HTMLTextAreaElement) {
@@ -273,126 +351,133 @@ export function AssistantWidget() {
     target.style.height = `${Math.min(target.scrollHeight, 128)}px`;
   }
 
+  function sessionPanelNode(hideHeader = false) {
+    return (
+      <AssistantSessionsPanel
+        sessions={sessions}
+        sessionsLoading={sessionsLoading}
+        activeSessionId={activeSessionId}
+        openingSession={openingSession}
+        renamingId={renamingId}
+        renameTitle={renameTitle}
+        renamePending={renameSession.isPending}
+        hideHeader={hideHeader}
+        onBack={() => setView('chat')}
+        onNew={newChat}
+        onOpen={(id) => void openSession(id)}
+        onRemove={(id, title) => void removeSession(id, title)}
+        onStartRename={(id, title) => {
+          setRenamingId(id);
+          setRenameTitle(title);
+        }}
+        onRenameTitleChange={setRenameTitle}
+        onSubmitRename={submitRename}
+        onCancelRename={() => setRenamingId(null)}
+      />
+    );
+  }
+
+  const sessionPanel = sessionPanelNode();
+  const sessionSidebar = sessionPanelNode(true);
+
+  const thread = (
+    <AssistantThread
+      messages={messages}
+      prompts={prompts}
+      intro={copy.intro}
+      greetingName={greetingName || null}
+      senderName={isAuthenticated && user?.name ? user.name : 'Guest User'}
+      senderAvatar={user?.avatar ?? null}
+      showTutorials={isAuthenticated}
+      isPending={chat.isPending}
+      error={error}
+      listRef={listRef}
+      onSend={send}
+      onRetry={resendLast}
+      onEditMessage={startEdit}
+      onRegenerate={() => {
+        setEditingIndex(null);
+        regenerate();
+      }}
+      canInteract={!chat.isPending}
+    />
+  );
+
+  const composer = (
+    <AssistantComposer
+      followUps={followUps}
+      error={error}
+      draft={draft}
+      placeholder={placeholder}
+      isPending={chat.isPending}
+      composerRef={composerRef}
+      onDraftChange={(value, target) => {
+        setDraft(value);
+        growComposer(target);
+      }}
+            onSubmit={onSubmit}
+            onStop={stopGenerating}
+      onFollowUp={send}
+      onHide={() => setOpen(false)}
+      editing={editingIndex !== null}
+      onCancelEdit={cancelEdit}
+    />
+  );
+
   return createPortal(
     <>
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-label={open ? 'Close assistant' : 'Chat with Custosell AI Agent'}
-        aria-expanded={open}
-        className="fixed bottom-20 right-4 z-[9000] flex h-12 w-12 items-center justify-center rounded-full shadow-lg ring-2 ring-white transition-all active:scale-95 sm:bottom-6 sm:right-6"
-      >
-        {open ? (
-          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg shadow-blue-500/30 hover:bg-blue-700">
-            <X className="h-5 w-5" aria-hidden />
-          </span>
-        ) : (
-          <span className="relative flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30 hover:from-blue-700 hover:to-indigo-700">
-            <Bot className="h-6 w-6" aria-hidden />
-            <span className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center overflow-hidden rounded-full ring-2 ring-white">
-              <img src={oscarAvatar} alt="" aria-hidden className="h-full w-full object-cover" />
-            </span>
-          </span>
-        )}
-      </button>
+      <AssistantFab open={open} onToggle={() => setOpen((v) => !v)} />
 
       {open && (
         <section
           aria-label="Chat with Custosell AI Agent"
-          className="fixed right-0 top-0 z-[9000] flex h-dvh min-h-0 w-full flex-col overflow-hidden bg-white sm:w-[420px] sm:border-l sm:border-gray-200"
+          className={
+            expanded
+              ? 'fixed inset-0 z-[9000] flex h-dvh min-h-0 w-full flex-col overflow-hidden bg-white'
+              : 'fixed right-0 top-0 z-[9000] flex h-dvh min-h-0 w-full flex-col overflow-hidden bg-white sm:w-[420px] sm:border-l sm:border-gray-200'
+          }
         >
-          <header className="flex shrink-0 items-center gap-2.5 border-b border-gray-200 bg-white px-5 py-4 sm:px-6">
-            <AssistantLockup size="md" />
-            <div className="min-w-0 flex-1">
-              <h2 className="flex items-center gap-1.5 truncate text-sm font-semibold text-gray-900">
-                Custosell AI Agent
-                <AiBadge />
-              </h2>
-              <p className="truncate text-[11px] text-gray-500">
-                I am Oscar, ask me about Custosell.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setView(view === 'sessions' ? 'chat' : 'sessions')}
-              aria-label={view === 'sessions' ? 'Back to chat' : 'Past chats'}
-              title={view === 'sessions' ? 'Back to chat' : 'Past chats'}
-              className="rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
-            >
-              <History className="h-4 w-4" aria-hidden />
-            </button>
-            <button
-              type="button"
-              onClick={newChat}
-              aria-label="New chat"
-              title="New chat"
-              className="rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
-            >
-              <SquarePen className="h-4 w-4" aria-hidden />
-            </button>
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              aria-label="Hide assistant"
-              title="Hide assistant"
-              className="rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
-            >
-              <X className="h-4 w-4 lg:hidden" aria-hidden />
-              <ChevronsRight className="hidden h-4 w-4 lg:block" aria-hidden />
-            </button>
-          </header>
-
-          {view === 'sessions' ? (
-            <AssistantSessionsPanel
-              sessions={sessions}
-              sessionsLoading={sessionsLoading}
-              activeSessionId={activeSessionId}
-              openingSession={openingSession}
-              renamingId={renamingId}
-              renameTitle={renameTitle}
-              renamePending={renameSession.isPending}
-              onBack={() => setView('chat')}
-              onNew={newChat}
-              onOpen={(id) => void openSession(id)}
-              onRemove={(id, title) => void removeSession(id, title)}
-              onStartRename={(id, title) => {
-                setRenamingId(id);
-                setRenameTitle(title);
-              }}
-              onRenameTitleChange={setRenameTitle}
-              onSubmitRename={submitRename}
-              onCancelRename={() => setRenamingId(null)}
-            />
-          ) : (
-            <AssistantThread
-              messages={messages}
-              prompts={prompts}
-              intro={copy.intro}
-              greetingName={greetingName || null}
-              isPending={chat.isPending}
-              error={error}
-              listRef={listRef}
-              onSend={send}
-              onRetry={resendLast}
-            />
-          )}
-
-          <AssistantComposer
-            followUps={followUps}
-            error={error}
-            draft={draft}
-            placeholder={placeholder}
-            isPending={chat.isPending}
-            composerRef={composerRef}
-            onDraftChange={(value, target) => {
-              setDraft(value);
-              growComposer(target);
-            }}
-            onSubmit={onSubmit}
-            onStop={() => abortAssistantChat()}
-            onFollowUp={send}
-            onHide={() => setOpen(false)}
+          <AssistantHeader
+            view={view}
+            expanded={expanded}
+            onToggleView={() => setView(view === 'sessions' ? 'chat' : 'sessions')}
+            onNew={newChat}
+            onToggleExpand={() => setExpanded((v) => !v)}
+            onClose={() => setOpen(false)}
           />
+
+          {expanded ? (
+            <div className="flex min-h-0 flex-1">
+              <aside className="hidden w-72 shrink-0 flex-col border-r border-gray-200 bg-gray-50 sm:flex">
+                {sessionSidebar}
+              </aside>
+              <div className="flex min-h-0 flex-1 flex-col sm:hidden">
+                {view === 'sessions' ? (
+                  sessionPanel
+                ) : (
+                  <>
+                    {thread}
+                    {composer}
+                  </>
+                )}
+              </div>
+              <div className="hidden min-h-0 flex-1 flex-col sm:flex">
+                {thread}
+                {composer}
+              </div>
+            </div>
+          ) : (
+            <>
+              {view === 'sessions' ? (
+                sessionPanel
+              ) : (
+                <>
+                  {thread}
+                  {composer}
+                </>
+              )}
+            </>
+          )}
         </section>
       )}
     </>,

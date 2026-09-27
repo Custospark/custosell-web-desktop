@@ -23,7 +23,7 @@ function linkNode(href: string, label: string, key: string): ReactNode {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="font-medium text-blue-700 underline hover:text-blue-900"
+      className="font-medium text-blue-700 underline hover:text-blue-900 [overflow-wrap:anywhere]"
     >
       {label}
     </a>

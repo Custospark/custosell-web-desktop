@@ -1,5 +1,5 @@
 import type { RefObject } from 'react';
-import { Send, Square } from 'lucide-react';
+import { Send, Square, X } from 'lucide-react';
 
 interface AssistantComposerProps {
   followUps: string[];
@@ -13,6 +13,9 @@ interface AssistantComposerProps {
   onStop: () => void;
   onFollowUp: (prompt: string) => void;
   onHide: () => void;
+  /** True while editing a sent message - submit resends the branch. */
+  editing: boolean;
+  onCancelEdit: () => void;
 }
 
 export function AssistantComposer({
@@ -27,6 +30,8 @@ export function AssistantComposer({
   onStop,
   onFollowUp,
   onHide,
+  editing,
+  onCancelEdit,
 }: AssistantComposerProps) {
   return (
     <>
@@ -46,6 +51,19 @@ export function AssistantComposer({
       )}
 
       <form onSubmit={onSubmit} className="shrink-0 border-t border-gray-200 bg-white px-3 py-2.5">
+        {editing && (
+          <div className="mb-2 flex items-center justify-between gap-2 rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700">
+            <span>Editing message - submit to resend this branch</span>
+            <button
+              type="button"
+              onClick={onCancelEdit}
+              aria-label="Cancel editing"
+              className="shrink-0 rounded p-0.5 transition-colors hover:bg-indigo-100"
+            >
+              <X className="h-3.5 w-3.5" aria-hidden />
+            </button>
+          </div>
+        )}
         <div className="relative">
           <textarea
             ref={composerRef}
@@ -56,9 +74,13 @@ export function AssistantComposer({
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 onSubmit(e as unknown as React.FormEvent);
-              } else if (e.key === 'Escape') {
+            } else if (e.key === 'Escape') {
+              if (editing) {
+                onCancelEdit();
+              } else {
                 onHide();
               }
+            }
             }}
             placeholder={placeholder}
             aria-label="Ask Custosell AI Agent"

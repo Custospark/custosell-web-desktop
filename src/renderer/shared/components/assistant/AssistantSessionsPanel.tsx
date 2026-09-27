@@ -1,4 +1,5 @@
-import { Pencil, SquarePen, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { Pencil, Search, SquarePen, Trash2, X } from 'lucide-react';
 import type { ChatSession } from '../../api/assistant/AssistantQueries';
 
 interface AssistantSessionsPanelProps {
@@ -17,6 +18,8 @@ interface AssistantSessionsPanelProps {
   onRenameTitleChange: (value: string) => void;
   onSubmitRename: (id: number) => void;
   onCancelRename: () => void;
+  /** Embedded sidebar mode: hides the top bar (the main header owns it). */
+  hideHeader?: boolean;
 }
 
 export function AssistantSessionsPanel({
@@ -35,9 +38,15 @@ export function AssistantSessionsPanel({
   onRenameTitleChange,
   onSubmitRename,
   onCancelRename,
+  hideHeader,
 }: AssistantSessionsPanelProps) {
+  const [query, setQuery] = useState('');
+  const needle = query.trim().toLowerCase();
+  const visibleSessions =
+    needle === '' ? sessions : sessions.filter((s) => s.title.toLowerCase().includes(needle));
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-gray-50">
+      {!hideHeader && (
       <div className="flex shrink-0 items-center gap-2 px-3 py-2.5">
         <button
           type="button"
@@ -56,6 +65,7 @@ export function AssistantSessionsPanel({
           New
         </button>
       </div>
+      )}
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-3">
         {sessionsLoading ? (
           <p className="py-10 text-center text-sm text-gray-500">Loading chats…</p>
@@ -64,8 +74,37 @@ export function AssistantSessionsPanel({
             No saved chats yet - your conversations appear here.
           </p>
         ) : (
+          <>
+            <div className="sticky top-0 bg-gray-50 pb-2 pt-1">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" aria-hidden />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search chats"
+                  aria-label="Search chats"
+                  maxLength={120}
+                  className="w-full rounded-lg border border-gray-200 bg-white py-1.5 pl-8 pr-7 text-xs text-gray-800 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/25"
+                />
+                {query !== '' && (
+                  <button
+                    type="button"
+                    onClick={() => setQuery('')}
+                    aria-label="Clear search"
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                  >
+                    <X className="h-3.5 w-3.5" aria-hidden />
+                  </button>
+                )}
+              </div>
+            </div>
+            {visibleSessions.length === 0 ? (
+              <p className="py-10 text-center text-sm text-gray-500">
+                No chats match your search.
+              </p>
+            ) : (
           <ul className="space-y-1.5">
-            {sessions.map((session) => (
+            {visibleSessions.map((session) => (
               <li
                 key={session.id}
                 className={`rounded-xl border bg-white px-3 py-2.5 shadow-sm transition-colors ${
@@ -146,6 +185,8 @@ export function AssistantSessionsPanel({
               </li>
             ))}
           </ul>
+            )}
+          </>
         )}
       </div>
     </div>

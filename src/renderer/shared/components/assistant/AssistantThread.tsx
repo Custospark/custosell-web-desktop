@@ -1,8 +1,11 @@
 import type { RefObject } from 'react';
-import { Bot, Mail, Phone, RotateCcw } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Bot, GraduationCap, Mail, MessageCircle, Pencil, Phone, Play, RotateCcw } from 'lucide-react';
 import { CUSTOSELL_SUPPORT } from '../../../modules/guide/guideSupportConfig';
+import { GUIDE } from '../../api/endpoints/guideEndpoints';
 import type { AssistantMessage } from '../../api/assistant/AssistantQueries';
 import { AssistantLockup } from './AssistantBrand';
+import { UserAvatar } from '../UserAvatar';
 import { renderAssistantMessage } from './assistantMessageLinks';
 
 interface AssistantThreadProps {
@@ -10,11 +13,20 @@ interface AssistantThreadProps {
   prompts: string[];
   intro: string;
   greetingName?: string | null;
+  /** User bubble identity - profile photo or initials; 'Guest User' renders GU. */
+  senderName: string;
+  senderAvatar?: string | null;
+  /** Logged-in users also get the in-app tutorials link on errors. */
+  showTutorials?: boolean;
   isPending: boolean;
   error: string | null;
   listRef: RefObject<HTMLDivElement | null>;
   onSend: (prompt: string) => void;
   onRetry: () => void;
+  onEditMessage: (index: number) => void;
+  onRegenerate: () => void;
+  /** False while a reply streams - actions that would fork state stay off. */
+  canInteract: boolean;
 }
 
 export function AssistantThread({
@@ -22,11 +34,17 @@ export function AssistantThread({
   prompts,
   intro,
   greetingName,
+  senderName,
+  senderAvatar,
+  showTutorials,
   isPending,
   error,
   listRef,
   onSend,
   onRetry,
+  onEditMessage,
+  onRegenerate,
+  canInteract,
 }: AssistantThreadProps) {
   return (
     <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-gray-50 px-3 py-3">
@@ -58,20 +76,47 @@ export function AssistantThread({
         <div className="flex flex-col gap-2">
           {messages.map((message, index) => (
             message.role === 'user' ? (
-              <p
-                key={index}
-                className="max-w-[85%] self-end whitespace-pre-wrap rounded-xl bg-blue-600 px-3 py-2 text-sm leading-relaxed text-white"
-              >
-                {message.content}
-              </p>
+              <div key={index} className="group flex min-w-0 max-w-[85%] items-end gap-1.5 self-end">
+                <div className="relative min-w-0">
+                  <p
+                    className="whitespace-pre-wrap break-words rounded-xl bg-blue-600 px-3 py-2 text-sm leading-relaxed text-white"
+                  >
+                    {message.content}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => onEditMessage(index)}
+                    disabled={!canInteract}
+                    aria-label="Edit and resend message"
+                    title="Edit and resend"
+                    className="absolute -right-2 -top-2 rounded-full bg-white p-1 text-gray-400 shadow ring-1 ring-gray-200 transition-colors hover:text-gray-600 focus-visible:text-gray-600 disabled:opacity-40 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
+                  >
+                    <Pencil className="h-3 w-3" aria-hidden />
+                  </button>
+                </div>
+                <UserAvatar name={senderName} avatar={senderAvatar} size="xs" />
+              </div>
             ) : (
-              <div key={index} className="flex max-w-[90%] items-start gap-1.5 self-start">
-                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white ring-1 ring-gray-200">
-                  <Bot className="h-3.5 w-3.5" aria-hidden />
-                </span>
-                        <p className="whitespace-pre-wrap rounded-xl bg-white px-3 py-2 text-sm leading-relaxed text-gray-800 shadow-sm ring-1 ring-gray-200">
-                          {renderAssistantMessage(message.content)}
-                        </p>
+              <div key={index} className="flex min-w-0 max-w-[90%] flex-col items-start gap-1 self-start sm:max-w-[85%]">
+                <div className="flex min-w-0 items-start gap-1.5">
+                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white ring-1 ring-gray-200">
+                    <Bot className="h-3.5 w-3.5" aria-hidden />
+                  </span>
+                  <p className="min-w-0 whitespace-pre-wrap break-words rounded-xl bg-white px-3 py-2 text-sm leading-relaxed text-gray-800 shadow-sm ring-1 ring-gray-200 [overflow-wrap:anywhere]">
+                    {renderAssistantMessage(message.content)}
+                  </p>
+                </div>
+                {index === messages.length - 1 && (
+                  <button
+                    type="button"
+                    onClick={onRegenerate}
+                    disabled={!canInteract}
+                    className="ml-7 inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-medium text-gray-400 transition-colors hover:bg-white hover:text-gray-600 disabled:opacity-40"
+                  >
+                    <RotateCcw className="h-3 w-3" aria-hidden />
+                    Regenerate
+                  </button>
+                )}
               </div>
             )
           ))}
@@ -85,7 +130,7 @@ export function AssistantThread({
             </p>
           )}
           {error && (
-            <div role="alert" className="self-stretch rounded-xl border border-red-200 bg-red-50 px-3 py-2.5">
+            <div role="alert" className="min-w-0 self-stretch break-words rounded-xl border border-red-200 bg-red-50 px-3 py-2.5">
               <p className="text-xs font-medium text-red-700">{error}</p>
               <button
                 type="button"
@@ -96,7 +141,7 @@ export function AssistantThread({
                 <RotateCcw className="h-3.5 w-3.5" aria-hidden />
                 {isPending ? 'Retrying…' : 'Retry'}
               </button>
-              <div className="mt-2.5 border-t border-red-200/70 pt-2.5">
+              <div className="mt-2.5 break-words border-t border-red-200/70 pt-2.5 [overflow-wrap:anywhere]">
                 <p className="text-[11px] font-bold uppercase tracking-wide text-gray-700">
                   Quick Support
                 </p>
@@ -117,6 +162,33 @@ export function AssistantThread({
                     {phone.display}
                   </a>
                 ))}
+                <a
+                  href={CUSTOSELL_SUPPORT.whatsapp.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1.5 flex items-center gap-2 text-xs font-medium text-blue-700 hover:underline"
+                >
+                  <MessageCircle className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                  {CUSTOSELL_SUPPORT.whatsapp.label}
+                </a>
+                <a
+                  href={CUSTOSELL_SUPPORT.youtube.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1.5 flex items-center gap-2 text-xs font-medium text-blue-700 hover:underline"
+                >
+                  <Play className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                  {CUSTOSELL_SUPPORT.youtube.label}
+                </a>
+                {showTutorials && (
+                  <Link
+                    to={GUIDE.TUTORIALS}
+                    className="mt-1.5 flex items-center gap-2 text-xs font-medium text-blue-700 hover:underline"
+                  >
+                    <GraduationCap className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                    Video tutorials and tour guides in the app
+                  </Link>
+                )}
               </div>
             </div>
           )}

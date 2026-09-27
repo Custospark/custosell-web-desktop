@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { cn } from '../../utils/cn';
+import { useHeaderCompact } from './useHeaderCompact';
 import { formatRelativeTime } from '../../utils/formatDateTime';
 import {
   useQuickNotes,
@@ -15,6 +16,7 @@ import {
 
 /** Quick Notes header dropdown - recent notes list + quick capture, matching the subscription dropdown layout. */
 export default function QuickNotesDropdown() {
+  const compact = useHeaderCompact();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
@@ -43,7 +45,7 @@ export default function QuickNotesDropdown() {
         aria-haspopup="menu"
         aria-label={`Quick notes${count > 0 ? `, ${count} notes` : ''}`}
         className={cn(
-          'flex items-center gap-1.5 px-2 lg:gap-2 lg:px-3 py-1.5 rounded-lg ring-1 cursor-pointer transition-colors',
+          'flex items-center gap-1.5 px-2 xl:gap-2 xl:px-3 py-1.5 rounded-lg ring-1 cursor-pointer transition-colors',
           open ? 'bg-blue-50 ring-blue-300' : 'bg-white ring-blue-200 hover:bg-blue-50/60 hover:ring-blue-300',
         )}
       >
@@ -55,12 +57,14 @@ export default function QuickNotesDropdown() {
             </span>
           )}
         </div>
-        <div className="hidden lg:block min-w-0 max-w-[140px]">
+        {!compact && (
+        <div className="hidden xl:block min-w-0 max-w-[140px]">
           <span className="text-xs font-semibold truncate block text-gray-900">Quick notes</span>
           <span className="block text-xs truncate text-gray-500">
             {count > 0 ? `${count} note${count === 1 ? '' : 's'}` : 'Jot it down'}
           </span>
         </div>
+        )}
         <ChevronDown className={cn('w-3 h-3 transition-transform shrink-0 text-gray-400', open && 'rotate-180')} />
       </button>
 

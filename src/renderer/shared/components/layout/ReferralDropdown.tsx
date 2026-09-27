@@ -6,6 +6,7 @@ import SalesRepBadge from '../referrals/SalesRepBadge';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
 import { cn } from '../../utils/cn';
 import { formatUSD } from '../../utils/formatCurrency';
+import { useHeaderCompact } from './useHeaderCompact';
 import { canAccessModule } from '../../utils/moduleAccess';
 import QRCodeLib from 'qrcode';
 import { useNetworkStatus } from '../../../app/store/hooks/useNetworkStatus';
@@ -22,6 +23,7 @@ const STATUS_STYLES: Record<string, { dot: string; label: string }> = {
 };
 
 export default function ReferralDropdown() {
+  const compact = useHeaderCompact();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -121,8 +123,8 @@ export default function ReferralDropdown() {
         type="button"
         onClick={() => setOpen(!open)}
         className={cn(
-          'flex items-center gap-1.5 px-2 lg:gap-2 lg:px-3 py-1.5 rounded-lg ring-1 cursor-pointer transition-colors',
-          'text-xs lg:text-sm',
+          'flex items-center gap-1.5 px-2 xl:gap-2 xl:px-3 py-1.5 rounded-lg ring-1 cursor-pointer transition-colors',
+          'text-xs xl:text-sm',
           open ? 'bg-indigo-50 ring-indigo-300' : 'bg-white ring-indigo-200 hover:bg-indigo-50/60 hover:ring-indigo-300',
         )}
         title={hasReferralCode ? `Referral code: ${code}` : 'Referral Program'}
@@ -132,10 +134,12 @@ export default function ReferralDropdown() {
         <div className="w-7 h-7 rounded-full flex items-center justify-center ring-1 ring-indigo-200 bg-indigo-50 shrink-0">
           <Gift className="w-3.5 h-3.5 text-indigo-600" />
         </div>
-        <div className="hidden lg:block min-w-0 max-w-[140px]">
+        {!compact && (
+        <div className="hidden xl:block min-w-0 max-w-[140px]">
           <span className="text-xs font-semibold truncate block text-gray-900">Refer &amp; Earn</span>
           <span className="block text-xs truncate text-gray-500">{hasReferralCode ? (totalEarned > 0 ? `${formatUSD(totalEarned)} earned` : 'Get your referral code') : 'Start referring'}</span>
         </div>
+        )}
         <ChevronDown className={cn('w-3 h-3 transition-transform shrink-0 text-gray-400', open && 'rotate-180')} />
       </button>
 

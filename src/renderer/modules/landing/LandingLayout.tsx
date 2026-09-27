@@ -14,6 +14,7 @@ import { cn } from '../../shared/utils/cn';
 import { LandingMobileTabBar } from './ui/LandingMobileTabBar';
 import { scrollLandingToTop } from './ui/landingMobileNav';
 import { useAssistantPushClass } from '../../shared/components/layout/useAssistantPush';
+import { useHeaderCompact } from '../../shared/components/layout/useHeaderCompact';
 
 const navLinks = [
   { label: 'Home', path: ROUTES.HOME, icon: Home },
@@ -28,6 +29,9 @@ export default function LandingLayout() {
   const location = useLocation();
   const { showToast } = useToast();
   const assistantPush = useAssistantPushClass();
+  // Panel open = icon-only nav (labels crowd out once the gutter docks).
+  // Account keeps its label - it is the conversion action.
+  const headerCompact = useHeaderCompact();
 
   useEffect(() => {
     scrollLandingToTop();
@@ -80,6 +84,7 @@ export default function LandingLayout() {
                     key={link.path}
                     to={link.path}
                     onClick={scrollLandingToTop}
+                    aria-label={link.label}
                     className={cn(
                       'inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold transition-all duration-300',
                       active
@@ -88,11 +93,11 @@ export default function LandingLayout() {
                     )}
                   >
                     <Icon className="h-4 w-4" />
-                    <span>{link.label}</span>
+                    {!headerCompact && <span>{link.label}</span>}
                   </Link>
                 );
               })}
-              <div className="mx-2 h-6 w-px bg-slate-300/50" />
+              {!headerCompact && <div className="mx-2 h-6 w-px bg-slate-300/50" />}
             </div>
 
             <button
@@ -103,7 +108,7 @@ export default function LandingLayout() {
               title="Download Custosell for Windows"
             >
               <Download className="h-3.5 w-3.5" />
-              <span>Windows</span>
+              {!headerCompact && <span>Windows</span>}
             </button>
 
             <button

@@ -36,7 +36,7 @@ export function AppChrome() {
   return (
     <div
       className={`flex flex-col h-dvh overflow-hidden bg-gray-50/30 transition-[padding-right] duration-200 ${
-        state.assistantOpen && !state.contentFullscreen ? 'lg:pr-[420px]' : ''
+        state.assistantOpen && !state.contentFullscreen ? 'md:pr-[360px] lg:pr-[380px] xl:pr-[420px]' : ''
       }`}
     >
       {!state.contentFullscreen && <AppStatusBanners />}

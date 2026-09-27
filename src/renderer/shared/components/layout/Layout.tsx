@@ -54,6 +54,14 @@ function LayoutShell() {
     }
   }, [state.contentFullscreen, location.pathname, dispatch]);
 
+  // While the assistant panel is open, viewports below xl lose 360-420px
+  // to the docked panel - the fixed sidebar hides (drawer still opens via
+  // the hamburger) and the content margin drops, mirroring mobile flow.
+  function contentMargin(isCollapsed: boolean, narrow: boolean): string {
+    if (isCollapsed) return narrow ? 'xl:ml-[64px]' : 'lg:ml-[64px]';
+    return narrow ? 'xl:ml-[247px]' : 'lg:ml-[247px]';
+  }
+
   // Immersive content mode hides all app chrome so the content gets maximum screen space.
   if (state.contentFullscreen) {
     return (
@@ -69,21 +77,32 @@ function LayoutShell() {
     <div className="relative flex flex-1 min-h-0 min-w-0 w-full overflow-hidden">
       {state.sidebarOpen && (
         <div
-          className="absolute inset-0 bg-black/50 z-20 lg:hidden"
+          className={
+            state.assistantOpen
+              ? 'absolute inset-0 bg-black/50 z-20 xl:hidden'
+              : 'absolute inset-0 bg-black/50 z-20 lg:hidden'
+          }
           onClick={() => dispatch({ type: 'TOGGLE_SIDEBAR' })}
           aria-hidden
         />
       )}
 
-      <Sidebar
-        isOpen={state.sidebarOpen}
-        onClose={() => dispatch({ type: 'TOGGLE_SIDEBAR' })}
-      />
+      <div
+        className={
+          state.assistantOpen && !state.sidebarOpen ? 'contents max-xl:hidden' : 'contents'
+        }
+      >
+        <Sidebar
+          isOpen={state.sidebarOpen}
+          onClose={() => dispatch({ type: 'TOGGLE_SIDEBAR' })}
+        />
+      </div>
 
       <div
-        className={`flex flex-1 flex-col min-w-0 min-h-0 transition-all duration-200 ${
-          collapsed ? 'lg:ml-[64px]' : 'lg:ml-[247px]'
-        }`}
+        className={`flex flex-1 flex-col min-w-0 min-h-0 transition-all duration-200 ${contentMargin(
+          collapsed,
+          state.assistantOpen === true,
+        )}`}
       >
         <Navbar />
         <Main />

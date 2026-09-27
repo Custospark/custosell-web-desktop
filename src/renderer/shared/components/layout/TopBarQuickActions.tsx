@@ -7,6 +7,7 @@ import { HeaderNotifications } from './HeaderNotifications';
 import { HeaderQuickNav } from './HeaderQuickNav';
 import { AppStoreCoachmark } from './AppStoreCoachmark';
 import { useAppSelector } from '../../../app/store/hooks/useApp';
+import { HeaderLabel } from './HeaderLabel';
 import ModuleLauncherModal from './ModuleLauncherModal';
 
 const iconBtn =
@@ -42,7 +43,7 @@ export function TopBarQuickActions() {
         className={cn(appStoreBtn)}
       >
         <LayoutGrid className="h-4 w-4 shrink-0" aria-hidden />
-        <span className="hidden xl:inline truncate">Custosell Apps</span>
+        <HeaderLabel>Custosell Apps</HeaderLabel>
       </button>
 
       <span className="ml-1 hidden items-center gap-1 border-l border-gray-200 pl-1 sm:gap-1.5 sm:pl-2 lg:flex">

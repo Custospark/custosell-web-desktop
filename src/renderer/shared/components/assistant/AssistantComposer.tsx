@@ -16,6 +16,7 @@ interface AssistantComposerProps {
   /** True while editing a sent message - submit resends the branch. */
   editing: boolean;
   onCancelEdit: () => void;
+  onDismissFollowUps: () => void;
 }
 
 export function AssistantComposer({
@@ -32,11 +33,23 @@ export function AssistantComposer({
   onHide,
   editing,
   onCancelEdit,
+  onDismissFollowUps,
 }: AssistantComposerProps) {
   return (
     <>
       {followUps.length > 0 && !error && (
         <div className="flex shrink-0 flex-col items-stretch gap-1.5 border-t border-gray-100 bg-white px-3 py-2">
+          <div className="flex items-center justify-end">
+            <button
+              type="button"
+              onClick={onDismissFollowUps}
+              aria-label="Dismiss suggestions"
+              title="Dismiss suggestions"
+              className="rounded p-1 text-blue-400 transition-colors hover:bg-gray-100 hover:text-blue-600"
+            >
+              <X className="h-3.5 w-3.5" aria-hidden />
+            </button>
+          </div>
           {followUps.map((prompt) => (
             <button
               key={prompt}

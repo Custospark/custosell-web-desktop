@@ -73,6 +73,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: SidebarProps & { openGroup: number | null; setOpenGroup: (i: number | null) => void; navGroups: SidebarNavGroup[] }) {
   const { state } = useAppContext();
   const collapsed = state.sidebarCollapsed;
+  // Panel open = drawer navigation at every width (mobile behavior), so
+  // the fixed sidebar never competes with the docked panel for space.
+  const drawerMode = state.assistantOpen === true;
   const location = useLocation();
   const { isCompletelyOffline } = useNetworkStatus();
   const activeItemRef = useRef<HTMLAnchorElement | null>(null);
@@ -89,7 +92,7 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
         'border-r border-gray-200 bg-white transition-all duration-200 transform',
         collapsed ? 'w-[64px]' : 'w-[247px]',
         isOpen ? 'translate-x-0' : '-translate-x-full',
-        'lg:translate-x-0',
+        drawerMode ? 'xl:translate-x-0' : 'lg:translate-x-0',
       )}
     >
       <div
@@ -99,15 +102,15 @@ function SidebarInner({ isOpen, onClose, openGroup, setOpenGroup, navGroups }: S
           collapsed ? 'justify-center px-2' : 'px-6',
         )}
       >
-        {collapsed ? (
-          <LogoImage size="sm" />
-        ) : (
-          <CustosellBrandLockup
-            logoSize="sm"
-            nameClassName="text-lg"
-            className="flex-1"
-          />
-        )}
+          {collapsed ? (
+            <LogoImage size="sm" />
+          ) : (
+            <CustosellBrandLockup
+              logoSize="sm"
+              nameClassName="text-lg"
+              className="flex-1"
+            />
+          )}
         <button
           type="button"
           onClick={onClose}

@@ -183,7 +183,11 @@ export function Navbar() {
   }, []);
 
   const handleToggleSidebar = () => {
-    if (window.innerWidth >= 1024) {
+    // The docked panel consumes 360-420px: below xl (or 1024 without it)
+    // the sidebar is a drawer, so the button opens it; on roomy screens
+    // it collapses the pinned sidebar instead. Never a dead action.
+    const pinWidth = state.assistantOpen ? 1280 : 1024;
+    if (window.innerWidth >= pinWidth) {
       dispatch({ type: 'TOGGLE_SIDEBAR_COLLAPSED' });
     } else {
       dispatch({ type: 'TOGGLE_SIDEBAR' });
@@ -193,6 +197,11 @@ export function Navbar() {
   const sidebarLabel = (isDesktopChrome ? !state.sidebarCollapsed : state.sidebarOpen)
     ? 'Hide sidebar'
     : 'Show sidebar';
+
+  // When the assistant panel overlays 420px of the viewport, the header
+  // mirrors mobile: dropdown triggers collapse to icons so everything
+  // stays reachable instead of crowding out of view.
+  const headerCompact = state.assistantOpen === true;
 
   useLayoutEffect(() => {
     if (!dropdownOpen) return;
@@ -264,16 +273,17 @@ export function Navbar() {
             aria-label={sidebarLabel}
             data-tour="sidebar-hamburger"
           >
-            <Menu className="w-6 h-6 sm:w-5 sm:h-5" />
+            <Menu className="w-6 h-6 sm:w-5 sm:h-5" aria-hidden />
           </button>
 
-          <CustosellBrandLockup
-            showTagline
-            logoSize="sm"
-            nameClassName="text-sm"
-            taglineClassName="hidden xl:block"
-            className="shrink-0"
-          />
+          {!headerCompact && !state.sidebarOpen && (
+            <CustosellBrandLockup
+              showTagline
+              logoSize="sm"
+              nameClassName="text-sm"
+              className="shrink-0"
+            />
+          )}
 
           {user?.shift_clock_in ? (
             <NavbarShiftBadge
@@ -331,7 +341,7 @@ export function Navbar() {
                   {initialsFromName(user?.name || 'U')}
                 </div>
               )}
-              <span className="font-medium text-sm text-gray-700 truncate hidden md:inline max-w-[8rem] lg:max-w-[10rem]">
+              <span className={cn('font-medium text-sm text-gray-700 truncate max-w-[8rem] lg:max-w-[10rem]', headerCompact ? 'hidden' : 'hidden xl:inline')}>
                 {resolveUserMenuLabel(user?.name)}
               </span>
               <ChevronDown

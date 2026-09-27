@@ -295,6 +295,14 @@ export function sortLauncherModules(items: ModuleLauncherItem[]): ModuleLauncher
 }
 
 /**
+ * Display name exactly as shown in the Custosell Apps store. Falls back to
+ * the slug itself for unknown entries (never blank).
+ */
+export function getLauncherLabel(slug: string): string {
+  return MODULE_LAUNCHER_CATALOG.find((item) => item.slug === slug)?.label ?? slug;
+}
+
+/**
  * Default page of the next visible app after `currentSlug` (catalog order,
  * wrapping around). Visibility = plan-granted and not hidden. Falls back to
  * the default route when nothing else is visible - callers must not redirect

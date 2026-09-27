@@ -89,19 +89,19 @@ export function AuthLayout({ title, subtitle, subtitleClassName, heroImage, hero
       </div>
 
       <div className="flex-1 flex flex-col min-h-screen">
-        <header className="flex items-center gap-3 px-5 sm:px-6 py-4 border-b border-gray-200 bg-white/95 backdrop-blur-sm sticky top-0 z-20">
-          <Link to={ROUTES.HOME} className="inline-flex items-center gap-2.5">
+        <header className="flex w-full items-center gap-2 px-4 py-3 sm:gap-3 sm:px-6 sm:py-4 border-b border-gray-200 bg-white/95 backdrop-blur-sm sticky top-0 z-20">
+          <Link to={ROUTES.HOME} className="inline-flex min-w-0 items-center gap-2 sm:gap-2.5">
             <LogoImage size="md" />
-            <span className="text-xl font-bold text-blue-600">{PRODUCT_NAME}</span>
+            <span className="truncate text-lg font-bold text-blue-600 sm:text-xl">{PRODUCT_NAME}</span>
           </Link>
-          <div className="ml-auto">
+          <div className="ml-auto shrink-0">
             <Link
               to={ROUTES.HOME}
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all"
+              className="inline-flex items-center gap-1.5 px-2.5 py-2 sm:gap-2 sm:px-3.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all"
               aria-label="Home"
             >
               <Home className="w-4 h-4 shrink-0" />
-              <span>Home</span>
+              <span className="hidden min-[380px]:inline">Home</span>
             </Link>
           </div>
         </header>

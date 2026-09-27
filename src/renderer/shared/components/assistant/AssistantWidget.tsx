@@ -36,10 +36,8 @@ import { useAssistantSend } from './useAssistantSend';
 import { AssistantHeader } from './AssistantHeader';
 import {
   clearActiveSessionId,
-  loadActiveSessionId,
-  loadGuestThread,
   saveActiveSessionId,
-  saveGuestThread,
+  useAssistantThreadRestore,
 } from './assistantThreadStore';
 import { AssistantSessionsPanel } from './AssistantSessionsPanel';
 import { AssistantThread } from './AssistantThread';
@@ -103,7 +101,7 @@ export function AssistantWidget() {
     if (viewContext) return new Set(viewContext.prompts);
     const labels = groupLabels.filter((label) => NAV_GROUP_MODULE[label] === currentSlug);
     return new Set(labels.flatMap((label) => groupPromptsFor(label, segment)));
-  }, [groupLabels, currentSlug, viewContext]);
+  }, [groupLabels, currentSlug, viewContext, segment]);
   function shuffle<T>(items: T[]): T[] {
     const shuffled = [...items];
     for (let i = shuffled.length - 1; i > 0; i--) {
@@ -217,48 +215,15 @@ export function AssistantWidget() {
     }
   }
 
-  useEffect(() => {
-    if (isAuthenticated || messages.length > 0) return;
-    const cached = loadGuestThread();
-    if (cached) {
-      Promise.resolve(cached).then((thread) => {
-        setMessages(thread);
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated]);
-
-  useEffect(() => {
-    if (isAuthenticated) return;
-    saveGuestThread(messages);
-  }, [messages, isAuthenticated]);
-
-  // Signed-in members resume their server-side chat instead of starting
-  // over. Silent: a stale id clears itself via the store helper.
-  const userId = user?.id;
-  useEffect(() => {
-    if (!isAuthenticated || userId == null || messages.length > 0) return;
-    const id = loadActiveSessionId(userId);
-    if (id === null) return;
-    let cancelled = false;
-    axiosInstance
-      .get<{ data: ChatSessionDetail }>(`/assistant/sessions/${id}`)
-      .then(({ data }) => {
-        if (cancelled) return;
-        setActiveSessionId(data.data.id);
-        setMessages(data.data.messages ?? []);
-        setError(null);
-        setView('chat');
-      })
-      .catch(() => {
-        if (cancelled) return;
-        clearActiveSessionId(userId);
-      });
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, userId]);
+  useAssistantThreadRestore({
+    isAuthenticated,
+    userId: user?.id ?? null,
+    messages,
+    setMessages,
+    setError,
+    setView,
+    setActiveSessionId,
+  });
 
   async function removeSession(id: number, title: string) {
     const ok = await confirm({
@@ -393,10 +358,17 @@ export function AssistantWidget() {
     return shown;
   }, [isAuthenticated, prompts]);
 
+  // Dismissed suggestions stay hidden only for the current turn count -
+  // the next exchange brings fresh ones back.
+  const [suggestionsHiddenFor, setSuggestionsHiddenFor] = useState<number | null>(null);
+  const dismissSuggestions = () => setSuggestionsHiddenFor(messages.length);
+  const shownPrompts = suggestionsHiddenFor === messages.length ? [] : displayPrompts;
+  const shownFollowUps = suggestionsHiddenFor === messages.length ? [] : followUps;
+
   const thread = (
     <AssistantThread
       messages={messages}
-      prompts={displayPrompts}
+      prompts={shownPrompts}
       intro={copy.intro}
       greetingName={greetingName || null}
       senderName={isAuthenticated && user?.name ? user.name : 'Guest User'}
@@ -413,12 +385,13 @@ export function AssistantWidget() {
         regenerate();
       }}
       canInteract={!chat.isPending}
+      onDismissPrompts={dismissSuggestions}
     />
   );
 
   const composer = (
     <AssistantComposer
-      followUps={followUps}
+      followUps={shownFollowUps}
       error={error}
       draft={draft}
       placeholder={placeholder}
@@ -434,6 +407,7 @@ export function AssistantWidget() {
       onHide={() => setOpen(false)}
       editing={editingIndex !== null}
       onCancelEdit={cancelEdit}
+      onDismissFollowUps={dismissSuggestions}
     />
   );
 
@@ -447,7 +421,7 @@ export function AssistantWidget() {
           className={
             expanded
               ? 'fixed inset-0 z-[9000] flex h-dvh min-h-0 w-full flex-col overflow-hidden bg-white'
-              : 'fixed right-0 top-0 z-[9000] flex h-dvh min-h-0 w-full flex-col overflow-hidden bg-white sm:w-[420px] sm:border-l sm:border-gray-200'
+              : 'fixed right-0 top-0 z-[9000] flex h-dvh min-h-0 w-full flex-col overflow-hidden bg-white md:w-[360px] lg:w-[380px] xl:w-[420px] md:border-l md:border-gray-200'
           }
         >
           <AssistantHeader
@@ -461,7 +435,7 @@ export function AssistantWidget() {
 
           {expanded ? (
             <div className="flex min-h-0 flex-1">
-              <aside className="hidden w-72 shrink-0 flex-col border-r border-gray-200 bg-gray-50 sm:flex">
+              <aside className="hidden w-60 shrink-0 flex-col border-r border-gray-200 bg-gray-50 sm:flex lg:w-72">
                 {sessionSidebar}
               </aside>
               <div className="flex min-h-0 flex-1 flex-col sm:hidden">

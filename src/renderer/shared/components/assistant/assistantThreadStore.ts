@@ -1,4 +1,6 @@
-import type { AssistantMessage } from '../../api/assistant/AssistantQueries';
+import { useEffect } from 'react';
+import { axiosInstance } from '../../../app/api/axiosConfig';
+import type { AssistantMessage, ChatSessionDetail } from '../../api/assistant/AssistantQueries';
 
 /**
  * Thread persistence for the assistant widget. Signed-in members resume
@@ -84,4 +86,63 @@ export function saveActiveSessionId(userId: number, sessionId: number): void {
 
 export function clearActiveSessionId(userId: number): void {
   clear(sessionStorageKey(userId));
+}
+
+interface ThreadRestoreDeps {
+  isAuthenticated: boolean;
+  userId: number | null;
+  messages: AssistantMessage[];
+  setMessages: (messages: AssistantMessage[]) => void;
+  setError: (error: string | null) => void;
+  setView: (view: 'chat' | 'sessions') => void;
+  setActiveSessionId: (id: number | null) => void;
+}
+
+/**
+ * Thread continuity effects: guests restore/save their browser-only
+ * thread, members silently resume their server-side session. All state
+ * updates stay inside promise callbacks.
+ */
+export function useAssistantThreadRestore(deps: ThreadRestoreDeps): void {
+  const { isAuthenticated, userId, messages, setMessages, setError, setView, setActiveSessionId } = deps;
+
+  useEffect(() => {
+    if (isAuthenticated || messages.length > 0) return;
+    const cached = loadGuestThread();
+    if (cached) {
+      Promise.resolve(cached).then((thread) => {
+        setMessages(thread);
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (isAuthenticated) return;
+    saveGuestThread(messages);
+  }, [messages, isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated || userId == null || messages.length > 0) return;
+    const id = loadActiveSessionId(userId);
+    if (id === null) return;
+    let cancelled = false;
+    axiosInstance
+      .get<{ data: ChatSessionDetail }>(`/assistant/sessions/${id}`)
+      .then(({ data }) => {
+        if (cancelled) return;
+        setActiveSessionId(data.data.id);
+        setMessages(data.data.messages ?? []);
+        setError(null);
+        setView('chat');
+      })
+      .catch(() => {
+        if (cancelled) return;
+        clearActiveSessionId(userId);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, userId]);
 }

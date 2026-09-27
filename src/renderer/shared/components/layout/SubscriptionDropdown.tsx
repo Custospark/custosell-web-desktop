@@ -7,6 +7,7 @@ import { formatCurrency, formatUSD } from '../../utils/formatCurrency';
 import { useDisplayPrices } from '../../utils/useDisplayPrices';
 import { useNetworkStatus } from '../../../app/store/hooks/useNetworkStatus';
 import { OfflineDropdownNotice } from './OfflineDropdownNotice';
+import { useHeaderCompact } from './useHeaderCompact';
 import { STATUS_STYLES } from '../../../modules/settings/planConstants';
 import {
   Crown, Sparkles, Building2, CircleUser, CheckCircle2, ChevronDown,
@@ -44,6 +45,7 @@ const FEATURE_LABELS: Record<string, string> = {
 };
 
 export default function SubscriptionDropdown() {
+  const compact = useHeaderCompact();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -118,10 +120,12 @@ export default function SubscriptionDropdown() {
           <div className="w-7 h-7 rounded-full flex items-center justify-center ring-1 ring-amber-300 bg-amber-100 shrink-0">
             <Sparkles className="w-3.5 h-3.5 text-amber-500" />
           </div>
-          <div className="hidden lg:block min-w-0 max-w-[140px]">
+          {!compact && (
+          <div className="hidden xl:block min-w-0 max-w-[140px]">
             <span className="text-xs font-semibold truncate block text-amber-700">Choose a plan</span>
             <span className="block text-xs truncate text-gray-500">Get started</span>
           </div>
+          )}
           <ChevronDown className="hidden lg:block w-3 h-3 ml-auto shrink-0 text-amber-400" />
         </button>
       </div>
@@ -134,7 +138,7 @@ export default function SubscriptionDropdown() {
         type="button"
         onClick={() => setOpen(!open)}
         className={cn(
-          'flex items-center gap-1.5 px-2 lg:gap-2 lg:px-3 py-1.5 rounded-lg ring-1 cursor-pointer transition-colors',
+          'flex items-center gap-1.5 px-2 xl:gap-2 xl:px-3 py-1.5 rounded-lg ring-1 cursor-pointer transition-colors',
           open ? 'bg-gray-100 ring-gray-300' : 'bg-white ring-gray-200 hover:bg-gray-50',
         )}
       >
@@ -142,14 +146,16 @@ export default function SubscriptionDropdown() {
           <Icon className={cn('w-3.5 h-3.5', meta.colors.text)} />
         </div>
         {currentSlug && (
-          <span className="lg:hidden text-xs font-semibold text-gray-900">
+          <span className="xl:hidden text-xs font-semibold text-gray-900">
             {currentSlug.slice(0, 1).toUpperCase()}{currentSlug.slice(1, 3)}
           </span>
         )}
-        <div className="hidden lg:block min-w-0 max-w-[140px]">
+        {!compact && (
+        <div className="hidden xl:block min-w-0 max-w-[140px]">
           <span className="text-xs font-semibold truncate block text-gray-900">{currentPlan?.name ?? subscription?.plan_name ?? 'Essential'}</span>
           <span className="block text-xs truncate text-gray-500">{statusLabel}</span>
         </div>
+        )}
         <ChevronDown className={cn('w-3 h-3 transition-transform shrink-0 text-gray-400', open && 'rotate-180')} />
       </button>
 

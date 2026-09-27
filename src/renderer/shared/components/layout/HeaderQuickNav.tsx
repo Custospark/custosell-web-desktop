@@ -5,6 +5,7 @@ import { ROUTES } from '../../../app/routes/constants/shared.paths';
 import { useOpenOrders } from '../../../modules/sales/api/orders/useOrderQueries';
 import { useNewOrderChime } from '../../../app/sound/useNewOrderChime';
 import { canAccessModule } from '../../utils/moduleAccess';
+import { HeaderLabel } from './HeaderLabel';
 import { cn } from '../../utils/cn';
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
@@ -42,7 +43,7 @@ export function HeaderQuickNav() {
           className={navLinkClass}
         >
           <Plus className="h-4 w-4 shrink-0" aria-hidden />
-          <span className="hidden xl:inline truncate">New Sale</span>
+          <HeaderLabel>New Sale</HeaderLabel>
         </NavLink>
       )}
       {canSales && (
@@ -53,7 +54,7 @@ export function HeaderQuickNav() {
           className={navLinkClass}
         >
           <ClipboardList className="h-4 w-4 shrink-0" aria-hidden />
-          <span className="hidden xl:inline truncate">Open Orders</span>
+          <HeaderLabel>Open Orders</HeaderLabel>
           {openCount > 0 && (
             <span className="absolute -top-0.5 -right-0.5 min-w-[15px] h-[15px] sm:min-w-4 sm:h-4 px-0.5 flex items-center justify-center rounded-full bg-red-500 text-white text-[8px] sm:text-[9px] font-bold leading-none animate-pulse">
               {openCount > 99 ? '99+' : openCount}
@@ -69,7 +70,7 @@ export function HeaderQuickNav() {
           className={navLinkClass}
         >
           <Package className="h-4 w-4 shrink-0" aria-hidden />
-          <span className="hidden xl:inline truncate">Products</span>
+          <HeaderLabel>Products</HeaderLabel>
         </NavLink>
       )}
     </div>

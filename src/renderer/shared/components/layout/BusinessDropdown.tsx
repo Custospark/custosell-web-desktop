@@ -8,6 +8,7 @@ import { resolveBusinessDisplayName, resolveBusinessLogoPath } from '../../utils
 import { avatarUrl } from '../../utils/avatarUrl';
 import { isBusinessOwner } from '../../utils/moduleAccess';
 import { OfflineDropdownNotice } from './OfflineDropdownNotice';
+import { useHeaderCompact } from './useHeaderCompact';
 import { cn } from '../../utils/cn';
 import {
   Building2, ChevronDown, ExternalLink, Settings, CreditCard, CircleUser,
@@ -18,6 +19,7 @@ type DetailRow = { icon: typeof MapPin; value: string };
 
 /** Business context trigger - the Custosell equivalent of Custocare's context switcher. */
 export default function BusinessDropdown() {
+  const compact = useHeaderCompact();
   const navigate = useNavigate();
   const { isCompletelyOffline } = useNetworkStatus();
   const [open, setOpen] = useState(false);
@@ -102,8 +104,8 @@ export default function BusinessDropdown() {
         type="button"
         onClick={() => setOpen(!open)}
         className={cn(
-          'flex items-center gap-1.5 px-2 lg:gap-2 lg:px-3 py-1.5 rounded-lg ring-1 cursor-pointer transition-colors',
-          'text-xs lg:text-sm',
+          'flex items-center gap-1.5 px-2 xl:gap-2 xl:px-3 py-1.5 rounded-lg ring-1 cursor-pointer transition-colors',
+          'text-xs xl:text-sm',
           open ? 'bg-blue-50 ring-blue-300' : 'bg-white ring-blue-200 hover:bg-blue-50/60 hover:ring-blue-300',
         )}
         title={businessName}
@@ -117,7 +119,8 @@ export default function BusinessDropdown() {
             <Building2 className="w-3.5 h-3.5 text-blue-600" />
           )}
         </div>
-        <div className="hidden lg:flex items-center gap-1.5 min-w-0 max-w-[200px]">
+        {!compact && (
+        <div className="hidden xl:flex items-center gap-1.5 min-w-0 max-w-[200px]">
           <div className="min-w-0">
             <span className="text-xs font-semibold truncate block text-gray-900">{businessName}</span>
             <span className="flex items-center gap-1 text-xs truncate text-gray-500">
@@ -126,6 +129,7 @@ export default function BusinessDropdown() {
             </span>
           </div>
         </div>
+        )}
         <ChevronDown className={cn('w-3 h-3 transition-transform shrink-0 text-gray-400', open && 'rotate-180')} />
       </button>
 

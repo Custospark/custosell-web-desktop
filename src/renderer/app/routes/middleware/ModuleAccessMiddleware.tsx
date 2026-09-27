@@ -4,6 +4,7 @@ import { useAppSelector } from '../../store/hooks/useApp';
 import { getPlanAccessibleModules, getDefaultRoute } from '../../../shared/utils/moduleAccess';
 import type { BusinessModuleSlug } from '../../../shared/utils/moduleAccess';
 import { getHiddenStoreApps } from '../../../shared/components/layout/storeAppVisibility';
+import { getLauncherLabel } from '../../../shared/components/layout/moduleLauncherCatalog';
 import { getNextVisibleAppRoute } from '../../../shared/components/layout/moduleLauncherCatalog';
 import { useToast } from '../../../app/contexts/useToast';
 
@@ -32,7 +33,8 @@ export function ModuleAccessMiddleware({ module }: ModuleAccessMiddlewareProps) 
     if (visibilityApplies && hidden.has(module)) {
       const next = getNextVisibleAppRoute(user, hidden, module);
       if (next !== location.pathname) {
-        showToast('info', 'That app is hidden - opened the next available one instead.');
+        const appLabel = getLauncherLabel(module);
+        showToast('info', `"${appLabel}" is hidden - enable it in Custosell Apps to open it.`);
         navigate(next, { replace: true });
       }
     }

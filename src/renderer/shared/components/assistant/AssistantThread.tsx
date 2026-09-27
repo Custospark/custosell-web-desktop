@@ -1,6 +1,6 @@
 import type { RefObject } from 'react';
 import { Link } from 'react-router-dom';
-import { Bot, ChevronRight, GraduationCap, Mail, MessageCircle, Pencil, Phone, Play, RotateCcw } from 'lucide-react';
+import { Bot, ChevronRight, GraduationCap, Mail, MessageCircle, Pencil, Phone, Play, RotateCcw, X } from 'lucide-react';
 import { CUSTOSELL_SUPPORT } from '../../../modules/guide/guideSupportConfig';
 import { GUIDE } from '../../api/endpoints/guideEndpoints';
 import type { AssistantMessage } from '../../api/assistant/AssistantQueries';
@@ -25,6 +25,7 @@ interface AssistantThreadProps {
   onRetry: () => void;
   onEditMessage: (index: number) => void;
   onRegenerate: () => void;
+  onDismissPrompts: () => void;
   /** False while a reply streams - actions that would fork state stay off. */
   canInteract: boolean;
 }
@@ -44,6 +45,7 @@ export function AssistantThread({
   onRetry,
   onEditMessage,
   onRegenerate,
+  onDismissPrompts,
   canInteract,
 }: AssistantThreadProps) {
   return (
@@ -59,7 +61,20 @@ export function AssistantThread({
           <p className="max-w-[30ch] text-sm text-gray-500">
             {intro}
           </p>
-          <div className="flex w-full max-w-sm flex-col items-stretch gap-1.5">
+          {prompts.length > 0 && (
+            <>
+              <div className="flex w-full max-w-sm items-center justify-end">
+                <button
+                  type="button"
+                  onClick={onDismissPrompts}
+                  aria-label="Dismiss suggestions"
+                  title="Dismiss suggestions"
+                  className="rounded p-1 text-blue-400 transition-colors hover:bg-white hover:text-blue-600"
+                >
+                  <X className="h-3.5 w-3.5" aria-hidden />
+                </button>
+              </div>
+              <div className="flex w-full max-w-sm flex-col items-stretch gap-1.5">
             {prompts.map((prompt) => (
               <button
                 key={prompt}
@@ -71,7 +86,9 @@ export function AssistantThread({
                 <ChevronRight className="h-4 w-4 shrink-0" aria-hidden />
               </button>
             ))}
-          </div>
+              </div>
+            </>
+          )}
         </div>
       ) : (
         <div className="flex flex-col gap-2">

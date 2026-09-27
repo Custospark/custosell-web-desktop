@@ -1,5 +1,6 @@
 import { Activity, AlertTriangle, WifiOff } from 'lucide-react';
 import { useNetworkStatus } from '../../../app/store/hooks/useNetworkStatus';
+import { useHeaderCompact } from './useHeaderCompact';
 import { getDesktopAppVersion } from '../../config/desktopRelease';
 import { cn } from '../../utils/cn';
 
@@ -52,6 +53,7 @@ function formatLastChecked(date: Date | null): string {
  * when the connection is slow or down.
  */
 export function TopBarStatus() {
+  const compact = useHeaderCompact();
   const { systemStatus, latency, lastCheckedAt, retryConnection } = useNetworkStatus();
   const theme = STATUS_THEME[systemStatus];
   const Icon = theme.icon;
@@ -82,22 +84,26 @@ export function TopBarStatus() {
           className={cn('h-3.5 w-3.5 shrink-0', theme.iconClass, theme.pulse && 'animate-pulse')}
           aria-hidden
         />
-        <span className="truncate">{theme.label}</span>
-        {systemStatus === 'online' && latency != null && (
+        {!compact && <span className="truncate">{theme.label}</span>}
+        {systemStatus === 'online' && latency != null && !compact && (
           <span className="hidden tabular-nums text-[10px] opacity-70 md:inline">{formatLatency(latency)}</span>
         )}
       </button>
 
-      <span
-        className="hidden rounded border border-gray-200 bg-slate-50 px-2 py-1 text-xs text-gray-500 md:inline"
-        title={lastChecked ? `Last checked: ${lastChecked.toLocaleTimeString()}` : 'Never checked'}
-      >
-        {formatLastChecked(lastChecked)}
-      </span>
+      {!compact && (
+        <span
+          className="hidden rounded border border-gray-200 bg-slate-50 px-2 py-1 text-xs text-gray-500 md:inline"
+          title={lastChecked ? `Last checked: ${lastChecked.toLocaleTimeString()}` : 'Never checked'}
+        >
+          {formatLastChecked(lastChecked)}
+        </span>
+      )}
 
-      <span className="hidden rounded border border-gray-200 bg-slate-50 px-2 py-1 text-xs text-gray-500 lg:inline">
-        Version {getDesktopAppVersion()}
-      </span>
+      {!compact && (
+        <span className="hidden rounded border border-gray-200 bg-slate-50 px-2 py-1 text-xs text-gray-500 lg:inline">
+          Version {getDesktopAppVersion()}
+        </span>
+      )}
     </div>
   );
 }

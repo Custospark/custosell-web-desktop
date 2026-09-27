@@ -61,6 +61,11 @@ export function AssistantThread({
           <p className="max-w-[30ch] text-sm text-gray-500">
             {intro}
           </p>
+          {greetingName && (
+            <p className="max-w-[30ch] text-xs text-gray-400">
+              {greetingName}, I'll always be here - feel free to ask me anything.
+            </p>
+          )}
           {prompts.length > 0 && (
             <>
               <div className="flex w-full max-w-sm items-center justify-end">

@@ -160,7 +160,7 @@ export default function ModuleLauncherModal({ open, onClose, welcome = false }: 
       subtitle={welcome ? undefined : subtitle}
       titleCentered
       size="xl"
-      bodyClassName={welcome ? 'px-0 py-0' : 'flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-3 sm:px-6 sm:py-4'}
+      bodyClassName={welcome ? 'px-0 py-0' : 'flex min-h-0 flex-1 flex-col overflow-hidden px-3 py-3 sm:px-6 sm:py-4'}
       panelClassName={welcome ? 'overflow-hidden' : undefined}
       hideCloseButton={welcome}
       closeOnEscape={!welcome}
@@ -372,7 +372,7 @@ export default function ModuleLauncherModal({ open, onClose, welcome = false }: 
                     </Link>
                   )}
                 </p>
-                <div className="flex shrink-0 items-center gap-2">
+                <div className="flex shrink-0 flex-wrap items-center gap-2">
                   <button
                     type="button"
                     onClick={handleClose}

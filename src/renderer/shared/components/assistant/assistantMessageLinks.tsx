@@ -18,7 +18,7 @@ function splitTrailingPunctuation(url: string): { url: string; trail: string } {
   return { url: match[1], trail: match[2] };
 }
 
-function linkNode(href: string, label: string, key: string): ReactNode {
+function linkNode(href: string, label: string, key: string, expanded: boolean): ReactNode {
   const to = sameAppRoute(href);
   if (to !== null) {
     // In-app route - client-side navigation with the panel stepping aside
@@ -27,6 +27,7 @@ function linkNode(href: string, label: string, key: string): ReactNode {
       <AssistantInternalLink
         key={key}
         to={to}
+        expanded={expanded}
         className="font-medium text-blue-700 underline hover:text-blue-900 [overflow-wrap:anywhere]"
       >
         {label}
@@ -112,7 +113,8 @@ export function normalizeOrigin(origin: string): string {
   return origin.toLowerCase().replace(/^([a-z][a-z0-9+.-]*:\/\/)www\./, '$1');
 }
 
-export function renderAssistantMessage(content: string): ReactNode[] {
+export function renderAssistantMessage(content: string, opts?: { expanded?: boolean }): ReactNode[] {
+  const expanded = opts?.expanded ?? false;
   const nodes: ReactNode[] = [];
   let lastIndex = 0;
   let key = 0;
@@ -125,10 +127,10 @@ export function renderAssistantMessage(content: string): ReactNode[] {
     }
     if (match[2]) {
       // Markdown [label](url).
-      nodes.push(linkNode(match[2], match[1], `link-${key++}`));
+      nodes.push(linkNode(match[2], match[1], `link-${key++}`, expanded));
     } else {
       const { url, trail } = splitTrailingPunctuation(match[3]);
-      nodes.push(linkNode(url, url, `link-${key++}`));
+      nodes.push(linkNode(url, url, `link-${key++}`, expanded));
       if (trail) nodes.push(trail);
     }
     lastIndex = match.index + match[0].length;

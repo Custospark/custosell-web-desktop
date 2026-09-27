@@ -1,8 +1,8 @@
 import type { RefObject } from 'react';
-import { Link } from 'react-router-dom';
 import { Bot, ChevronRight, GraduationCap, Mail, MessageCircle, Pencil, Phone, Play, RotateCcw, X } from 'lucide-react';
 import { CUSTOSELL_SUPPORT } from '../../../modules/guide/guideSupportConfig';
 import { GUIDE } from '../../api/endpoints/guideEndpoints';
+import { AssistantInternalLink } from './AssistantInternalLink';
 import type { AssistantMessage } from '../../api/assistant/AssistantQueries';
 import { AssistantLockup } from './AssistantBrand';
 import { UserAvatar } from '../UserAvatar';
@@ -18,6 +18,8 @@ interface AssistantThreadProps {
   senderAvatar?: string | null;
   /** Logged-in users also get the in-app tutorials link on errors. */
   showTutorials?: boolean;
+  /** Fullscreen takeover: links step aside so destinations open fully. */
+  expanded?: boolean;
   isPending: boolean;
   error: string | null;
   listRef: RefObject<HTMLDivElement | null>;
@@ -38,6 +40,7 @@ export function AssistantThread({
   senderName,
   senderAvatar,
   showTutorials,
+  expanded,
   isPending,
   error,
   listRef,
@@ -126,7 +129,7 @@ export function AssistantThread({
                     <Bot className="h-3.5 w-3.5" aria-hidden />
                   </span>
                   <p className="min-w-0 whitespace-pre-wrap break-words rounded-xl bg-white px-3 py-2 text-sm leading-relaxed text-gray-800 shadow-sm ring-1 ring-gray-200 [overflow-wrap:anywhere]">
-                    {renderAssistantMessage(message.content)}
+                    {renderAssistantMessage(message.content, { expanded })}
                   </p>
                 </div>
                 {index === messages.length - 1 && (
@@ -204,13 +207,14 @@ export function AssistantThread({
                   {CUSTOSELL_SUPPORT.youtube.label}
                 </a>
                 {showTutorials && (
-                  <Link
+                  <AssistantInternalLink
                     to={GUIDE.TUTORIALS}
+                    expanded={expanded}
                     className="mt-1.5 flex items-center gap-2 text-xs font-medium text-blue-700 hover:underline"
                   >
                     <GraduationCap className="h-3.5 w-3.5 shrink-0" aria-hidden />
                     Video tutorials and tour guides in the app
-                  </Link>
+                  </AssistantInternalLink>
                 )}
               </div>
             </div>

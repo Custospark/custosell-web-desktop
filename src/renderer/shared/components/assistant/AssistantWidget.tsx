@@ -375,6 +375,7 @@ export function AssistantWidget() {
       senderName={isAuthenticated && user?.name ? user.name : 'Guest User'}
       senderAvatar={user?.avatar ?? null}
       showTutorials={isAuthenticated}
+      expanded={expanded}
       isPending={chat.isPending}
       error={error}
       listRef={listRef}

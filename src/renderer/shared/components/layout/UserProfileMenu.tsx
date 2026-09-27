@@ -41,8 +41,8 @@ export function UserProfileMenu({
         <div
           ref={menuRef}
           role="menu"
-          className="fixed z-[300] flex max-h-[calc(100dvh_-_4rem)] flex-col overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-xl ring-1 ring-black/5"
-          style={{ top: menuPos.top, left: menuPos.left, width: menuPos.width }}
+          className="fixed z-[300] flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-xl ring-1 ring-black/5"
+          style={{ top: menuPos.top, left: menuPos.left, width: menuPos.width, maxHeight: `min(100dvh - 4rem, 100dvh - ${menuPos.top}px - 1rem)` }}
         >
           <div className="shrink-0 px-4 py-3 border-b border-gray-100">
             <p className="text-sm font-semibold text-gray-900 break-words">{user?.name || 'User'}</p>
@@ -61,7 +61,7 @@ export function UserProfileMenu({
             )}
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          <div className="min-h-0 max-h-[248px] flex-1 overflow-y-auto overscroll-contain sm:max-h-none">
           <Link
             to={ROUTES.ACCOUNT.PROFILE}
             role="menuitem"
@@ -169,7 +169,8 @@ export function UserProfileMenu({
               </button>
             </>
           )}
-          <hr className="border-gray-100" />
+          </div>
+          <div className="shrink-0 border-t border-gray-100">
           <button
             type="button"
             role="menuitem"

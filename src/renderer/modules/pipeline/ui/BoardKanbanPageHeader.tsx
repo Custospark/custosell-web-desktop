@@ -187,43 +187,49 @@ export default function BoardKanbanPageHeader({
               }
             >
               {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
-              {isFullscreen ? 'Exit full screen' : 'Full screen'}
+              <span className="hidden md:inline">{isFullscreen ? 'Exit full screen' : 'Full screen'}</span>
             </button>
 
             <div className="inline-flex rounded-lg border border-blue-100 bg-white p-0.5 shadow-sm">
               <button
                 type="button"
                 onClick={() => onViewModeChange('kanban')}
+                title="Board view"
+                aria-label="Board view"
                 className={cn(
                   'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
                   viewMode === 'kanban' ? 'bg-blue-600 text-white shadow-sm' : 'text-blue-800/80 hover:bg-blue-50',
                 )}
               >
                 <LayoutGrid className="h-3.5 w-3.5" />
-                Board
+                <span className="hidden md:inline">Board</span>
               </button>
               <button
                 type="button"
                 onClick={() => onViewModeChange('calendar')}
+                title="Calendar view"
+                aria-label="Calendar view"
                 className={cn(
                   'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
                   viewMode === 'calendar' ? 'bg-blue-600 text-white shadow-sm' : 'text-blue-800/80 hover:bg-blue-50',
                 )}
               >
                 <CalendarDays className="h-3.5 w-3.5" />
-                Calendar
+                <span className="hidden md:inline">Calendar</span>
               </button>
               {showBoardManagementControls && (
-                <button
-                  type="button"
-                  onClick={() => onViewModeChange('members')}
+                  <button
+                    type="button"
+                    onClick={() => onViewModeChange('members')}
+                    title="Members view"
+                    aria-label="Members view"
                   className={cn(
                     'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
                     viewMode === 'members' ? 'bg-blue-600 text-white shadow-sm' : 'text-blue-800/80 hover:bg-blue-50',
                   )}
                 >
-                  <Users className="h-3.5 w-3.5" />
-                  Members
+                    <Users className="h-3.5 w-3.5" />
+                    <span className="hidden md:inline">Members</span>
                 </button>
               )}
             </div>
@@ -231,9 +237,9 @@ export default function BoardKanbanPageHeader({
             {viewMode === 'kanban' && (
               <>
                 {showBoardManagementControls && (
-                  <Button variant="secondary" onClick={onAddStage} className="inline-flex items-center gap-2">
+                  <Button variant="secondary" onClick={onAddStage} title="Add column" className="inline-flex items-center gap-2">
                     <Columns3 className="h-4 w-4" />
-                    Add column
+                    <span className="hidden md:inline">Add column</span>
                   </Button>
                 )}
                 {canContribute && (
@@ -241,19 +247,21 @@ export default function BoardKanbanPageHeader({
                     <Button
                       variant="secondary"
                       onClick={onImport}
+                      title="Import"
                       className="inline-flex items-center gap-2"
                       disabled={!allStages.length}
                     >
                       <Upload className="h-4 w-4" />
-                      Import
+                      <span className="hidden md:inline">Import</span>
                     </Button>
                     <Button
                       onClick={onAddCard}
+                      title={isTaskBoard ? 'Add task' : 'Add card'}
                       className="inline-flex items-center gap-2 shadow-sm"
                       disabled={!allStages.length}
                     >
                       <UserPlus className="h-4 w-4" />
-                      {isTaskBoard ? 'Add task' : 'Add card'}
+                      <span className="hidden md:inline">{isTaskBoard ? 'Add task' : 'Add card'}</span>
                     </Button>
                   </>
                 )}

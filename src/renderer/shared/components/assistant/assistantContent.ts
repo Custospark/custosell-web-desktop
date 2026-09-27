@@ -30,6 +30,23 @@ export const APPS_SETUP_PROMPT = 'How do I add or remove apps?';
 /** Access troubleshooting never rotates away for signed-in users. */
 export const APPS_ACCESS_PROMPT = "I can't access an app or feature";
 
+/** Empty-state intro per active module - falls back to the segment intro. */
+export const INTRO_BY_SLUG: Record<string, string> = {
+  dashboard: 'I am Oscar, your AI agent. Ask about your business performance - or anything else on Custosell.',
+  sales: 'I am Oscar, your AI agent. Ask about sales, receipts and invoices - or anything else on Custosell.',
+  inventory: 'I am Oscar, your AI agent. Ask about stock, products and suppliers - or anything else on Custosell.',
+  customers: 'I am Oscar, your AI agent. Ask about customers and their orders - or anything else on Custosell.',
+  pipeline: 'I am Oscar, your AI agent. Ask about deals and follow-ups - or anything else on Custosell.',
+  estimates: 'I am Oscar, your AI agent. Ask about projects, quotes and deadlines - or anything else on Custosell.',
+  expenses: 'I am Oscar, your AI agent. Ask about spending and budgets - or anything else on Custosell.',
+  accounting: 'I am Oscar, your AI agent. Ask about your books and journals - or anything else on Custosell.',
+  forecasting: 'I am Oscar, your AI agent. Ask about cash outlook and scenarios - or anything else on Custosell.',
+  documents: 'I am Oscar, your AI agent. Ask about files and records - or anything else on Custosell.',
+  hr: 'I am Oscar, your AI agent. Ask about the team, leave and payroll - or anything else on Custosell.',
+  efris: 'I am Oscar, your AI agent. Ask about fiscal receipts - or anything else on Custosell.',
+  discover: 'I am Oscar, your AI agent. Ask about shopping, orders and tracking - or anything else on Custosell.',
+};
+
 const GUEST_HIDDEN_GROUPS = ['Online Shopping'];
 
 /** Module prompts for a segment - guests never get shopping-intent prompts. */

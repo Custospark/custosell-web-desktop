@@ -26,6 +26,7 @@ import { AssistantFab } from './AssistantFab';
 import {
   APPS_ACCESS_PROMPT,
   APPS_SETUP_PROMPT,
+  INTRO_BY_SLUG,
   PLACEHOLDER_BY_SLUG,
   SEGMENT_COPY,
   VIEW_CONTEXTS,
@@ -369,7 +370,7 @@ export function AssistantWidget() {
     <AssistantThread
       messages={messages}
       prompts={shownPrompts}
-      intro={copy.intro}
+      intro={(currentSlug && INTRO_BY_SLUG[currentSlug]) ?? copy.intro}
       greetingName={greetingName || null}
       senderName={isAuthenticated && user?.name ? user.name : 'Guest User'}
       senderAvatar={user?.avatar ?? null}

@@ -276,14 +276,12 @@ export function Navbar() {
             <Menu className="w-6 h-6 sm:w-5 sm:h-5" aria-hidden />
           </button>
 
-          {!headerCompact && !state.sidebarOpen && (
-            <CustosellBrandLockup
-              showTagline
-              logoSize="sm"
-              nameClassName="text-sm"
-              className="shrink-0"
-            />
-          )}
+          <CustosellBrandLockup
+            showTagline
+            logoSize="sm"
+            nameClassName="text-sm"
+            className="min-w-0 shrink-0"
+          />
 
           {user?.shift_clock_in ? (
             <NavbarShiftBadge

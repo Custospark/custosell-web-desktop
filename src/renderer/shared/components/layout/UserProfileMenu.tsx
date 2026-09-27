@@ -41,10 +41,10 @@ export function UserProfileMenu({
         <div
           ref={menuRef}
           role="menu"
-          className="fixed z-[300] overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-xl ring-1 ring-black/5"
+          className="fixed z-[300] flex max-h-[calc(100dvh-4rem)] flex-col overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-xl ring-1 ring-black/5"
           style={{ top: menuPos.top, left: menuPos.left, width: menuPos.width }}
         >
-          <div className="px-4 py-3 border-b border-gray-100">
+          <div className="shrink-0 px-4 py-3 border-b border-gray-100">
             <p className="text-sm font-semibold text-gray-900 break-words">{user?.name || 'User'}</p>
             {user?.email && (
               <p className="text-xs text-gray-500 truncate mt-0.5" title={user.email}>{user.email}</p>
@@ -61,6 +61,7 @@ export function UserProfileMenu({
             )}
           </div>
 
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           <Link
             to={ROUTES.ACCOUNT.PROFILE}
             role="menuitem"
@@ -178,6 +179,7 @@ export function UserProfileMenu({
             <LogOut className="w-4 h-4 shrink-0" />
             {isLoggingOut ? 'Logging out...' : 'Logout'}
           </button>
+          </div>
         </div>
       )}
       <ModuleLauncherModal open={appsOpen} onClose={() => setAppsOpen(false)} />

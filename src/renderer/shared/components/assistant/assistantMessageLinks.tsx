@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
 import { ROUTES } from '../../../app/routes/constants/shared.paths';
+import { AssistantInternalLink } from './AssistantInternalLink';
 
 /**
  * Renders assistant message text with clickable links.
@@ -21,15 +21,16 @@ function splitTrailingPunctuation(url: string): { url: string; trail: string } {
 function linkNode(href: string, label: string, key: string): ReactNode {
   const to = sameAppRoute(href);
   if (to !== null) {
-    // In-app route - client-side navigation, no new tab.
+    // In-app route - client-side navigation with the panel stepping aside
+    // so the destination page is fully visible, no new tab.
     return (
-      <Link
+      <AssistantInternalLink
         key={key}
         to={to}
         className="font-medium text-blue-700 underline hover:text-blue-900 [overflow-wrap:anywhere]"
       >
         {label}
-      </Link>
+      </AssistantInternalLink>
     );
   }
   return (

@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
-import { renderAssistantMessage } from '../../components/assistant/assistantMessageLinks';
+import { normalizeOrigin, renderAssistantMessage } from '../../components/assistant/assistantMessageLinks';
 
 function html(content: string): string {
   return renderToStaticMarkup(
@@ -41,5 +41,17 @@ describe('renderAssistantMessage', () => {
   it('opens unknown same-origin paths externally', () => {
     const out = html(`See ${window.location.origin}/no-such-route-xyz.`);
     expect(out).toContain('target="_blank"');
+  });
+
+  it('treats www and apex hosts as the same app', () => {
+    expect(normalizeOrigin('https://www.custosell.com')).toBe('https://custosell.com');
+    expect(normalizeOrigin('https://custosell.com')).toBe('https://custosell.com');
+  });
+
+  it('navigates www-variant app links internally', () => {
+    const wwwOrigin = window.location.origin.replace('://', '://www.');
+    const out = html(`Confirm at ${wwwOrigin}/pricing anytime.`);
+    expect(out).toContain('href="/pricing"');
+    expect(out).not.toContain('target="_blank"');
   });
 });

@@ -92,7 +92,7 @@ function sameAppRoute(href: string): string | null {
   try {
     if (typeof window === 'undefined') return null;
     const url = new URL(href);
-    if (url.origin !== window.location.origin) return null;
+    if (normalizeOrigin(url.origin) !== normalizeOrigin(window.location.origin)) return null;
     if (!internalRoutePatterns().some((pattern) => pattern.test(url.pathname))) {
       return null;
     }
@@ -100,6 +100,15 @@ function sameAppRoute(href: string): string | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * Origin equivalence ignoring a leading www - custosell.com and
+ * www.custosell.com serve the same app, so agent links stay in-app no
+ * matter which host rendered the page.
+ */
+export function normalizeOrigin(origin: string): string {
+  return origin.toLowerCase().replace(/^([a-z][a-z0-9+.-]*:\/\/)www\./, '$1');
 }
 
 export function renderAssistantMessage(content: string): ReactNode[] {

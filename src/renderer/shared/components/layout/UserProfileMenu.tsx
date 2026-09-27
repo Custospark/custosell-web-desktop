@@ -41,7 +41,7 @@ export function UserProfileMenu({
         <div
           ref={menuRef}
           role="menu"
-          className="fixed z-[300] flex max-h-[calc(100dvh-4rem)] flex-col overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-xl ring-1 ring-black/5"
+          className="fixed z-[300] flex max-h-[calc(100dvh_-_4rem)] flex-col overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-xl ring-1 ring-black/5"
           style={{ top: menuPos.top, left: menuPos.left, width: menuPos.width }}
         >
           <div className="shrink-0 px-4 py-3 border-b border-gray-100">

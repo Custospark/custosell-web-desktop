@@ -1,10 +1,12 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Bot, X } from 'lucide-react';
 import oscarAvatar from '../../assets/oscar.webp';
 
 const STORAGE_KEY = 'assistant-fab-position';
 const FAB_SIZE = 48;
 const MARGIN = 16;
+/** Narrow screens carry the 64px tab bar plus notch safe-area. */
+const DOCKED_BOTTOM_PX = 96;
 const DRAG_THRESHOLD_PX = 6;
 
 interface FabPosition {
@@ -12,9 +14,23 @@ interface FabPosition {
   y: number;
 }
 
+/** Bottom clearance so the launcher never slides under the tab bar. */
+function bottomMargin(): number {
+  if (typeof window === 'undefined') return MARGIN;
+  return window.innerWidth < 640 ? DOCKED_BOTTOM_PX : MARGIN;
+}
+
+/** Default docked spot: above the tab bar on phones, corner on desktop. */
+function dockedBase(): FabPosition {
+  const bottom = window.innerWidth < 640 ? DOCKED_BOTTOM_PX : 24;
+  const right = window.innerWidth < 640 ? MARGIN : 24;
+  return { x: window.innerWidth - FAB_SIZE - right, y: window.innerHeight - FAB_SIZE - bottom };
+}
+
 function clampPosition(x: number, y: number): FabPosition {
   const maxX = Math.max(MARGIN, window.innerWidth - FAB_SIZE - MARGIN);
-  const maxY = Math.max(MARGIN, window.innerHeight - FAB_SIZE - MARGIN);
+  const bottom = bottomMargin();
+  const maxY = Math.max(MARGIN, window.innerHeight - FAB_SIZE - bottom);
   return {
     x: Math.min(Math.max(MARGIN, x), maxX),
     y: Math.min(Math.max(MARGIN, y), maxY),
@@ -53,6 +69,30 @@ export function AssistantFab({ open, onToggle }: { open: boolean; onToggle: () =
   const dragRef = useRef<{ startX: number; startY: number; baseX: number; baseY: number; moved: boolean; latest: FabPosition | null } | null>(null);
   const justDragged = useRef(false);
 
+  // Rotation, resize, split-screen: keep a parked launcher inside the new
+  // viewport instead of stranded off-screen.
+  useEffect(() => {
+    const onResize = () => {
+      setPosition((prev) => {
+        if (!prev) return prev;
+        const next = clampPosition(prev.x, prev.y);
+        if (next.x === prev.x && next.y === prev.y) return prev;
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+        } catch {
+          // Private mode - position just will not persist.
+        }
+        return next;
+      });
+    };
+    window.addEventListener('resize', onResize);
+    window.addEventListener('orientationchange', onResize);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('orientationchange', onResize);
+    };
+  }, []);
+
   function persist(pos: FabPosition | null) {
     setPosition(pos);
     try {
@@ -67,10 +107,7 @@ export function AssistantFab({ open, onToggle }: { open: boolean; onToggle: () =
   }
 
   function onPointerDown(e: React.PointerEvent<HTMLButtonElement>) {
-    const base = position ?? {
-      x: window.innerWidth - FAB_SIZE - MARGIN,
-      y: window.innerHeight - FAB_SIZE - MARGIN,
-    };
+    const base = position ?? dockedBase();
     dragRef.current = { startX: e.clientX, startY: e.clientY, baseX: base.x, baseY: base.y, moved: false, latest: null };
     e.currentTarget.setPointerCapture(e.pointerId);
   }
@@ -115,7 +152,7 @@ export function AssistantFab({ open, onToggle }: { open: boolean; onToggle: () =
       aria-label={open ? 'Close assistant' : 'Chat with Custosell AI Agent'}
       aria-expanded={open}
       className={`fixed z-[9000] flex h-12 w-12 touch-none select-none items-center justify-center rounded-full shadow-lg ring-2 ring-white transition-all active:scale-95 ${
-        position ? '' : 'bottom-20 right-4 sm:bottom-6 sm:right-6'
+        position ? '' : 'bottom-[max(6rem,calc(4rem_+_env(safe-area-inset-bottom)))] right-[max(1rem,env(safe-area-inset-right))] sm:bottom-6 sm:right-6'
       }`}
       style={position ? { left: position.x, top: position.y } : undefined}
     >

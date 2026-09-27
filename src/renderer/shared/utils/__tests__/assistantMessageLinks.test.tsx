@@ -1,9 +1,12 @@
 import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import { renderAssistantMessage } from '../../components/assistant/assistantMessageLinks';
 
 function html(content: string): string {
-  return renderToStaticMarkup(<>{renderAssistantMessage(content)}</>);
+  return renderToStaticMarkup(
+    <MemoryRouter>{renderAssistantMessage(content)}</MemoryRouter>,
+  );
 }
 
 describe('renderAssistantMessage', () => {
@@ -27,5 +30,16 @@ describe('renderAssistantMessage', () => {
   it('does not link non-http schemes', () => {
     const out = html('Call mailto:info@custospark.com today');
     expect(out).not.toContain('<a');
+  });
+
+  it('navigates same-origin app routes internally without a new tab', () => {
+    const out = html(`Confirm at ${window.location.origin}/pricing anytime.`);
+    expect(out).toContain('href="/pricing"');
+    expect(out).not.toContain('target="_blank"');
+  });
+
+  it('opens unknown same-origin paths externally', () => {
+    const out = html(`See ${window.location.origin}/no-such-route-xyz.`);
+    expect(out).toContain('target="_blank"');
   });
 });

@@ -24,10 +24,12 @@ import { sanitizeErrorMessage } from '../../../app/store/offline/core/offlineQue
 import { axiosInstance } from '../../../app/api/axiosConfig';
 import { AssistantFab } from './AssistantFab';
 import {
-  GROUP_PROMPTS,
+  APPS_ACCESS_PROMPT,
+  APPS_SETUP_PROMPT,
   PLACEHOLDER_BY_SLUG,
   SEGMENT_COPY,
   VIEW_CONTEXTS,
+  groupPromptsFor,
   type AssistantSegment,
 } from './assistantContent';
 import { useAssistantSend } from './useAssistantSend';
@@ -81,12 +83,12 @@ export function AssistantWidget() {
   // Pool: prompts of visible sidebar modules first, segment fallbacks fill up.
   // Hidden or ungranted apps never suggest themselves.
   const promptPool = useMemo(() => {
-    const pool = groupLabels.flatMap((label) => GROUP_PROMPTS[label] ?? []);
+    const pool = groupLabels.flatMap((label) => groupPromptsFor(label, segment));
     for (const fallback of copy.prompts) {
       if (!pool.includes(fallback)) pool.push(fallback);
     }
     return pool;
-  }, [groupLabels, copy]);
+  }, [groupLabels, copy, segment]);
   // Route-detected: prompts executable in the module the user is standing in.
   const location = useLocation();
   const currentSlug = resolveModuleForPath(location.pathname);
@@ -100,7 +102,7 @@ export function AssistantWidget() {
   const currentModulePrompts = useMemo(() => {
     if (viewContext) return new Set(viewContext.prompts);
     const labels = groupLabels.filter((label) => NAV_GROUP_MODULE[label] === currentSlug);
-    return new Set(labels.flatMap((label) => GROUP_PROMPTS[label] ?? []));
+    return new Set(labels.flatMap((label) => groupPromptsFor(label, segment)));
   }, [groupLabels, currentSlug, viewContext]);
   function shuffle<T>(items: T[]): T[] {
     const shuffled = [...items];
@@ -380,10 +382,21 @@ export function AssistantWidget() {
   const sessionPanel = sessionPanelNode();
   const sessionSidebar = sessionPanelNode(true);
 
+  // Two prompts never rotate away for signed-in users: workspace setup
+  // and access troubleshooting.
+  const displayPrompts = useMemo(() => {
+    if (!isAuthenticated) return prompts;
+    const shown = [...prompts];
+    for (const fixed of [APPS_SETUP_PROMPT, APPS_ACCESS_PROMPT]) {
+      if (!shown.includes(fixed)) shown.push(fixed);
+    }
+    return shown;
+  }, [isAuthenticated, prompts]);
+
   const thread = (
     <AssistantThread
       messages={messages}
-      prompts={prompts}
+      prompts={displayPrompts}
       intro={copy.intro}
       greetingName={greetingName || null}
       senderName={isAuthenticated && user?.name ? user.name : 'Guest User'}

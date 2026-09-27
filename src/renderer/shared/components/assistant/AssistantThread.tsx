@@ -1,6 +1,6 @@
 import type { RefObject } from 'react';
 import { Link } from 'react-router-dom';
-import { Bot, GraduationCap, Mail, MessageCircle, Pencil, Phone, Play, RotateCcw } from 'lucide-react';
+import { Bot, ChevronRight, GraduationCap, Mail, MessageCircle, Pencil, Phone, Play, RotateCcw } from 'lucide-react';
 import { CUSTOSELL_SUPPORT } from '../../../modules/guide/guideSupportConfig';
 import { GUIDE } from '../../api/endpoints/guideEndpoints';
 import type { AssistantMessage } from '../../api/assistant/AssistantQueries';
@@ -59,15 +59,16 @@ export function AssistantThread({
           <p className="max-w-[30ch] text-sm text-gray-500">
             {intro}
           </p>
-          <div className="flex flex-wrap justify-center gap-1.5">
+          <div className="flex w-full max-w-sm flex-col items-stretch gap-1.5">
             {prompts.map((prompt) => (
               <button
                 key={prompt}
                 type="button"
                 onClick={() => onSend(prompt)}
-                className="rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-xs font-medium text-indigo-700 transition-colors hover:border-indigo-300 hover:bg-indigo-50"
+                className="flex min-h-[44px] items-center justify-between gap-2 rounded-xl border border-indigo-200 bg-white px-4 py-3 text-left text-sm font-medium text-indigo-700 transition-colors hover:border-indigo-300 hover:bg-indigo-50 active:bg-indigo-100"
               >
-                {prompt}
+                <span>{prompt}</span>
+                <ChevronRight className="h-4 w-4 shrink-0" aria-hidden />
               </button>
             ))}
           </div>

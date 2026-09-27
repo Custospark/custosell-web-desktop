@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react';
+import { Link } from 'react-router-dom';
+import { ROUTES } from '../../../app/routes/constants/shared.paths';
 
 /**
  * Renders assistant message text with clickable links.
@@ -17,6 +19,19 @@ function splitTrailingPunctuation(url: string): { url: string; trail: string } {
 }
 
 function linkNode(href: string, label: string, key: string): ReactNode {
+  const to = sameAppRoute(href);
+  if (to !== null) {
+    // In-app route - client-side navigation, no new tab.
+    return (
+      <Link
+        key={key}
+        to={to}
+        className="font-medium text-blue-700 underline hover:text-blue-900 [overflow-wrap:anywhere]"
+      >
+        {label}
+      </Link>
+    );
+  }
   return (
     <a
       key={key}
@@ -28,6 +43,63 @@ function linkNode(href: string, label: string, key: string): ReactNode {
       {label}
     </a>
   );
+}
+
+/** Flatten the ROUTES registry to literal paths (functions skipped). */
+function collectRoutePaths(node: unknown, out: string[]): void {
+  if (typeof node === 'string') {
+    if (node.startsWith('/')) out.push(node);
+    return;
+  }
+  if (typeof node === 'object' && node !== null) {
+    for (const value of Object.values(node)) {
+      collectRoutePaths(value, out);
+    }
+  }
+}
+
+let routePatterns: RegExp[] | null = null;
+
+function internalRoutePatterns(): RegExp[] {
+  if (!routePatterns) {
+    const paths: string[] = [];
+    collectRoutePaths(ROUTES, paths);
+    routePatterns = paths.map(
+      (path) =>
+        new RegExp(
+          '^' +
+            path
+              .split('/')
+              .map((segment) =>
+                segment.startsWith(':')
+                  ? '[^/]+'
+                  : segment.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+              )
+              .join('/') +
+            '/?$',
+        ),
+    );
+  }
+  return routePatterns;
+}
+
+/**
+ * Same-origin URL matching a real app route - returned as the router
+ * target for internal navigation. Anything else (foreign origin, unknown
+ * path, no window) stays null so the caller opens it externally.
+ */
+function sameAppRoute(href: string): string | null {
+  try {
+    if (typeof window === 'undefined') return null;
+    const url = new URL(href);
+    if (url.origin !== window.location.origin) return null;
+    if (!internalRoutePatterns().some((pattern) => pattern.test(url.pathname))) {
+      return null;
+    }
+    return url.pathname + url.search + url.hash;
+  } catch {
+    return null;
+  }
 }
 
 export function renderAssistantMessage(content: string): ReactNode[] {

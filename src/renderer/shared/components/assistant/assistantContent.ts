@@ -24,6 +24,20 @@ const GUEST_PROMPTS = [
 
 export type AssistantSegment = 'business' | 'personal' | 'shopping' | 'guest';
 
+/** Workspace setup never rotates away for signed-in users. */
+export const APPS_SETUP_PROMPT = 'How do I add or remove apps?';
+
+/** Access troubleshooting never rotates away for signed-in users. */
+export const APPS_ACCESS_PROMPT = "I can't access an app or feature";
+
+const GUEST_HIDDEN_GROUPS = ['Online Shopping'];
+
+/** Module prompts for a segment - guests never get shopping-intent prompts. */
+export function groupPromptsFor(label: string, segment: AssistantSegment): string[] {
+  if (segment === 'guest' && GUEST_HIDDEN_GROUPS.includes(label)) return [];
+  return GROUP_PROMPTS[label] ?? [];
+}
+
 /** Input hint per active route - falls back to the account-type default. */
 export const PLACEHOLDER_BY_SLUG: Record<string, string> = {
   dashboard: 'Ask about your business or anything you want on Custosell…',

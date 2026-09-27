@@ -1,5 +1,5 @@
 import type { RefObject } from 'react';
-import { Send, Square, X } from 'lucide-react';
+import { ChevronRight, Send, Square, X } from 'lucide-react';
 
 interface AssistantComposerProps {
   followUps: string[];
@@ -36,15 +36,16 @@ export function AssistantComposer({
   return (
     <>
       {followUps.length > 0 && !error && (
-        <div className="flex shrink-0 gap-1.5 overflow-x-auto border-t border-gray-100 bg-white px-3 py-2">
+        <div className="flex shrink-0 flex-col items-stretch gap-1.5 border-t border-gray-100 bg-white px-3 py-2">
           {followUps.map((prompt) => (
             <button
               key={prompt}
               type="button"
               onClick={() => onFollowUp(prompt)}
-              className="shrink-0 whitespace-nowrap rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-xs font-medium text-indigo-700 transition-colors hover:border-indigo-300 hover:bg-indigo-50"
+              className="flex min-h-[44px] items-center justify-between gap-2 rounded-xl border border-indigo-200 bg-white px-4 py-2.5 text-left text-sm font-medium text-indigo-700 transition-colors hover:border-indigo-300 hover:bg-indigo-50 active:bg-indigo-100"
             >
-              {prompt}
+              <span>{prompt}</span>
+              <ChevronRight className="h-4 w-4 shrink-0" aria-hidden />
             </button>
           ))}
         </div>

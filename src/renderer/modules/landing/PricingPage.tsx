@@ -4,7 +4,8 @@ import { ROUTES } from '../../app/routes/constants/shared.paths';
 import { Button } from '../../shared/components/buttons/Button';
 import { useActivePlans } from '../../shared/components/plans/useActivePlans';
 import { PlanCards, PlansLoading } from '../../shared/components/plans/PlanCards';
-import { ArrowRight, AlertCircle, RefreshCw } from 'lucide-react';
+import { ArrowRight, AlertCircle, Calculator, RefreshCw } from 'lucide-react';
+import { API_BASE_URL } from '../../app/api/apiConfig';
 
 const FEATURE_COMPARISON: Record<string, [boolean, boolean, boolean]> = {
   'Point of Sale': [true, true, true],
@@ -144,6 +145,26 @@ export default function PricingPage() {
                 })}
               </tbody>
             </table>
+          </div>
+
+          <div className="max-w-3xl mx-auto mb-16 rounded-2xl border-2 border-blue-100 bg-blue-50/60 p-6 sm:p-8 text-center">
+            <h2 className="text-2xl font-bold mb-2 text-gray-900">
+              Budgeting the full setup?
+            </h2>
+            <p className="text-sm text-gray-500 mb-6">
+              Plans are only part of the investment. Build a complete budget - hardware, installation,
+              subscription, maintenance and site requirements - in UGX with USD approximations, ready to download.
+            </p>
+            <a
+              href={`${new URL(API_BASE_URL).origin}/quotations`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button size="lg" className="gap-2">
+                <Calculator className="w-4 h-4" />
+                Get investment budget
+              </Button>
+            </a>
           </div>
 
           <div className="max-w-3xl mx-auto mb-16">

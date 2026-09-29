@@ -5,7 +5,6 @@ import { Button } from '../../shared/components/buttons/Button';
 import { useActivePlans } from '../../shared/components/plans/useActivePlans';
 import { PlanCards, PlansLoading } from '../../shared/components/plans/PlanCards';
 import { ArrowRight, AlertCircle, Calculator, RefreshCw } from 'lucide-react';
-import { API_BASE_URL } from '../../app/api/apiConfig';
 
 const FEATURE_COMPARISON: Record<string, [boolean, boolean, boolean]> = {
   'Point of Sale': [true, true, true],
@@ -155,16 +154,10 @@ export default function PricingPage() {
               Plans are only part of the investment. Build a complete budget - hardware, installation,
               subscription, maintenance and site requirements - in UGX with USD approximations, ready to download.
             </p>
-            <a
-              href={`${new URL(API_BASE_URL).origin}/quotations`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Button size="lg" className="gap-2">
-                <Calculator className="w-4 h-4" />
-                Get investment budget
-              </Button>
-            </a>
+            <Button size="lg" onClick={() => navigate(ROUTES.INVESTMENT_BUDGET)} className="gap-2">
+              <Calculator className="w-4 h-4" />
+              Get investment budget
+            </Button>
           </div>
 
           <div className="max-w-3xl mx-auto mb-16">

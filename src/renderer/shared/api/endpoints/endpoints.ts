@@ -4,6 +4,7 @@ export { QUICK_NOTES } from './quickNotesEndpoints';
 export { LINKED_ACCOUNTS } from './linkedAccountsEndpoints';
 
 export const ASSISTANT = { CHAT: '/assistant/chat', GUIDE: '/assistant/guide' };
+export const QUOTATIONS = { PACKAGES: '/quotations/packages', ITEMS: '/quotations/items', ESTIMATE: '/quotations/estimate', DOWNLOAD: '/quotations/download' };
 
 export const AUTH = { REGISTER: '/auth/register', LOGIN: '/auth/login', LOGOUT: '/auth/logout', ME: '/auth/me', PROFILE: '/auth/profile', STORE_VISIBILITY: '/auth/store-visibility', VERIFY_SEND: '/auth/verify/send', VERIFY: '/auth/verify', TWO_FACTOR: '/auth/two-factor', ACTIVITY: '/auth/activity', PASSWORD_INITIATE: '/auth/password/initiate', PASSWORD_CONFIRM: '/auth/password/confirm', PROFILE_INITIATE: '/auth/profile/initiate', PROFILE_CONFIRM: '/auth/profile/confirm' };
 export const PLANS = '/plans';

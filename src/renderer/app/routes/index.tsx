@@ -90,6 +90,7 @@ import SubscriptionSettingsPage from '../../modules/settings/SubscriptionSetting
 import PrivacyPage from '../../modules/landing/PrivacyPage';
 import FaqPage from '../../modules/landing/FaqPage';
 import PricingPage from '../../modules/landing/PricingPage';
+import InvestmentBudgetPage from '../../modules/landing/InvestmentBudgetPage';
 import ShopShareRedirect from '../../modules/storefront/ShopShareRedirect';
 import BookingLayout from '../../modules/pipeline/ui/BookingLayout';
 
@@ -190,6 +191,7 @@ export function AppRoutes() {
         <Route element={<SuspenseWrapper><LandingLayout /></SuspenseWrapper>}>
           <Route path="/" element={<SuspenseWrapper><LandingPage /></SuspenseWrapper>} />
           <Route path={ROUTES.PRICING} element={<SuspenseWrapper><PricingPage /></SuspenseWrapper>} />
+          <Route path={ROUTES.INVESTMENT_BUDGET} element={<SuspenseWrapper><InvestmentBudgetPage /></SuspenseWrapper>} />
           <Route path={ROUTES.PRIVACY} element={<SuspenseWrapper><PrivacyPage /></SuspenseWrapper>} />
           <Route path={ROUTES.PUBLIC_FAQS} element={<SuspenseWrapper><FaqPage /></SuspenseWrapper>} />
         </Route>
